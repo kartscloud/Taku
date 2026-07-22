@@ -28,9 +28,14 @@ python -m http.server 5180 -d www
 
 ## Ship it as a PWA today (installable on iPhone/Android immediately)
 
-1. Push this repo to GitHub → Settings → Pages → deploy from branch, folder `/ (root)` (the root index.html redirects into `www/`), or point Pages/Netlify/Vercel straight at `www/`.
-2. **HTTPS is required** for the service worker + install prompt (any of those hosts give you it free).
-3. iPhone: open the URL in Safari → Share → **Add to Home Screen**. It runs fullscreen, offline-shell, feels native. This is the fastest way to get it on your friend's phone **today**.
+1. Create an empty GitHub repo named `naku` (no README/license — this repo has them), then push:
+   ```bash
+   git remote add origin https://github.com/<you>/naku.git
+   git push -u origin main
+   ```
+2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The bundled workflow (`.github/workflows/deploy.yml`) publishes the `www/` folder as the site root on every push to `main` — so the app lives at `https://<you>.github.io/naku/` with the service worker scoped correctly (no `/www/` in the URL, no redirect hop). Watch it under the repo's **Actions** tab.
+3. **HTTPS is automatic** on Pages — required for the service worker + install prompt.
+4. iPhone: open the URL in Safari → Share → **Add to Home Screen**. Fullscreen, offline-shell, native-feeling. Fastest way onto your friend's phone **today**. (Alternatively point Netlify/Vercel at the `www/` folder.)
 
 ## App Store launch (Capacitor + Xcode)
 
