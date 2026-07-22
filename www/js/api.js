@@ -1,0 +1,62 @@
+/* naku · AniList client + cached pools (trending / season / popular / gems / search) */
+const API="https://graphql.anilist.co";
+const MEDIA_FIELDS=`id title{english romaji} averageScore popularity genres episodes duration seasonYear season status format
+coverImage{large extraLarge} bannerImage description(asHtml:false)
+studios(isMain:true){nodes{name}} trailer{id site} externalLinks{site url type}`;
+
+async function gql(query,variables){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query,variables})});
+  if(!r.ok)throw new Error("AniList "+r.status);
+  const j=await r.json();
+  if(j.errors)throw new Error(j.errors[0].message);
+  return j.data;
+}
+
+function curSeason(){
+  const d=new Date(),m=d.getMonth()+1,y=d.getFullYear();
+  const s=m<=3?"WINTER":m<=6?"SPRING":m<=9?"SUMMER":"FALL";
+  return{s,y};
+}
+
+/* trim media before caching so localStorage stays small */
+function trimMedia(m){
+  return{
+    id:m.id,title:m.title,averageScore:m.averageScore,popularity:m.popularity,genres:m.genres,
+    episodes:m.episodes,duration:m.duration,seasonYear:m.seasonYear,season:m.season,status:m.status,format:m.format,
+    coverImage:{large:m.coverImage&&m.coverImage.large,extraLarge:m.coverImage&&m.coverImage.extraLarge},
+    bannerImage:m.bannerImage,
+    description:(m.description||"").replace(/<[^>]*>/g,"").slice(0,420),
+    studio:(m.studios&&m.studios.nodes&&m.studios.nodes[0]&&m.studios.nodes[0].name)||null,
+    trailer:(m.trailer&&m.trailer.site==="youtube")?m.trailer.id:null,
+    links:(m.externalLinks||[]).filter(l=>l.type==="STREAMING").slice(0,3).map(l=>({site:l.site,url:l.url}))
+  };
+}
+
+const CACHE_TTL=30*60*1000;
+async function fetchPool(kind,page){
+  const key="cache2_"+kind+"_"+(page||1); // cache2: post-ecchi-filter pools
+  const hit=store.get(key,null);
+  if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
+  const {s,y}=curSeason();
+  let args;
+  switch(kind){
+    case "trending": args=`sort:TRENDING_DESC`; break;
+    case "season":   args=`sort:POPULARITY_DESC,season:${s},seasonYear:${y}`; break;
+    case "recent":   args=`sort:POPULARITY_DESC,seasonYear_greater:${y-2},status_in:[FINISHED,RELEASING]`; break;
+    case "popular":  args=`sort:POPULARITY_DESC`; break;
+    case "gems":     args=`sort:SCORE_DESC,popularity_lesser:80000,averageScore_greater:74`; break;
+    default: throw new Error("bad pool "+kind);
+  }
+  // genre_not_in Ecchi: AniList's own docs warn ecchi is NOT flagged isAdult and has caused App Store problems
+  const q=`query($p:Int){Page(page:$p,perPage:25){media(${args},type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED,countryOfOrigin:JP){${MEDIA_FIELDS}}}}`;
+  const data=await gql(q,{p:page||1});
+  const list=(data.Page.media||[]).map(trimMedia);
+  store.set(key,{t:Date.now(),d:list});
+  return list;
+}
+
+async function searchAnime(qs){
+  const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
+  const data=await gql(q,{q:qs});
+  return (data.Page.media||[]).map(trimMedia);
+}

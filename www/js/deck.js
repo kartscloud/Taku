@@ -1,0 +1,193 @@
+/* naku · discover deck: modes, swipe, details, rating */
+let deckMode="foryou";
+const queues={foryou:[],new:[],trending:[],gems:[]};
+const poolPage={foryou:0,new:0,trending:0,gems:0};
+let deckLoading=false,pendingWatch=null;
+let lastUndo=null; // single-level rewind, Tinder-style
+
+const scoreClass=s=>s>=75?"hi":s>=60?"mid":"lo";
+
+async function ensureQueue(){
+  if(deckLoading)return;deckLoading=true;
+  let guard=0;
+  while(queues[deckMode].length<4&&guard<3){
+    poolPage[deckMode]++;guard++;
+    try{
+      const cands=await buildQueue(deckMode,poolPage[deckMode]);
+      const have=new Set(queues[deckMode].map(m=>m.id));
+      queues[deckMode].push(...cands.filter(m=>!have.has(m.id)));
+    }catch(e){console.error(e);break;}
+  }
+  deckLoading=false;
+}
+function prefetchImages(){
+  queues[deckMode].slice(0,4).forEach(m=>{const u=m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large);if(u){const i=new Image();i.src=u;}});
+}
+
+function cardEl(m){
+  const el=document.createElement("div");el.className="card";el.dataset.id=m.id;
+  const img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
+  const meta=[m.format,m.seasonYear,m.episodes?m.episodes+" eps":null].filter(Boolean).map(x=>`<span class="chip">${x}</span>`).join("")
+    +(m.genres||[]).slice(0,3).map(g=>`<span class="chip">${g}</span>`).join("");
+  const r=reasonFor(m);
+  el.innerHTML=`
+    <div class="poster" style="background-image:url('${img}')"></div>
+    <div class="shade"></div>
+    ${r?`<div class="reason ${r.cls}">${r.txt}</div>`:""}
+    ${m.averageScore?`<div class="score ${scoreClass(m.averageScore)}">${icSvg("star",true)} ${(m.averageScore/10).toFixed(1)}</div>`:""}
+    <div class="badge want">Want</div><div class="badge nope">Nope</div><div class="badge watch">Seen</div>
+    <div class="info">
+      <h2>${mTitle(m)}</h2>
+      <div class="meta">${meta}</div>
+      <div class="desc">${(m.description||"")}</div>
+      <span class="cinfo" title="Details">${icSvg("info")}</span>
+    </div>`;
+  attachDrag(el,m);
+  return el;
+}
+
+async function renderDeck(){
+  const deck=$("#deck");
+  if(!queues[deckMode].length){
+    deck.innerHTML=`<div class="empty"><div class="spin"></div><p>Studying your taste…</p></div>`;
+    await ensureQueue();
+  }
+  deck.innerHTML="";
+  const q=queues[deckMode];
+  if(!q.length){
+    deck.innerHTML=`<div class="empty"><h3>You're all caught up</h3><p>This feed is clear for now. Try another mode, or search for something specific.</p></div>`;
+    return;
+  }
+  const top=q.slice(0,3).reverse();
+  top.forEach((m,i)=>{
+    const el=cardEl(m);
+    const depth=top.length-1-i;
+    el.style.transform=`scale(${1-depth*0.04}) translateY(${depth*10}px)`;
+    el.style.zIndex=10-depth;
+    el.style.pointerEvents=depth===0?"auto":"none";
+    deck.appendChild(el);
+  });
+  prefetchImages();
+  ensureQueue(); // top up in background
+}
+
+function decide(id,action){
+  const q=queues[deckMode];
+  const idx=q.findIndex(m=>m.id===id);
+  if(idx<0)return;
+  const m=q[idx];q.splice(idx,1);
+  markSeen(id);buzz(12);
+  if(window._dismissCoach)window._dismissCoach();
+  lastUndo={m,action};updateUndoBtn();
+  if(action==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);}
+  if(action==="nope"){bumpAffinity(m.genres,-1);}
+  if(action==="watch"){openRate(m);}
+  refreshCounts();
+}
+function updateUndoBtn(){const b=$("#bUndo");if(b)b.classList.toggle("off",!lastUndo);}
+function undoLast(){
+  if(!lastUndo)return;
+  const {m,action}=lastUndo;
+  seen.delete(m.id);store.set("seen",[...seen]);
+  if(action==="want"){removeWant(m.id);bumpAffinity(m.genres,-1.5);}
+  if(action==="nope"){bumpAffinity(m.genres,1);}
+  if(action==="watch"){
+    if(pendingWatch&&pendingWatch.rec.id===m.id){$("#rateModal").classList.remove("on");pendingWatch=null;}
+    else{const rec=watched.find(x=>x.id===m.id);if(rec){removeWatched(m.id);bumpAffinity(m.genres,-(rec.tier?TIER_AFFINITY[rec.tier]:1));}}
+  }
+  queues[deckMode].unshift(m);
+  lastUndo=null;updateUndoBtn();
+  buzz(10);toast("Brought it back");
+  refreshCounts();renderDeck();
+}
+function flyOut(el,dir,cb){
+  const x=dir==="want"?600:dir==="nope"?-600:0;
+  const y=dir==="watch"?-700:0;
+  el.style.transition="transform .35s ease, opacity .35s ease";
+  el.style.transform=`translate(${x}px,${y}px) rotate(${x/20}deg)`;el.style.opacity="0";
+  setTimeout(cb,300);
+}
+function topCard(){const c=$("#deck").querySelectorAll(".card");return c[c.length-1]||null;}
+function doAction(action){
+  const top=topCard();if(!top)return;
+  const id=+top.dataset.id;
+  flyOut(top,action,()=>{decide(id,action);renderDeck();});
+}
+
+/* pointer-capture drag: no global listeners, no leaks */
+function attachDrag(el,m){
+  let sx=0,sy=0,dx=0,dy=0,drag=false,t0=0;
+  const bw=el.querySelector(".badge.want"),bn=el.querySelector(".badge.nope"),bs=el.querySelector(".badge.watch");
+  el.addEventListener("pointerdown",e=>{
+    drag=true;sx=e.clientX;sy=e.clientY;dx=dy=0;t0=Date.now();
+    el.setPointerCapture(e.pointerId);el.style.transition="none";
+  });
+  el.addEventListener("pointermove",e=>{
+    if(!drag)return;
+    dx=e.clientX-sx;dy=e.clientY-sy;
+    el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/22}deg)`;
+    const up=dy<-60&&Math.abs(dy)>Math.abs(dx);
+    bw.style.opacity=up?0:Math.max(0,dx/90);
+    bn.style.opacity=up?0:Math.max(0,-dx/90);
+    bs.style.opacity=up?Math.min(1,-dy/120):0;
+  });
+  el.addEventListener("pointerup",e=>{
+    if(!drag)return;drag=false;
+    const dist=Math.hypot(dx,dy);
+    if(dist<8&&Date.now()-t0<400){ // tap → details
+      el.style.transition="transform .25s ease";el.style.transform="";
+      openDetails(m);return;
+    }
+    const up=dy<-90&&Math.abs(dy)>Math.abs(dx);
+    if(up)flyOut(el,"watch",()=>{decide(m.id,"watch");renderDeck();});
+    else if(dx>110)flyOut(el,"want",()=>{decide(m.id,"want");renderDeck();});
+    else if(dx<-110)flyOut(el,"nope",()=>{decide(m.id,"nope");renderDeck();});
+    else{el.style.transition="transform .25s ease";el.style.transform="";bw.style.opacity=bn.style.opacity=bs.style.opacity=0;}
+    dx=dy=0;
+  });
+  el.addEventListener("pointercancel",()=>{drag=false;el.style.transition="transform .25s ease";el.style.transform="";});
+}
+
+/* details sheet */
+function openDetails(m){
+  const links=(m.links||[]).map(l=>`<a class="dlink" href="${l.url}" target="_blank" rel="noopener"><span class="icw">${icSvg("play",true)}</span>${l.site}</a>`).join("");
+  const yt=m.trailer?`<a class="dlink yt" href="https://www.youtube.com/watch?v=${m.trailer}" target="_blank" rel="noopener"><span class="icw">${icSvg("play")}</span>Trailer</a>`:"";
+  const meta=[m.format,m.season?`${m.season} ${m.seasonYear||""}`:m.seasonYear,m.episodes?m.episodes+" eps":null,m.studio,m.status==="RELEASING"?"AIRING":null]
+    .filter(Boolean).map(x=>`<span class="chip">${x}</span>`).join("")+(m.genres||[]).map(g=>`<span class="chip">${g}</span>`).join("");
+  $("#detailSheet").innerHTML=`
+    ${m.bannerImage?`<img class="dbanner" src="${m.bannerImage}" alt="">`:""}
+    <div class="dtitle">${mTitle(m)} ${m.averageScore?`<span style="font-size:14px;color:${m.averageScore>=75?"#22c55e":"#f59e0b"}">★ ${(m.averageScore/10).toFixed(1)}</span>`:""}</div>
+    <div class="dmeta">${meta}</div>
+    <div class="ddesc">${m.description||"No synopsis."}</div>
+    <div class="dlinks">${yt}${links}</div>
+    <div class="dactions">
+      <button class="dact nope" data-d="nope"><span class="icw">${icSvg("x")}</span>Pass</button>
+      <button class="dact want" data-d="want"><span class="icw">${icSvg("heart",true)}</span>Want</button>
+      <button class="dact watch" data-d="watch"><span class="icw">${icSvg("star",true)}</span>Seen</button>
+    </div>`;
+  $("#detailModal").classList.add("on");
+  $("#detailSheet").querySelectorAll(".dact").forEach(b=>b.onclick=()=>{
+    $("#detailModal").classList.remove("on");
+    const inDeck=queues[deckMode].some(x=>x.id===m.id);
+    if(inDeck){const top=topCard();if(top&&+top.dataset.id===m.id){doAction(b.dataset.d);return;}decide(m.id,b.dataset.d);renderDeck();}
+    else{ // from search
+      markSeen(m.id);
+      if(b.dataset.d==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);toast("Added to Want");}
+      if(b.dataset.d==="nope"){bumpAffinity(m.genres,-1);}
+      if(b.dataset.d==="watch")openRate(m);
+      refreshCounts();
+    }
+  });
+}
+
+/* rating */
+function openRate(m){pendingWatch={rec:slim(m),genres:m.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");}
+function commitRate(tier){
+  if(!pendingWatch)return;
+  const rec={...pendingWatch.rec,tier};
+  addWatched(rec);
+  bumpAffinity(pendingWatch.genres, tier?TIER_AFFINITY[tier]:1);
+  $("#rateModal").classList.remove("on");pendingWatch=null;
+  buzz(tier==="S"?[15,40,15]:12);
+  refreshCounts();
+}

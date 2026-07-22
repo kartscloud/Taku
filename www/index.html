@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0d0b14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="description" content="naku — swipe to find your next anime. Personalized discovery, tier ratings, and a neural rank." />
+<title>naku — swipe your next anime</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
+<link rel="stylesheet" href="css/app.css?v=5" />
+</head>
+<body>
+
+<header>
+  <div class="logo">naku<i class="dot"></i></div>
+  <button class="miniav" id="miniAv" title="Profile">🍥</button>
+</header>
+
+<main>
+  <!-- DISCOVER -->
+  <section id="view-deck">
+    <div class="modes" id="modes">
+      <button class="pill active" data-mode="foryou"><span class="icw" data-ic="sparkles"></span>For You</button>
+      <button class="pill" data-mode="new"><span class="icw" data-ic="leaf"></span>New</button>
+      <button class="pill" data-mode="trending"><span class="icw" data-ic="flame"></span>Trending</button>
+      <button class="pill" data-mode="gems"><span class="icw" data-ic="gem"></span>Gems</button>
+    </div>
+    <div id="deck"></div>
+    <div class="actions">
+      <button class="btn xs undo off" id="bUndo" title="Undo last swipe" aria-label="Undo last swipe"><span class="icw" data-ic="rotate"></span></button>
+      <button class="btn mid nope" id="bNope" title="Pass" aria-label="Pass"><span class="icw" data-ic="x"></span></button>
+      <button class="btn sm watch" id="bWatch" title="Seen it — rate" aria-label="Seen it, rate"><span class="icw" data-ic="star"></span></button>
+      <button class="btn big want" id="bWant" title="Want to watch" aria-label="Want to watch"><span class="icw" data-ic="heart"></span></button>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <section id="view-search" style="display:none">
+    <div class="searchbar">
+      <input id="searchInput" type="search" placeholder="Search any anime…" autocomplete="off" />
+    </div>
+    <div class="list" id="searchList"><div class="searchmsg"><b>Find any anime</b>Save it, rate it, or pass — straight from the results.</div></div>
+  </section>
+
+  <!-- WANT -->
+  <section id="view-want" style="display:none">
+    <div class="listhead"><span class="t">Want to watch</span><span class="c" id="wantCount"></span></div>
+    <div class="list" id="wantList"></div>
+  </section>
+
+  <!-- TIERS -->
+  <section id="view-watched" style="display:none">
+    <div class="listhead"><span class="t">Your tiers</span><span class="c" id="watchedCount"></span></div>
+    <div class="list" id="watchedList"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="view-profile" style="display:none">
+    <div class="idcard">
+      <button class="avatar" id="pfAvatar" title="Edit avatar">🍥</button>
+      <div class="idmeta">
+        <div class="uname" id="pfName">Nameless Otaku</div>
+        <div class="handle" id="pfHandle">@you</div>
+        <div class="bio" id="pfBio">No bio yet — tap edit.</div>
+      </div>
+      <button class="editbtn" id="pfEdit">Edit</button>
+    </div>
+    <div class="netwrap">
+      <canvas id="net"></canvas>
+      <div class="scanline"></div>
+      <div class="analyzing" id="analyzing">Analyzing neural signature</div>
+    </div>
+    <div class="rankcard" id="rankReveal">
+      <div class="rank-eyebrow" id="rankEyebrow">Classification</div>
+      <div class="rank-title" id="rankTitle">—</div>
+      <div class="rank-tier" id="rankTier"></div>
+      <div class="rank-blurb" id="rankBlurb"></div>
+      <div class="stats">
+        <div class="stat"><b id="stPower">0</b><span>NEURAL INDEX</span></div>
+        <div class="stat"><b id="stHours">0</b><span>HOURS</span></div>
+        <div class="stat"><b id="stCount">0</b><span>TITLES</span></div>
+      </div>
+      <div class="genrebars" id="genreBars"></div>
+      <button class="sharebtn" id="shareCard"><span class="icw" data-ic="share"></span>Share my rank card</button>
+    </div>
+    <div class="friends">
+      <div class="fhead"><span class="ft">Squad</span><span class="fc" id="squadCount"></span></div>
+      <div id="friendList" class="flist"></div>
+      <div class="frow-actions">
+        <button class="fbtn" id="addFriend">+ Add friend</button>
+        <button class="fbtn ghost" id="shareCode">Share my code</button>
+      </div>
+    </div>
+    <div class="datazone">
+      <div class="fhead"><span class="ft">Your data</span><span class="fc">stays on this device</span></div>
+      <div class="frow-actions">
+        <button class="fbtn ghost" id="backupBtn"><span class="icw" data-ic="download"></span> Back up</button>
+        <button class="fbtn ghost" id="restoreBtn"><span class="icw" data-ic="upload"></span> Restore</button>
+      </div>
+      <input type="file" id="restoreFile" accept="application/json,.json" hidden />
+    </div>
+  </section>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom">
+  <button class="navbtn active" data-view="deck"><span class="icw" data-ic="deck"></span><small>Discover</small></button>
+  <button class="navbtn" data-view="search"><span class="icw" data-ic="search"></span><small>Search</small></button>
+  <button class="navbtn" data-view="want"><span class="icw" data-ic="heart"></span><small>Want</small><span class="n" id="nWant" style="display:none">0</span></button>
+  <button class="navbtn" data-view="watched"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
+  <button class="navbtn" data-view="profile"><span class="icw" data-ic="user"></span><small>Profile</small></button>
+</nav>
+
+<!-- FIRST-RUN GESTURE COACH -->
+<div class="coach" id="coach" hidden>
+  <div class="coach-in">
+    <h3>How it works</h3>
+    <div class="crow want"><span class="icw" data-ic="arrowR"></span><div><b>Swipe right</b><span>Want to watch — saves it to your list</span></div></div>
+    <div class="crow nope"><span class="icw" data-ic="arrowL"></span><div><b>Swipe left</b><span>Pass — you won't see it again</span></div></div>
+    <div class="crow watch"><span class="icw" data-ic="arrowU"></span><div><b>Swipe up</b><span>Already seen — give it a tier</span></div></div>
+    <div class="crow tap"><span class="icw" data-ic="tap"></span><div><b>Tap a card</b><span>Trailer, studio, where to watch</span></div></div>
+    <button class="savebtn" id="coachOk">Got it</button>
+  </div>
+</div>
+
+<!-- RATE SHEET -->
+<div class="modal" id="rateModal">
+  <div class="sheet">
+    <h3 id="rateTitle">Rate it</h3>
+    <p>Drop it in a tier — this trains your feed and builds your rank.</p>
+    <div class="tiers">
+      <button class="tierbtn" style="background:var(--s)" data-tier="S">S<small>peak</small></button>
+      <button class="tierbtn" style="background:var(--a)" data-tier="A">A<small>great</small></button>
+      <button class="tierbtn" style="background:var(--b)" data-tier="B">B<small>good</small></button>
+      <button class="tierbtn" style="background:var(--c)" data-tier="C">C<small>meh</small></button>
+      <button class="tierbtn" style="background:var(--d)" data-tier="D">D<small>nah</small></button>
+    </div>
+    <button class="skip" id="rateSkip">Just mark watched (no rating)</button>
+  </div>
+</div>
+
+<!-- DETAILS SHEET -->
+<div class="modal" id="detailModal">
+  <div class="sheet" id="detailSheet"></div>
+</div>
+
+<!-- EDIT PROFILE SHEET -->
+<div class="modal" id="editModal">
+  <div class="sheet">
+    <h3>Edit profile</h3>
+    <p>This is you. Pick a face, a name, a vibe.</p>
+    <div class="avpick" id="avPick"></div>
+    <input class="inp" id="inName" maxlength="20" placeholder="Display name" />
+    <input class="inp" id="inHandle" maxlength="18" placeholder="handle (no spaces)" />
+    <textarea class="inp" id="inBio" maxlength="120" placeholder="Your bio — who are you as a watcher?"></textarea>
+    <button class="savebtn" id="saveProfile">Save profile</button>
+    <button class="skip" id="editCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD FRIEND SHEET -->
+<div class="modal" id="friendModal">
+  <div class="sheet">
+    <h3>Add a friend</h3>
+    <p>Paste a naku code a friend shared with you. Their rank lands on your leaderboard.</p>
+    <textarea class="inp" id="inCode" placeholder="Paste code…"></textarea>
+    <button class="savebtn" id="doAddFriend">Add to squad</button>
+    <button class="skip" id="friendCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="onboard" id="onboard" hidden>
+  <div class="ob-inner">
+    <div class="ob-logo">naku</div>
+    <div class="ob-tag">Swipe. Rate. Ascend. Your next anime finds you.</div>
+    <div class="ob-h">Pick a face + name</div>
+    <div class="avpick" id="obAvPick"></div>
+    <input class="inp" id="obName" maxlength="20" placeholder="What do we call you?" />
+    <div class="ob-h">What do you vibe with? <span style="color:var(--dim);font-weight:400">(pick any — trains your feed)</span></div>
+    <div class="ob-genres" id="obGenres"></div>
+    <button class="ob-start" id="obStart">Start swiping<span class="icw" data-ic="arrowR"></span></button>
+    <div class="ob-note">Everything stays on your device. No account, no tracking.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js?v=5"></script>
+<script src="js/state.js?v=5"></script>
+<script src="js/api.js?v=5"></script>
+<script src="js/rec.js?v=5"></script>
+<script src="js/deck.js?v=5"></script>
+<script src="js/lists.js?v=5"></script>
+<script src="js/search.js?v=5"></script>
+<script src="js/profile.js?v=5"></script>
+<script src="js/share.js?v=5"></script>
+<script src="js/main.js?v=5"></script>
+</body>
+</html>

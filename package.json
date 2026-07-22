@@ -1,0 +1,19 @@
+{
+  "name": "naku",
+  "version": "1.0.0",
+  "private": true,
+  "description": "naku — swipe to find your next anime",
+  "scripts": {
+    "serve": "npx --yes serve www -l 5180",
+    "ios:add": "npx cap add ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  }
+}
