@@ -124,6 +124,7 @@ function renderDetail(m,full){
     <div class="dbody">
       <div class="dtitle">${mTitle(m)} ${scoreCol?`<span class="dscore" style="color:${scoreCol}">${icSvg("star",true)} ${(m.averageScore/10).toFixed(1)}</span>`:""}</div>
       <div class="dmeta">${meta}</div>
+      ${m.next?`<div class="dairing"><span class="icw">${icSvg("flame")}</span>${airingText(m.next,m.status)}</div>`:""}
       ${m.description?`<div class="ddesc">${m.description}</div>`:""}
       ${actionsHtml}
       ${reel}

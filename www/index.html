@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=13" />
+<link rel="stylesheet" href="css/app.css?v=14" />
 </head>
 <body>
 
@@ -54,7 +54,10 @@
 
   <!-- TIERS -->
   <section id="view-watched" style="display:none">
-    <div class="listhead"><span class="t">Your tiers</span><span class="c" id="watchedCount"></span></div>
+    <div class="segmented" id="tierTabs">
+      <button class="seg on" data-tiertab="ranked">Watched<span class="segn" id="cRanked"></span></button>
+      <button class="seg" data-tiertab="watching">Watching<span class="segn" id="cWatching"></span></button>
+    </div>
     <div class="list" id="watchedList"></div>
   </section>
 
@@ -131,6 +134,10 @@
 <div class="modal" id="rateModal">
   <div class="sheet">
     <h3 id="rateTitle">Rate it</h3>
+    <div class="segmented small" id="rateStatusToggle">
+      <button class="segs on" data-status="watched">Finished it</button>
+      <button class="segs" data-status="watching">Still watching</button>
+    </div>
     <p>Drop it in a tier — this trains your feed and builds your rank.</p>
     <div class="tiers">
       <button class="tierbtn" style="background:var(--s)" data-tier="S">S<small>peak</small></button>
@@ -139,7 +146,7 @@
       <button class="tierbtn" style="background:var(--c)" data-tier="C">C<small>meh</small></button>
       <button class="tierbtn" style="background:var(--d)" data-tier="D">D<small>nah</small></button>
     </div>
-    <button class="skip" id="rateSkip">Just mark watched (no rating)</button>
+    <button class="skip" id="rateSkip">Add without a tier</button>
   </div>
 </div>
 
@@ -201,16 +208,16 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=13"></script>
-<script src="js/state.js?v=13"></script>
-<script src="js/api.js?v=13"></script>
-<script src="js/rec.js?v=13"></script>
-<script src="js/deck.js?v=13"></script>
-<script src="js/lists.js?v=13"></script>
-<script src="js/search.js?v=13"></script>
-<script src="js/profile.js?v=13"></script>
-<script src="js/detail.js?v=13"></script>
-<script src="js/share.js?v=13"></script>
-<script src="js/main.js?v=13"></script>
+<script src="js/data.js?v=14"></script>
+<script src="js/state.js?v=14"></script>
+<script src="js/api.js?v=14"></script>
+<script src="js/rec.js?v=14"></script>
+<script src="js/deck.js?v=14"></script>
+<script src="js/lists.js?v=14"></script>
+<script src="js/search.js?v=14"></script>
+<script src="js/profile.js?v=14"></script>
+<script src="js/detail.js?v=14"></script>
+<script src="js/share.js?v=14"></script>
+<script src="js/main.js?v=14"></script>
 </body>
 </html>

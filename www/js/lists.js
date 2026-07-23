@@ -4,7 +4,6 @@ function refreshCounts(){
   nw.textContent=want.length;nw.style.display=want.length?"grid":"none";
   nt.textContent=watched.length;nt.style.display=watched.length?"grid":"none";
   $("#wantCount").textContent=want.length+" title"+(want.length!==1?"s":"");
-  $("#watchedCount").textContent=watched.length+" ranked";
   if(currentView==="want")renderWant();
   if(currentView==="watched")renderWatched();
 }
@@ -75,10 +74,21 @@ function renderWant(){
   });
 }
 
+let tierTab="ranked";
+function updateTierCounts(){
+  const w=watched.filter(m=>m.status==="watching").length, r=watched.length-w;
+  const cr=$("#cRanked"),cw=$("#cWatching");
+  if(cr)cr.textContent=r||"";if(cw)cw.textContent=w||"";
+}
 function renderWatched(){
+  updateTierCounts();
+  return tierTab==="watching"?renderWatching():renderRanked();
+}
+function renderRanked(){
   const c=$("#watchedList");
-  if(!watched.length){c.innerHTML=`<div class="emptylist">No ratings yet.<br>Swipe up on something you've seen and give it a tier.</div>`;return;}
-  c.innerHTML=watched.map((m,i)=>`
+  const list=watched.filter(m=>m.status!=="watching");
+  if(!list.length){c.innerHTML=`<div class="emptylist">No ratings yet.<br>Swipe up on something you've finished and give it a tier.</div>`;return;}
+  c.innerHTML=list.map((m,i)=>`
     <div class="row">
       <span class="rank">${i+1}</span>
       <div class="tier" style="background:${TIER_COLOR[m.tier]||"var(--line)"}">${m.tier||"–"}</div>
@@ -90,13 +100,42 @@ function renderWatched(){
       <button class="x" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
 }
+async function renderWatching(){
+  const c=$("#watchedList");
+  const list=watched.filter(m=>m.status==="watching");
+  if(!list.length){c.innerHTML=`<div class="emptylist">Nothing in progress.<br>When you start a show, rate it as <b>Still watching</b>.</div>`;return;}
+  c.innerHTML=list.map(m=>`
+    <div class="row">
+      ${m.tier?`<div class="tier sm" style="background:${TIER_COLOR[m.tier]}">${m.tier}</div>`:`<span class="livedot"></span>`}
+      <div class="rc rc-open" data-open-watched="${m.id}">
+        <h4>${m.title}</h4>
+        <div class="sub airing" data-air="${m.id}">checking schedule…</div>
+      </div>
+      <button class="x" data-finish="${m.id}" title="Finished — rate it"><span class="icw">${icSvg("star")}</span></button>
+      <button class="x" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
+    </div>`).join("");
+  const map=await fetchNextAiring(list.map(m=>m.id));
+  if(currentView!=="watched"||tierTab!=="watching")return;
+  list.forEach(m=>{
+    const el=c.querySelector(`[data-air="${m.id}"]`);if(!el)return;
+    const info=map[m.id];
+    const txt=airingText(info&&info.next,info&&info.status);
+    el.textContent=txt||[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ");
+    if(info&&info.next)el.classList.add("live");
+  });
+}
 
 document.addEventListener("click",e=>{
-  const t=e.target.closest?e.target.closest("[data-sw-watched],[data-sw-unadd],[data-watch-remove],[data-rewatch],[data-open-watched]"):null;
+  // tier sub-tabs (Watched / Watching)
+  const seg=e.target.closest?e.target.closest("#tierTabs .seg"):null;
+  if(seg){tierTab=seg.dataset.tiertab;document.querySelectorAll("#tierTabs .seg").forEach(s=>s.classList.toggle("on",s===seg));renderWatched();return;}
+
+  const t=e.target.closest?e.target.closest("[data-sw-watched],[data-sw-unadd],[data-watch-remove],[data-rewatch],[data-open-watched],[data-finish]"):null;
   if(!t)return;const d=t.dataset;
   if(d.swUnadd){removeWant(+d.swUnadd);closeOpenRow();refreshCounts();toast("Removed from Want");}
-  if(d.swWatched){const m=want.find(x=>x.id==d.swWatched);if(m){closeOpenRow();pendingWatch={rec:m,genres:m.genres||[]};$("#rateTitle").textContent=m.title;$("#rateModal").classList.add("on");}}
+  if(d.swWatched){const m=want.find(x=>x.id==d.swWatched);if(m){closeOpenRow();openRateFor(m,"watched");}}
   if(d.watchRemove){removeWatched(+d.watchRemove);refreshCounts();}
-  if(d.rewatch){const m=watched.find(x=>x.id==d.rewatch);if(m){pendingWatch={rec:m,genres:m.genres||[]};$("#rateTitle").textContent=m.title;$("#rateModal").classList.add("on");}}
+  if(d.rewatch){const m=watched.find(x=>x.id==d.rewatch);if(m)openRateFor(m,m.status||"watched");}
+  if(d.finish){const m=watched.find(x=>x.id==d.finish);if(m)openRateFor(m,"watched");}
   if(d.openWatched){const m=watched.find(x=>x.id==d.openWatched);if(m)openDetails({id:m.id,title:m.title,img:m.img,genres:m.genres});}
 });

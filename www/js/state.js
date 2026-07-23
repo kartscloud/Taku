@@ -19,7 +19,8 @@ function purgeCaches(){
 })();
 
 let want=store.get("want",[]);
-let watched=store.get("watched",[]);          // slim records + tier
+let watched=store.get("watched",[]);          // slim records + tier + status ("watching"|"watched")
+watched.forEach(m=>{if(!m.status)m.status="watched";}); // records made before the watching/watched split
 let seen=new Set(store.get("seen",[]));        // every id acted on
 let profile=store.get("profile",{name:"",handle:"",bio:"",avatar:"🍥",created:0});
 let friends=store.get("friends",null);
@@ -35,6 +36,20 @@ if(friends===null){friends=[
 const $=s=>document.querySelector(s);
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(window._toastT);window._toastT=setTimeout(()=>t.classList.remove("show"),1900);}
 function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms||10);}catch(e){}}
+
+/* human "next episode airs in …" from a nextAiringEpisode {at,ep} */
+function airingText(next,status){
+  if(next&&next.at){
+    const secs=next.at-Math.floor(Date.now()/1000);
+    if(secs<=0)return "Ep "+next.ep+" · airing now";
+    const d=Math.floor(secs/86400),h=Math.floor((secs%86400)/3600),m=Math.floor((secs%3600)/60);
+    const rel=d>0?d+"d "+h+"h":h>0?h+"h "+m+"m":m+"m";
+    return "Ep "+next.ep+" · airs in "+rel;
+  }
+  if(status==="FINISHED")return "All episodes out";
+  if(status==="RELEASING")return "Airing — schedule TBA";
+  return "";
+}
 
 /* affinity learning: every action teaches the feed */
 function bumpAffinity(genres,delta){

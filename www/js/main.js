@@ -38,6 +38,7 @@ function initNav(){
   $("#restoreBtn").onclick=()=>$("#restoreFile").click();
   $("#restoreFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f);e.target.value="";});
   document.querySelectorAll("#rateModal .tierbtn").forEach(b=>b.onclick=()=>commitRate(b.dataset.tier));
+  document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.onclick=()=>{rateStatus=b.dataset.status;syncRateToggle();});
   $("#rateSkip").onclick=()=>commitRate(null);
   ["rateModal","detailModal","editModal","friendModal","genreModal"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});

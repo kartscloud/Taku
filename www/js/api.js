@@ -1,7 +1,7 @@
 /* taku · AniList client + cached pools (trending / season / popular / gems / search) */
 const API="https://graphql.anilist.co";
 const MEDIA_FIELDS=`id title{english romaji} averageScore popularity genres episodes duration seasonYear season status format
-startDate{year month day}
+startDate{year month day} nextAiringEpisode{airingAt episode}
 coverImage{large extraLarge} bannerImage description(asHtml:false)
 studios(isMain:true){nodes{name}} trailer{id site} externalLinks{site url type}`;
 
@@ -25,6 +25,7 @@ function trimMedia(m){
     id:m.id,title:m.title,averageScore:m.averageScore,popularity:m.popularity,genres:m.genres,
     episodes:m.episodes,duration:m.duration,seasonYear:m.seasonYear,season:m.season,status:m.status,format:m.format,
     aired:m.startDate?((m.startDate.year||0)*10000+(m.startDate.month||0)*100+(m.startDate.day||0)):0,
+    next:m.nextAiringEpisode?{at:m.nextAiringEpisode.airingAt,ep:m.nextAiringEpisode.episode}:null,
     coverImage:{large:m.coverImage&&m.coverImage.large,extraLarge:m.coverImage&&m.coverImage.extraLarge},
     bannerImage:m.bannerImage,
     description:(m.description||"").replace(/<[^>]*>/g,"").slice(0,420),
@@ -83,6 +84,17 @@ async function fetchDetail(id){
   };
   _detailCache.set(id,detail);
   return detail;
+}
+
+/* next-airing episode for a set of ids (for the Watching list) — always fresh, never cached */
+async function fetchNextAiring(ids){
+  if(!ids||!ids.length)return {};
+  const q=`query($ids:[Int]){Page(perPage:50){media(id_in:$ids,type:ANIME){id status episodes nextAiringEpisode{airingAt episode}}}}`;
+  try{
+    const d=await gql(q,{ids});
+    const map={};(d.Page.media||[]).forEach(m=>{map[m.id]={status:m.status,eps:m.episodes,next:m.nextAiringEpisode?{at:m.nextAiringEpisode.airingAt,ep:m.nextAiringEpisode.episode}:null};});
+    return map;
+  }catch(e){return {};}
 }
 
 async function searchAnime(qs){

@@ -1,6 +1,6 @@
 /* taku · profile: neural rank, identity, squad */
 function computeProfile(){
-  const list=watched,count=list.length,gcount={};
+  const list=watched.filter(m=>m.status!=="watching"),count=list.length,gcount={}; // in-progress shows don't count toward the rank
   let minutes=0;
   list.forEach(m=>{
     minutes+=(m.eps||12)*(m.dur||23);

@@ -155,11 +155,18 @@ function attachDrag(el,m){
   el.addEventListener("pointercancel",()=>{drag=false;el.style.transition="transform .25s ease";el.style.transform="";});
 }
 
-/* rating */
-function openRate(m){pendingWatch={rec:slim(m),genres:m.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");}
+/* rating (+ watching/watched status) */
+let rateStatus="watched";
+function syncRateToggle(){document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.classList.toggle("on",b.dataset.status===rateStatus));}
+function openRate(m,status){openRateFor(slim(m),status||"watched");}
+function openRateFor(rec,status){
+  pendingWatch={rec:rec,genres:rec.genres||[]};
+  rateStatus=status||rec.status||"watched";syncRateToggle();
+  $("#rateTitle").textContent=rec.title;$("#rateModal").classList.add("on");
+}
 function commitRate(tier){
   if(!pendingWatch)return;
-  const rec={...pendingWatch.rec,tier};
+  const rec={...pendingWatch.rec,tier,status:rateStatus};
   addWatched(rec);
   bumpAffinity(pendingWatch.genres, tier?TIER_AFFINITY[tier]:1);
   $("#rateModal").classList.remove("on");pendingWatch=null;
