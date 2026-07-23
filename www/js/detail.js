@@ -47,12 +47,13 @@ function renderDetail(m,full){
     const chars=(m.characters||[]).filter(c=>c.role!=="BACKGROUND").slice(0,10).map(c=>{
       const mb=mbtiFor(c.name,c.desc);
       const sub=[c.role==="MAIN"?"Main":"Supporting",c.age&&("Age "+c.age)].filter(Boolean).join(" · ");
-      const bio=c.desc?c.desc.split(/(?<=[.!?])\s/).slice(0,2).join(" ").slice(0,150):"";
+      const bio=(c.desc||"").slice(0,1400);
+      const long=bio.length>170;
       return `<div class="charcard">
         <div class="charimg" style="background-image:url('${c.img||""}')">${mb?`<span class="mbti">${mb}</span>`:""}</div>
         <div class="charname">${c.name}</div>
         <div class="charsub">${sub}</div>
-        ${bio?`<div class="charbio">${bio}</div>`:""}
+        ${bio?`<div class="charbio">${bio}</div>${long?`<div class="charmore">tap to read more</div>`:""}`:""}
       </div>`;
     }).join("");
     const recs=(m.recs||[]).slice(0,12).map(r=>`
@@ -104,6 +105,8 @@ document.addEventListener("click",e=>{
     if(r){addWant(slim(r));bumpAffinity(r.genres,1.5);markSeen(r.id);add.classList.add("done");toast("Added to Want");refreshCounts();}
     return;
   }
+  const cc=e.target.closest(".charcard");
+  if(cc&&!cc.classList.contains("sk")&&$("#detailModal").classList.contains("on")){cc.classList.toggle("expanded");return;}
   const rec=e.target.closest("[data-rec]");
   if(rec&&$("#detailModal").classList.contains("on")){
     const cur=_detailStack[_detailStack.length-1];
