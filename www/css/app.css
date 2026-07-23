@@ -208,13 +208,13 @@ nav.bottom{
 @keyframes shim{to{background-position:-200% 0}}
 
 /* ===== swipe-to-reveal rows (Want) ===== */
-.swrow{position:relative;border-radius:14px;overflow:hidden;background:var(--nope)}
+.swrow{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
 .swactions{position:absolute;inset:0;display:flex;justify-content:flex-end}
 .swact{width:88px;border:0;color:#fff;font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
 .swact .icw{width:19px;height:19px}
-.swact.watched{background:var(--watch);color:#1a1206}
+.swact.watched{background:var(--accent)}
 .swact.unadd{background:var(--nope)}
-.swfront{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-radius:14px;touch-action:pan-y;will-change:transform;cursor:pointer}
+.swfront{position:relative;z-index:1;background:var(--card);border:0;border-radius:0;touch-action:pan-y;will-change:transform;cursor:pointer}
 .swhint{margin-left:auto;color:var(--dim);opacity:.4;display:grid;place-items:center;flex:none;padding-right:2px}
 .swhint .icw{width:15px;height:15px}
 .rc-open{cursor:pointer}

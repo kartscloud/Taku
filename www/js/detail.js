@@ -61,7 +61,7 @@ function renderDetail(m,full){
       <div class="dsection"><h4>More like this</h4><div class="recscroll">${'<div class="reccard sk"></div>'.repeat(4)}</div></div>
     </div>`;
   }else{
-    const chars=(m.characters||[]).filter(c=>c.role!=="BACKGROUND").slice(0,10).map(c=>{
+    const chars=(m.characters||[]).filter(c=>c.role!=="BACKGROUND").filter(c=>c.img&&!/\/default\.\w+$/i.test(c.img)).slice(0,10).map(c=>{
       const mb=mbtiFor(c.name,c.desc);
       const sub=[c.role==="MAIN"?"Main":"Supporting",c.age&&("Age "+c.age)].filter(Boolean).join(" · ");
       const bio=(c.desc||"").slice(0,1400);
