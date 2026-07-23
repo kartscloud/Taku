@@ -74,9 +74,6 @@ function renderDetail(m,full){
     </div>`;
   }
 
-  const links=(m.links||[]).map(l=>`<a class="dlink" href="${l.url}" target="_blank" rel="noopener"><span class="icw">${icSvg("play",true)}</span>${l.site}</a>`).join("");
-  const yt=m.trailer?`<a class="dlink yt" href="https://www.youtube.com/watch?v=${m.trailer}" target="_blank" rel="noopener"><span class="icw">${icSvg("play")}</span>Trailer</a>`:"";
-
   $("#detailSheet").innerHTML=`
     <div class="dhead">${banner}<div class="dscrim"></div>${back}<button class="dnav dclose" id="dClose">${icSvg("x")}</button></div>
     <div class="dbody">
@@ -88,7 +85,6 @@ function renderDetail(m,full){
         <button class="dact want" data-d="want"><span class="icw">${icSvg("heart",true)}</span>Want</button>
         <button class="dact watch" data-d="watch"><span class="icw">${icSvg("star",true)}</span>Seen</button>
       </div>
-      ${(links||yt)?`<div class="dlinks">${yt}${links}</div>`:""}
       ${reel}
     </div>`;
 
