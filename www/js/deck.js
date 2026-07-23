@@ -1,9 +1,16 @@
-/* naku · discover deck: modes, swipe, details, rating */
+/* taku · discover deck: modes, swipe, details, rating */
 let deckMode="foryou";
-const queues={foryou:[],new:[],trending:[],gems:[]};
-const poolPage={foryou:0,new:0,trending:0,gems:0};
+const queues={foryou:[],new:[],trending:[]};
+const poolPage={foryou:0,new:0,trending:0};
 let deckLoading=false,pendingWatch=null;
 let lastUndo=null; // single-level rewind, Tinder-style
+
+/* genre filter changed → drop queued cards for all modes and rebuild */
+function applyGenreFilter(){
+  Object.keys(queues).forEach(k=>{queues[k]=[];poolPage[k]=0;});
+  lastUndo=null;updateUndoBtn();
+  renderDeck();
+}
 
 const scoreClass=s=>s>=75?"hi":s>=60?"mid":"lo";
 

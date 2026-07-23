@@ -1,11 +1,11 @@
-# naku — swipe your next anime
+# taku — swipe your next anime
 
 Tinder-style anime discovery. Swipe right = want to watch, left = nope, up = watched (then tier-rate it S–D). A client-side rec engine learns your taste from every action and biases the **For You** feed toward new & currently-airing shows. Neural-network profile page classifies you into an archetype (go deep on niche Slice of Life and you ascend to **TAKU**). Friends work peer-to-peer via shareable profile codes. All data stays in the browser (`localStorage`) — no accounts, no backend.
 
 ## Project layout
 
 ```
-naku/
+taku/
   www/              ← the entire app (this is what Capacitor wraps / what you deploy)
     index.html
     css/app.css
@@ -21,19 +21,19 @@ naku/
 ## Run it now (Windows, no install)
 
 ```powershell
-cd C:\Users\karti\projects\naku
+cd C:\Users\karti\projects\taku
 python -m http.server 5180 -d www
 # open http://localhost:5180
 ```
 
 ## Ship it as a PWA today (installable on iPhone/Android immediately)
 
-1. Create an empty GitHub repo named `naku` (no README/license — this repo has them), then push:
+1. Create an empty GitHub repo named `taku` (no README/license — this repo has them), then push:
    ```bash
-   git remote add origin https://github.com/<you>/naku.git
+   git remote add origin https://github.com/<you>/taku.git
    git push -u origin main
    ```
-2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The bundled workflow (`.github/workflows/deploy.yml`) publishes the `www/` folder as the site root on every push to `main` — so the app lives at `https://<you>.github.io/naku/` with the service worker scoped correctly (no `/www/` in the URL, no redirect hop). Watch it under the repo's **Actions** tab.
+2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The bundled workflow (`.github/workflows/deploy.yml`) publishes the `www/` folder as the site root on every push to `main` — so the app lives at `https://<you>.github.io/taku/` with the service worker scoped correctly (no `/www/` in the URL, no redirect hop). Watch it under the repo's **Actions** tab.
 3. **HTTPS is automatic** on Pages — required for the service worker + install prompt.
 4. iPhone: open the URL in Safari → Share → **Add to Home Screen**. Fullscreen, offline-shell, native-feeling. Fastest way onto your friend's phone **today**. (Alternatively point Netlify/Vercel at the `www/` folder.)
 
@@ -47,7 +47,7 @@ python -m http.server 5180 -d www
 Once on a Mac (Node + Xcode 15+ installed):
 
 ```bash
-cd naku
+cd taku
 npm install
 npx cap add ios        # generates ios/ native project wrapping www/
 npx cap sync ios
@@ -55,7 +55,7 @@ npx cap open ios       # opens Xcode
 ```
 
 Then in Xcode:
-1. Set your Team (needs an Apple Developer account, $99/yr) + bundle id `com.carter.naku`
+1. Set your Team (needs an Apple Developer account, $99/yr) + bundle id `com.carter.taku`
 2. Replace AppIcon with a 1024×1024 raster export of `www/icons/icon.svg` (App Store requires PNG, no alpha)
 3. Product → Archive → Distribute → App Store Connect
 4. In App Store Connect: screenshots (6.7" + 5.5"), description, **content rating** (mind that AniList data includes anime artwork; the app filters `isAdult`), privacy label = "Data Not Collected" (everything is on-device)

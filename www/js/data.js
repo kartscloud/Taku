@@ -1,4 +1,4 @@
-/* naku · static data: archetypes, tiers, avatars */
+/* taku · static data: archetypes, tiers, avatars */
 const ARCH={
   "Slice of Life":{base:"SLICE MONK",legend:"TAKU",color:"#a3e635",blurb:"You seek the quiet frames everyone else skips. Niche, patient, and completely unbothered by plot."},
   "Comedy":{base:"CLASS CLOWN",legend:"GAG GOBLIN",color:"#fbbf24",blurb:"Here for the bits. Your watch history is a laugh track with occasional feelings."},
@@ -49,7 +49,8 @@ const ICON_PATHS={
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11.2 12H12v4h.8"/>',
   share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>',
   download:'<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
-  upload:'<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>'
+  upload:'<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>',
+  filter:'<path d="M3 4h18l-7 8v6l-4 2v-8Z"/>'
 };
 function icSvg(n,fill){return '<svg class="ic" viewBox="0 0 24 24" fill="'+(fill?'currentColor':'none')+'" stroke="'+(fill?'none':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON_PATHS[n]+'</svg>';}
 

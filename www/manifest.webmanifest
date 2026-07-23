@@ -1,6 +1,6 @@
 {
-  "name": "naku — swipe your next anime",
-  "short_name": "naku",
+  "name": "taku — swipe your next anime",
+  "short_name": "taku",
   "description": "Swipe to find your next anime. Personalized discovery, tier ratings, and a neural rank.",
   "start_url": "./index.html",
   "scope": "./",

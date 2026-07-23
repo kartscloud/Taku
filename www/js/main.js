@@ -1,4 +1,4 @@
-/* naku · nav, onboarding, boot */
+/* taku · nav, onboarding, boot */
 let currentView="deck";
 function setView(v){
   currentView=v;
@@ -24,13 +24,22 @@ function initNav(){
   $("#bNope").onclick=()=>doAction("nope");
   $("#bWatch").onclick=()=>doAction("watch");
   $("#bUndo").onclick=()=>undoLast();
+
+  // genre filter
+  $("#filterBtn").onclick=()=>{
+    $("#filterGenres").innerHTML=OB_GENRES.map(g=>`<button class="ob-g${deckGenres.includes(g)?" sel":""}" data-fg="${g}">${g}</button>`).join("");
+    $("#genreModal").classList.add("on");
+  };
+  $("#filterGenres").onclick=e=>{const g=e.target.dataset.fg;if(!g)return;const i=deckGenres.indexOf(g);if(i>=0)deckGenres.splice(i,1);else deckGenres.push(g);e.target.classList.toggle("sel");buzz(6);};
+  $("#applyGenres").onclick=()=>{store.set("deckGenres",deckGenres);$("#genreModal").classList.remove("on");updateFilterBadge();applyGenreFilter();toast(deckGenres.length?"Filtered to "+deckGenres.length+" genre"+(deckGenres.length>1?"s":""):"Showing everything");};
+  $("#clearGenres").onclick=()=>{deckGenres.length=0;store.set("deckGenres",deckGenres);$("#genreModal").classList.remove("on");updateFilterBadge();applyGenreFilter();toast("Filter cleared");};
   $("#shareCard").onclick=()=>shareRankCard();
   $("#backupBtn").onclick=()=>exportData();
   $("#restoreBtn").onclick=()=>$("#restoreFile").click();
   $("#restoreFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f);e.target.value="";});
   document.querySelectorAll("#rateModal .tierbtn").forEach(b=>b.onclick=()=>commitRate(b.dataset.tier));
   $("#rateSkip").onclick=()=>commitRate(null);
-  ["rateModal","detailModal","editModal","friendModal"].forEach(id=>{
+  ["rateModal","detailModal","editModal","friendModal","genreModal"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
@@ -88,11 +97,13 @@ function hydrateIcons(){
   document.querySelectorAll("[data-ic]").forEach(el=>{el.innerHTML=icSvg(el.dataset.ic);});
 }
 
+function updateFilterBadge(){const b=$("#filterCount");if(!b)return;b.textContent=deckGenres.length||"";$("#filterBtn").classList.toggle("active",deckGenres.length>0);}
+
 /* boot */
 sortWatched();
 hydrateIcons();
 initNav();initSearch();initProfile();initOnboard();initCoach();
-refreshCounts();
+refreshCounts();updateFilterBadge();
 $("#miniAv").textContent=profile.avatar||"🍥";
 if(store.get("onboarded",false))renderDeck();
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{}); // ask the browser not to evict our data

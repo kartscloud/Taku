@@ -1,4 +1,4 @@
-/* naku · share-card export + data backup/restore */
+/* taku · share-card export + data backup/restore */
 
 /* ---------- rank share card (1080×1920 story PNG) ---------- */
 function _rr(ctx,x,y,w,h,r){ // roundRect fallback
@@ -42,8 +42,9 @@ async function buildShareCard(prof){
   wm.addColorStop(0,"#8b5cf6");wm.addColorStop(1,"#ec4899");
   ctx.textAlign="center";ctx.fillStyle=wm;
   ctx.font="800 88px -apple-system,'Segoe UI',Roboto,sans-serif";
-  ctx.fillText("naku",W/2-10,150);
-  ctx.fillStyle="#ec4899";ctx.beginPath();ctx.arc(W/2+112,142,11,0,7);ctx.fill();
+  const wmCx=W/2-14, wmW=ctx.measureText("taku").width;
+  ctx.fillText("taku",wmCx,150);
+  ctx.fillStyle="#ec4899";ctx.beginPath();ctx.arc(wmCx+wmW/2+20,142,11,0,7);ctx.fill(); // dot anchored to text edge
 
   // avatar in ring
   ctx.strokeStyle=color;ctx.lineWidth=10;ctx.shadowColor=color;ctx.shadowBlur=44;
@@ -131,11 +132,11 @@ async function shareRankCard(){
     const canvas=await buildShareCard(prof);
     const blob=await new Promise(r=>canvas.toBlob(r,"image/png"));
     if(!blob)throw new Error("render failed");
-    const file=new File([blob],"naku-rank.png",{type:"image/png"});
+    const file=new File([blob],"taku-rank.png",{type:"image/png"});
     if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-      await navigator.share({files:[file],title:"my naku rank"});
+      await navigator.share({files:[file],title:"my taku rank"});
     }else{
-      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="naku-rank.png";
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="taku-rank.png";
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(a.href),5000);
       toast("Card saved as an image");
@@ -150,13 +151,13 @@ async function shareRankCard(){
 /* ---------- data backup / restore (iOS eviction shield) ---------- */
 function exportData(){
   try{
-    const data={_naku:1,exported:new Date().toISOString()};
+    const data={_taku:1,exported:new Date().toISOString()};
     Object.keys(localStorage).forEach(k=>{
-      if(k.startsWith("naku_")&&!k.startsWith("naku_cache"))data[k]=localStorage.getItem(k);
+      if(k.startsWith("taku_")&&!k.startsWith("taku_cache"))data[k]=localStorage.getItem(k);
     });
     const blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-    a.download="naku-backup-"+new Date().toISOString().slice(0,10)+".json";
+    a.download="taku-backup-"+new Date().toISOString().slice(0,10)+".json";
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     toast("Backup saved — keep it somewhere safe");
@@ -167,13 +168,13 @@ function importData(file){
   rd.onload=()=>{
     try{
       const data=JSON.parse(rd.result);
-      if(!data||data._naku!==1)throw new Error("not a naku backup");
+      if(!data||data._taku!==1)throw new Error("not a taku backup");
       let n=0;
-      Object.keys(data).forEach(k=>{if(k.startsWith("naku_")&&!k.startsWith("naku_cache")){localStorage.setItem(k,data[k]);n++;}});
+      Object.keys(data).forEach(k=>{if(k.startsWith("taku_")&&!k.startsWith("taku_cache")){localStorage.setItem(k,data[k]);n++;}});
       if(!n)throw new Error("empty");
       toast("Restored — reloading");
       setTimeout(()=>location.reload(),700);
-    }catch(e){toast("That file isn't a naku backup");}
+    }catch(e){toast("That file isn't a taku backup");}
   };
   rd.onerror=()=>toast("Couldn't read that file");
   rd.readAsText(file);

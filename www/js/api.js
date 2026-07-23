@@ -1,6 +1,7 @@
-/* naku · AniList client + cached pools (trending / season / popular / gems / search) */
+/* taku · AniList client + cached pools (trending / season / popular / gems / search) */
 const API="https://graphql.anilist.co";
 const MEDIA_FIELDS=`id title{english romaji} averageScore popularity genres episodes duration seasonYear season status format
+startDate{year month day}
 coverImage{large extraLarge} bannerImage description(asHtml:false)
 studios(isMain:true){nodes{name}} trailer{id site} externalLinks{site url type}`;
 
@@ -23,6 +24,7 @@ function trimMedia(m){
   return{
     id:m.id,title:m.title,averageScore:m.averageScore,popularity:m.popularity,genres:m.genres,
     episodes:m.episodes,duration:m.duration,seasonYear:m.seasonYear,season:m.season,status:m.status,format:m.format,
+    aired:m.startDate?((m.startDate.year||0)*10000+(m.startDate.month||0)*100+(m.startDate.day||0)):0,
     coverImage:{large:m.coverImage&&m.coverImage.large,extraLarge:m.coverImage&&m.coverImage.extraLarge},
     bannerImage:m.bannerImage,
     description:(m.description||"").replace(/<[^>]*>/g,"").slice(0,420),
@@ -34,9 +36,12 @@ function trimMedia(m){
 
 const CACHE_TTL=30*60*1000;
 async function fetchPool(kind,page){
-  const key="cache2_"+kind+"_"+(page||1); // cache2: post-ecchi-filter pools
+  const gsel=(typeof deckGenres!=="undefined"&&deckGenres.length)?deckGenres:[];
+  const gkey=gsel.length?"_g"+gsel.slice().sort().join("-"):"";
+  const key="cache2_"+kind+"_"+(page||1)+gkey; // cache2: post-ecchi-filter pools
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
+  const gFilter=gsel.length?`,genre_in:[${gsel.map(g=>`"${g}"`).join(",")}]`:"";
   const {s,y}=curSeason();
   let args;
   switch(kind){
@@ -48,7 +53,7 @@ async function fetchPool(kind,page){
     default: throw new Error("bad pool "+kind);
   }
   // genre_not_in Ecchi: AniList's own docs warn ecchi is NOT flagged isAdult and has caused App Store problems
-  const q=`query($p:Int){Page(page:$p,perPage:25){media(${args},type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED,countryOfOrigin:JP){${MEDIA_FIELDS}}}}`;
+  const q=`query($p:Int){Page(page:$p,perPage:25){media(${args},type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"]${gFilter},status_not:NOT_YET_RELEASED,countryOfOrigin:JP){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{p:page||1});
   const list=(data.Page.media||[]).map(trimMedia);
   store.set(key,{t:Date.now(),d:list});

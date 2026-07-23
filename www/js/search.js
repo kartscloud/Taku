@@ -1,4 +1,4 @@
-/* naku · search view */
+/* taku · search view */
 let _searchT=null,_lastQ="",_searchResults=[];
 function initSearch(){
   const inp=$("#searchInput");

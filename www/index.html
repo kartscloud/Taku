@@ -6,17 +6,17 @@
 <meta name="theme-color" content="#0d0b14" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="description" content="naku — swipe to find your next anime. Personalized discovery, tier ratings, and a neural rank." />
-<title>naku — swipe your next anime</title>
+<meta name="description" content="taku — swipe to find your next anime. Personalized discovery, tier ratings, and a neural rank." />
+<title>taku — swipe your next anime</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=11" />
+<link rel="stylesheet" href="css/app.css?v=12" />
 </head>
 <body>
 
 <header>
-  <div class="logo">naku<i class="dot"></i></div>
+  <div class="logo">taku<i class="dot"></i></div>
   <button class="miniav" id="miniAv" title="Profile">🍥</button>
 </header>
 
@@ -27,7 +27,7 @@
       <button class="pill active" data-mode="foryou"><span class="icw" data-ic="sparkles"></span>For You</button>
       <button class="pill" data-mode="new"><span class="icw" data-ic="leaf"></span>New</button>
       <button class="pill" data-mode="trending"><span class="icw" data-ic="flame"></span>Trending</button>
-      <button class="pill" data-mode="gems"><span class="icw" data-ic="gem"></span>Gems</button>
+      <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     </div>
     <div id="deck"></div>
     <div class="actions">
@@ -148,6 +148,17 @@
   <div class="sheet" id="detailSheet"></div>
 </div>
 
+<!-- GENRE FILTER SHEET -->
+<div class="modal" id="genreModal">
+  <div class="sheet">
+    <h3>Filter by genre</h3>
+    <p>Pick genres to narrow your feed. Leave empty for everything.</p>
+    <div class="ob-genres" id="filterGenres"></div>
+    <button class="savebtn" id="applyGenres">Apply</button>
+    <button class="skip" id="clearGenres">Clear filter</button>
+  </div>
+</div>
+
 <!-- EDIT PROFILE SHEET -->
 <div class="modal" id="editModal">
   <div class="sheet">
@@ -166,7 +177,7 @@
 <div class="modal" id="friendModal">
   <div class="sheet">
     <h3>Add a friend</h3>
-    <p>Paste a naku code a friend shared with you. Their rank lands on your leaderboard.</p>
+    <p>Paste a taku code a friend shared with you. Their rank lands on your leaderboard.</p>
     <textarea class="inp" id="inCode" placeholder="Paste code…"></textarea>
     <button class="savebtn" id="doAddFriend">Add to squad</button>
     <button class="skip" id="friendCancel">Cancel</button>
@@ -176,7 +187,7 @@
 <!-- ONBOARDING -->
 <div class="onboard" id="onboard" hidden>
   <div class="ob-inner">
-    <div class="ob-logo">naku</div>
+    <div class="ob-logo">taku</div>
     <div class="ob-tag">Swipe. Rate. Ascend. Your next anime finds you.</div>
     <div class="ob-h">Pick a face + name</div>
     <div class="avpick" id="obAvPick"></div>
@@ -190,16 +201,16 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=11"></script>
-<script src="js/state.js?v=11"></script>
-<script src="js/api.js?v=11"></script>
-<script src="js/rec.js?v=11"></script>
-<script src="js/deck.js?v=11"></script>
-<script src="js/lists.js?v=11"></script>
-<script src="js/search.js?v=11"></script>
-<script src="js/profile.js?v=11"></script>
-<script src="js/detail.js?v=11"></script>
-<script src="js/share.js?v=11"></script>
-<script src="js/main.js?v=11"></script>
+<script src="js/data.js?v=12"></script>
+<script src="js/state.js?v=12"></script>
+<script src="js/api.js?v=12"></script>
+<script src="js/rec.js?v=12"></script>
+<script src="js/deck.js?v=12"></script>
+<script src="js/lists.js?v=12"></script>
+<script src="js/search.js?v=12"></script>
+<script src="js/profile.js?v=12"></script>
+<script src="js/detail.js?v=12"></script>
+<script src="js/share.js?v=12"></script>
+<script src="js/main.js?v=12"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* naku · full anime info page — synopsis, characters (+MBTI), tags, "more like this" */
+/* taku · full anime info page — synopsis, characters (+MBTI), tags, "more like this" */
 let _detailStack=[];
 
 function detailAction(m,action){

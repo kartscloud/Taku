@@ -1,4 +1,4 @@
-/* naku · profile: neural rank, identity, squad */
+/* taku · profile: neural rank, identity, squad */
 function computeProfile(){
   const list=watched,count=list.length,gcount={};
   let minutes=0;
@@ -128,7 +128,7 @@ function initProfile(){
   $("#shareCode").onclick=async()=>{
     const code=myCode(window._lastProf||computeProfile());
     try{await navigator.clipboard.writeText(code);toast("Your code is copied — send it to a friend");}
-    catch(e){window.prompt("Copy your naku code and send it to a friend:",code);}
+    catch(e){window.prompt("Copy your taku code and send it to a friend:",code);}
   };
   document.addEventListener("click",e=>{const t=e.target.closest?e.target.closest("[data-friend-remove]"):null;if(t){friends=friends.filter(x=>x.id!==t.dataset.friendRemove);store.set("friends",friends);renderFriends(window._lastProf||computeProfile());}});
 }

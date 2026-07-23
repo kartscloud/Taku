@@ -1,11 +1,22 @@
-/* naku · persistent state (localStorage, same naku_* keys as v1 so data survives) */
+/* taku · persistent state (localStorage, same taku_* keys as v1 so data survives) */
 const store={
-  get(k,d){try{const v=JSON.parse(localStorage.getItem("naku_"+k));return v===null||v===undefined?d:v;}catch(e){return d;}},
-  set(k,v){try{localStorage.setItem("naku_"+k,JSON.stringify(v));}catch(e){/* quota — drop caches */ purgeCaches();}}
+  get(k,d){try{const v=JSON.parse(localStorage.getItem("taku_"+k));return v===null||v===undefined?d:v;}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem("taku_"+k,JSON.stringify(v));}catch(e){/* quota — drop caches */ purgeCaches();}}
 };
 function purgeCaches(){
-  for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith("naku_cache_"))localStorage.removeItem(k);}
+  for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith("taku_cache"))localStorage.removeItem(k);}
 }
+
+/* one-time migration: the app was renamed naku → taku; carry old naku_* data over */
+(function migrateNakuToTaku(){
+  try{
+    if(localStorage.getItem("taku_migrated"))return;
+    const old=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("naku_")===0)old.push(k);}
+    old.forEach(k=>{const nk="taku_"+k.slice(5);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));});
+    localStorage.setItem("taku_migrated","1");
+  }catch(e){}
+})();
 
 let want=store.get("want",[]);
 let watched=store.get("watched",[]);          // slim records + tier
@@ -13,6 +24,7 @@ let seen=new Set(store.get("seen",[]));        // every id acted on
 let profile=store.get("profile",{name:"",handle:"",bio:"",avatar:"🍥",created:0});
 let friends=store.get("friends",null);
 let affinity=store.get("affinity",{});         // genre -> learned weight
+let deckGenres=store.get("deckGenres",[]);      // Discover genre filter (empty = all)
 
 if(friends===null){friends=[
   {id:"seed_rei",name:"Rei",handle:"reibot",avatar:"👁️",title:"MINDFLAYER",tier:"ELITE",power:8200,genre:"Psychological",color:"#a855f7"},

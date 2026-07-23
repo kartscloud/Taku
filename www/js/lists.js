@@ -1,4 +1,4 @@
-/* naku · Want (swipe-to-reveal) + Tiers views */
+/* taku · Want (swipe-to-reveal) + Tiers views */
 function refreshCounts(){
   const nw=$("#nWant"),nt=$("#nWatched");
   nw.textContent=want.length;nw.style.display=want.length?"grid":"none";
