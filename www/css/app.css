@@ -161,6 +161,11 @@ nav.bottom{
 .dact{flex:1;border:0;border-radius:13px;padding:13px;font-size:13.5px;font-weight:800;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px}
 .dact .icw{width:15px;height:15px}
 .dact.want{background:var(--want)} .dact.nope{background:#3d2430;color:var(--nope)} .dact.watch{background:var(--watch);color:#1a1206}
+.dact.rerank{background:var(--accent)} .dact.remove{background:#2a2440;color:var(--dim)}
+.dstate{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:var(--dim);margin-bottom:11px}
+.dstate .icw{width:15px;height:15px}
+.dstate.want .icw{color:var(--want)}
+.dstier{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-weight:900;font-size:13px;color:#0d0b14;flex:none}
 .dlinks{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .dlink{background:var(--bg);border:1px solid var(--line);color:var(--txt);font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:11px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .dlink .icw{width:13px;height:13px}

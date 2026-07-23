@@ -75,23 +75,52 @@ function renderDetail(m,full){
     </div>`;
   }
 
+  // contextual actions: what you can do depends on where this anime already sits
+  const ranked=watched.find(x=>x.id===m.id);
+  const inWant=want.some(x=>x.id===m.id);
+  let actionsHtml;
+  if(ranked){
+    actionsHtml=`
+      <div class="dstate"><span class="dstier" style="background:${TIER_COLOR[ranked.tier]||"var(--line)"}">${ranked.tier||"–"}</span>Ranked in your tiers</div>
+      <div class="dactions">
+        <button class="dact rerank" data-da="rerank"><span class="icw">${icSvg("rotate")}</span>Re-rank</button>
+        <button class="dact remove" data-da="rmwatched"><span class="icw">${icSvg("x")}</span>Remove</button>
+      </div>`;
+  }else if(inWant){
+    actionsHtml=`
+      <div class="dstate want"><span class="icw">${icSvg("heart",true)}</span>Saved in your Want list</div>
+      <div class="dactions">
+        <button class="dact watch" data-da="watch"><span class="icw">${icSvg("star",true)}</span>Seen it — rank</button>
+        <button class="dact remove" data-da="rmwant"><span class="icw">${icSvg("x")}</span>Remove</button>
+      </div>`;
+  }else{
+    actionsHtml=`
+      <div class="dactions">
+        <button class="dact nope" data-da="nope"><span class="icw">${icSvg("x")}</span>Pass</button>
+        <button class="dact want" data-da="want"><span class="icw">${icSvg("heart",true)}</span>Want</button>
+        <button class="dact watch" data-da="watch"><span class="icw">${icSvg("star",true)}</span>Seen</button>
+      </div>`;
+  }
+
   $("#detailSheet").innerHTML=`
     <div class="dhead">${banner}<div class="dscrim"></div>${back}<button class="dnav dclose" id="dClose">${icSvg("x")}</button></div>
     <div class="dbody">
       <div class="dtitle">${mTitle(m)} ${scoreCol?`<span class="dscore" style="color:${scoreCol}">${icSvg("star",true)} ${(m.averageScore/10).toFixed(1)}</span>`:""}</div>
       <div class="dmeta">${meta}</div>
       ${m.description?`<div class="ddesc">${m.description}</div>`:""}
-      <div class="dactions">
-        <button class="dact nope" data-d="nope"><span class="icw">${icSvg("x")}</span>Pass</button>
-        <button class="dact want" data-d="want"><span class="icw">${icSvg("heart",true)}</span>Want</button>
-        <button class="dact watch" data-d="watch"><span class="icw">${icSvg("star",true)}</span>Seen</button>
-      </div>
+      ${actionsHtml}
       ${reel}
     </div>`;
 
   $("#dClose").onclick=closeDetail;
   const b=$("#dBack");if(b)b.onclick=()=>{_detailStack.pop();const prev=_detailStack[_detailStack.length-1];openDetails(prev,false);};
-  $("#detailSheet").querySelectorAll(".dact").forEach(btn=>btn.onclick=()=>{closeDetail();detailAction(m,btn.dataset.d);});
+  $("#detailSheet").querySelectorAll(".dact").forEach(btn=>btn.onclick=()=>{
+    const a=btn.dataset.da;
+    if(a==="nope"||a==="want"||a==="watch"){closeDetail();detailAction(m,a);return;}
+    if(a==="rerank"){const w=watched.find(x=>x.id===m.id);if(w){closeDetail();pendingWatch={rec:w,genres:w.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");}return;}
+    if(a==="rmwatched"){removeWatched(m.id);refreshCounts();closeDetail();toast("Removed from your tiers");return;}
+    if(a==="rmwant"){removeWant(m.id);refreshCounts();closeDetail();toast("Removed from Want");return;}
+  });
 }
 
 /* recommendation navigation + quick-add (delegated) */
