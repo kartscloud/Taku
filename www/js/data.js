@@ -52,3 +52,37 @@ const ICON_PATHS={
   upload:'<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>'
 };
 function icSvg(n,fill){return '<svg class="ic" viewBox="0 0 24 24" fill="'+(fill?'currentColor':'none')+'" stroke="'+(fill?'none':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON_PATHS[n]+'</svg>';}
+
+/* MBTI — AniList has no MBTI field, so this is a curated community-consensus starter set
+   (keyed by lowercase full name), merged at runtime with any type tagged in a character's bio.
+   Expand freely; unknown characters simply show no type rather than a fabricated one. */
+const MBTI_CONSENSUS={
+  "light yagami":"INTJ","l lawliet":"INTP","lawliet l":"INTP","lelouch lamperouge":"ENTJ","lelouch vi britannia":"ENTJ",
+  "edward elric":"ENTP","alphonse elric":"INFP","roy mustang":"ENTJ",
+  "mikasa ackerman":"ISTP","levi ackerman":"ISTP","eren yeager":"INFP","armin arlert":"INFP","erwin smith":"ENTJ","historia reiss":"ISFJ",
+  "naruto uzumaki":"ENFP","sasuke uchiha":"ISTP","kakashi hatake":"INTP","itachi uchiha":"INFJ","shikamaru nara":"INTP",
+  "monkey d luffy":"ESFP","roronoa zoro":"ISTP","nico robin":"INTJ","sanji":"ESFP",
+  "spike spiegel":"ISTP","gon freecss":"ESFP","killua zoldyck":"INTP","kurapika":"INTJ","hisoka morow":"ENTP","chrollo lucilfer":"INTJ",
+  "guts":"ISTP","griffith":"ENTJ",
+  "shinji ikari":"INFP","asuka langley soryu":"ESTJ","rei ayanami":"ISTP",
+  "okabe rintarou":"ENTP","rintarou okabe":"ENTP","kurisu makise":"INTJ",
+  "lucy heartfilia":"ENFP","natsu dragneel":"ESFP",
+  "yuuji itadori":"ESFP","megumi fushiguro":"INTJ","satoru gojo":"ENTP","nobara kugisaki":"ESTP","suguru geto":"ENTJ",
+  "tanjirou kamado":"ISFJ","kamado tanjirou":"ISFJ","nezuko kamado":"ISFP","zenitsu agatsuma":"ISFP","inosuke hashibira":"ESTP","giyuu tomioka":"ISTP",
+  "senku ishigami":"INTJ","ishigami senku":"INTJ",
+  "ken kaneki":"INFP","kaneki ken":"INFP",
+  "thorfinn":"ISTP","askeladd":"ENTP",
+  "frieren":"INTP","fern":"ISTJ","stark":"ISFP","himmel":"ENFJ",
+  "violet evergarden":"ISTJ","ai hoshino":"ESFP","aqua hoshino":"INTJ",
+  "anya forger":"ESFP","loid forger":"ISTJ","yor forger":"ISFP",
+  "denji":"ESFP","makima":"ENTJ","power":"ESTP","aki hayakawa":"ISTJ",
+  "saitama":"ISTP","genos":"ISTJ","tatsumaki":"ESTJ",
+  "ai":"ESFP"
+};
+const MBTI_TYPES=["INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP","ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP"];
+function mbtiFor(name,desc){
+  const key=(name||"").toLowerCase().trim();
+  if(MBTI_CONSENSUS[key])return MBTI_CONSENSUS[key];
+  const m=(desc||"").match(new RegExp("\\b("+MBTI_TYPES.join("|")+")\\b","i")); // some bios are community-tagged
+  return m?m[1].toUpperCase():null;
+}

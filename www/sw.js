@@ -1,11 +1,11 @@
 /* naku service worker · versioned shell + runtime image cache
    RULE: bump VER and the ?v= asset query (also in index.html) together on every shell change. */
-const VER="naku-v5";
-const AV="5";
+const VER="naku-v6";
+const AV="6";
 const SHELL=["./","./index.html","./manifest.webmanifest","./icons/icon.svg","./icons/maskable.svg",
 "./css/app.css?v="+AV,
 "./js/data.js?v="+AV,"./js/state.js?v="+AV,"./js/api.js?v="+AV,"./js/rec.js?v="+AV,
-"./js/deck.js?v="+AV,"./js/lists.js?v="+AV,"./js/search.js?v="+AV,"./js/profile.js?v="+AV,"./js/share.js?v="+AV,"./js/main.js?v="+AV];
+"./js/deck.js?v="+AV,"./js/lists.js?v="+AV,"./js/search.js?v="+AV,"./js/profile.js?v="+AV,"./js/detail.js?v="+AV,"./js/share.js?v="+AV,"./js/main.js?v="+AV];
 
 self.addEventListener("install",e=>{
   e.waitUntil(caches.open(VER).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));

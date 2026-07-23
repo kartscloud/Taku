@@ -148,38 +148,6 @@ function attachDrag(el,m){
   el.addEventListener("pointercancel",()=>{drag=false;el.style.transition="transform .25s ease";el.style.transform="";});
 }
 
-/* details sheet */
-function openDetails(m){
-  const links=(m.links||[]).map(l=>`<a class="dlink" href="${l.url}" target="_blank" rel="noopener"><span class="icw">${icSvg("play",true)}</span>${l.site}</a>`).join("");
-  const yt=m.trailer?`<a class="dlink yt" href="https://www.youtube.com/watch?v=${m.trailer}" target="_blank" rel="noopener"><span class="icw">${icSvg("play")}</span>Trailer</a>`:"";
-  const meta=[m.format,m.season?`${m.season} ${m.seasonYear||""}`:m.seasonYear,m.episodes?m.episodes+" eps":null,m.studio,m.status==="RELEASING"?"AIRING":null]
-    .filter(Boolean).map(x=>`<span class="chip">${x}</span>`).join("")+(m.genres||[]).map(g=>`<span class="chip">${g}</span>`).join("");
-  $("#detailSheet").innerHTML=`
-    ${m.bannerImage?`<img class="dbanner" src="${m.bannerImage}" alt="">`:""}
-    <div class="dtitle">${mTitle(m)} ${m.averageScore?`<span style="font-size:14px;color:${m.averageScore>=75?"#22c55e":"#f59e0b"}">★ ${(m.averageScore/10).toFixed(1)}</span>`:""}</div>
-    <div class="dmeta">${meta}</div>
-    <div class="ddesc">${m.description||"No synopsis."}</div>
-    <div class="dlinks">${yt}${links}</div>
-    <div class="dactions">
-      <button class="dact nope" data-d="nope"><span class="icw">${icSvg("x")}</span>Pass</button>
-      <button class="dact want" data-d="want"><span class="icw">${icSvg("heart",true)}</span>Want</button>
-      <button class="dact watch" data-d="watch"><span class="icw">${icSvg("star",true)}</span>Seen</button>
-    </div>`;
-  $("#detailModal").classList.add("on");
-  $("#detailSheet").querySelectorAll(".dact").forEach(b=>b.onclick=()=>{
-    $("#detailModal").classList.remove("on");
-    const inDeck=queues[deckMode].some(x=>x.id===m.id);
-    if(inDeck){const top=topCard();if(top&&+top.dataset.id===m.id){doAction(b.dataset.d);return;}decide(m.id,b.dataset.d);renderDeck();}
-    else{ // from search
-      markSeen(m.id);
-      if(b.dataset.d==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);toast("Added to Want");}
-      if(b.dataset.d==="nope"){bumpAffinity(m.genres,-1);}
-      if(b.dataset.d==="watch")openRate(m);
-      refreshCounts();
-    }
-  });
-}
-
 /* rating */
 function openRate(m){pendingWatch={rec:slim(m),genres:m.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");}
 function commitRate(tier){

@@ -55,6 +55,31 @@ async function fetchPool(kind,page){
   return list;
 }
 
+/* full detail (characters + recs + tags) — session-cached in memory, not localStorage (too big) */
+const _detailCache=new Map();
+async function fetchDetail(id){
+  if(_detailCache.has(id))return _detailCache.get(id);
+  const q=`query($id:Int){Media(id:$id){${MEDIA_FIELDS}
+    tags{name rank isGeneralSpoiler isAdult}
+    characters(sort:[ROLE,RELEVANCE],perPage:10){edges{role node{id name{full} image{medium} gender age description(asHtml:false)}}}
+    recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id title{english romaji} coverImage{large} averageScore seasonYear format genres}}}
+  }}`;
+  const data=await gql(q,{id});
+  const m=data.Media;
+  const detail={
+    ...trimMedia(m),
+    tags:(m.tags||[]).filter(t=>!t.isAdult&&!t.isGeneralSpoiler&&t.rank>=60).slice(0,8).map(t=>t.name),
+    characters:(m.characters&&m.characters.edges||[]).map(e=>({
+      id:e.node.id,name:e.node.name.full,role:e.role,img:e.node.image&&e.node.image.medium,
+      gender:e.node.gender,age:e.node.age,
+      desc:(e.node.description||"").replace(/<[^>]*>/g,"").replace(/\[([^\]]+)\]\([^)]*\)/g,"$1").replace(/[_~]/g,"").trim()
+    })),
+    recs:(m.recommendations&&m.recommendations.nodes||[]).map(n=>n.mediaRecommendation).filter(Boolean).map(trimMedia)
+  };
+  _detailCache.set(id,detail);
+  return detail;
+}
+
 async function searchAnime(qs){
   const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{q:qs});
