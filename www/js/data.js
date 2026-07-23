@@ -25,7 +25,7 @@ const LEGEND_TIERS=["VETERAN","ELITE","ASCENDED"];
 const TIER_ORDER={S:0,A:1,B:2,C:3,D:4};
 const TIER_COLOR={S:"var(--s)",A:"var(--a)",B:"var(--b)",C:"var(--c)",D:"var(--d)"};
 const AVATARS=["🍥","🦊","👺","🌸","🗡️","👁️","🐉","🌙","⚡","🍜","🎐","🥷","🔮","🌊","🎴","🩸","😼","🧋"];
-const OB_GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Psychological","Horror","Thriller","Mystery","Supernatural","Mecha","Sports","Music"];
+const OB_GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Psychological","Horror","Thriller","Mystery","Supernatural","Mecha","Sports"];
 
 /* icon system — single source of truth, 24px grid, 2px stroke, round caps (HIG-consistent) */
 const ICON_PATHS={

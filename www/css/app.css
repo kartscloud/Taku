@@ -49,6 +49,9 @@ nav.bottom{
 .pill{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.15s}
 .pill .icw{width:14px;height:14px}
 .pill.active{background:linear-gradient(90deg,var(--accent),#a855f7);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.35)}
+/* genre filter grid — even 3-col layout */
+.genregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:2px 0 20px}
+.genregrid .ob-g{width:100%;text-align:center;padding:11px 6px;font-size:12.5px;border-radius:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .filterpill{margin-left:auto}
 .filterpill.active{background:transparent;border-color:var(--accent);color:var(--accent);box-shadow:none}
 .fcount{background:var(--accent);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:none;place-items:center;padding:0 4px}
