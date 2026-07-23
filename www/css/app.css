@@ -178,6 +178,7 @@ nav.bottom{
 .mbti-note{opacity:.6}
 /* characters */
 .charscroll{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;scroll-snap-type:x proximity}
+@media(pointer:fine){.charscroll,.recscroll{cursor:grab}.charscroll.dragging,.recscroll.dragging{cursor:grabbing;scroll-snap-type:none}.charscroll.dragging *,.recscroll.dragging *{pointer-events:none}}
 .charscroll::-webkit-scrollbar{display:none}
 .charcard{flex:none;width:150px;scroll-snap-align:start;cursor:pointer;transition:width .22s ease}
 .charcard.expanded{width:250px}

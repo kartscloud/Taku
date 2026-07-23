@@ -13,6 +13,23 @@ function detailAction(m,action){
 
 function closeDetail(){$("#detailModal").classList.remove("on");_detailStack=[];}
 
+/* mouse drag-to-scroll for horizontal rails (touch/pen keep native scroll) */
+function enableDragScroll(el){
+  if(!el)return;
+  let down=false,sx=0,sl=0,moved=false,pid=null;
+  el.addEventListener("pointerdown",e=>{
+    if(e.pointerType!=="mouse")return;
+    down=true;sx=e.clientX;sl=el.scrollLeft;moved=false;pid=e.pointerId;
+    el.setPointerCapture(pid);el.classList.add("dragging");
+  });
+  el.addEventListener("pointermove",e=>{
+    if(!down)return;const dx=e.clientX-sx;if(Math.abs(dx)>4)moved=true;el.scrollLeft=sl-dx;
+  });
+  const end=()=>{if(!down)return;down=false;el.classList.remove("dragging");if(pid!=null){try{el.releasePointerCapture(pid);}catch(_){}}if(moved){el._sc=true;setTimeout(()=>{el._sc=false;},60);}};
+  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
+  el.addEventListener("click",e=>{if(el._sc){e.stopPropagation();e.preventDefault();}},true); // swallow the click that ends a drag
+}
+
 function openDetails(seed,push){
   if(push!==false)_detailStack.push(seed);
   renderDetail(seed,!!seed.characters); // full immediately if seed already carries detail (back-nav), else skeleton
@@ -113,6 +130,8 @@ function renderDetail(m,full){
     </div>`;
 
   $("#dClose").onclick=closeDetail;
+  enableDragScroll($("#detailSheet").querySelector(".charscroll"));
+  enableDragScroll($("#detailSheet").querySelector(".recscroll"));
   const b=$("#dBack");if(b)b.onclick=()=>{_detailStack.pop();const prev=_detailStack[_detailStack.length-1];openDetails(prev,false);};
   $("#detailSheet").querySelectorAll(".dact").forEach(btn=>btn.onclick=()=>{
     const a=btn.dataset.da;

@@ -1,7 +1,7 @@
 /* naku service worker · versioned shell + runtime image cache
    RULE: bump VER and the ?v= asset query (also in index.html) together on every shell change. */
-const VER="naku-v9";
-const AV="9";
+const VER="naku-v10";
+const AV="10";
 const SHELL=["./","./index.html","./manifest.webmanifest","./icons/icon.svg","./icons/maskable.svg",
 "./css/app.css?v="+AV,
 "./js/data.js?v="+AV,"./js/state.js?v="+AV,"./js/api.js?v="+AV,"./js/rec.js?v="+AV,
