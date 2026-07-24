@@ -91,15 +91,18 @@ function _browseItem(id){
   return null;
 }
 
-/* weekly airing schedule (animeschedule-style) */
-function schrow(e){
+/* weekly airing schedule (animeschedule-style poster grid) */
+function schcard(e){
   const m=e.m,img=(m.coverImage&&m.coverImage.large)||"";
   const flag=m.country&&m.country!=="JP"?`<span class="schflag">${m.country}</span>`:"";
-  return `<div class="schrow" data-bopen="${m.id}">
-    <div class="schtime">${_timeLabel(e.at)}</div>
-    <div class="schposter" style="background-image:url('${img}')"></div>
-    <div class="schmeta"><h4>${mTitle(m)}</h4><div class="schsub">Ep ${e.ep}${m.format?" · "+m.format:""}${m.averageScore?" · "+(m.averageScore/10).toFixed(1):""}</div></div>
-    ${flag}
+  const score=m.averageScore?`<span class="schscore">${(m.averageScore/10).toFixed(1)}</span>`:"";
+  return `<div class="schcard" data-bopen="${m.id}">
+    <div class="schart" style="background-image:url('${img}')">
+      <span class="schtime">${_timeLabel(e.at)}</span>
+      ${flag}${score}
+      <span class="schep">EP ${e.ep}</span>
+    </div>
+    <div class="schname">${mTitle(m)}</div>
   </div>`;
 }
 function paintSchedule(){
@@ -109,7 +112,7 @@ function paintSchedule(){
   if(!entries.length){host.innerHTML=`<div class="emptylist">No airing anime match this language this week.</div>`;return;}
   const order=[],map={};
   entries.forEach(e=>{const k=_dayKey(e.at);if(!map[k]){map[k]={at:e.at,items:[]};order.push(k);}map[k].items.push(e);});
-  host.innerHTML=order.map(k=>`<div class="schday"><div class="schdayhead">${_dayLabel(map[k].at)}<span class="schcount">${map[k].items.length}</span></div>${map[k].items.map(schrow).join("")}</div>`).join("");
+  host.innerHTML=order.map(k=>`<div class="schday"><div class="schdayhead">${_dayLabel(map[k].at)}<span class="schcount">${map[k].items.length}</span></div><div class="schgrid">${map[k].items.map(schcard).join("")}</div></div>`).join("");
 }
 async function renderSchedule(){
   paintSchedule();

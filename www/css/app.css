@@ -130,14 +130,16 @@ nav.bottom{
 .schday{margin:18px 0 4px}
 .schdayhead{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;letter-spacing:-.2px;margin:0 2px 8px;padding-bottom:9px;border-bottom:1px solid var(--line)}
 .schcount{font:700 10px ui-monospace,monospace;color:var(--dim);background:var(--bg2);border:1px solid var(--line);padding:2px 7px;border-radius:999px}
-.schrow{display:flex;align-items:center;gap:12px;padding:8px 4px;cursor:pointer;border-radius:12px}
-.schrow:active{background:var(--bg2)}
-.schtime{font:800 12.5px ui-monospace,monospace;color:var(--accent);width:66px;flex:none;text-align:right}
-.schposter{width:44px;height:60px;flex:none;border-radius:8px;background:var(--bg2) center/cover;border:1px solid var(--line)}
-.schmeta{flex:1;min-width:0}
-.schmeta h4{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
-.schsub{font:600 11px ui-monospace,monospace;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.schflag{font:800 9px ui-monospace,monospace;background:rgba(236,72,153,.9);color:#fff;padding:3px 6px;border-radius:6px;flex:none}
+.schgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+.schcard{cursor:pointer}
+.schcard:active{transform:scale(.96)}
+.schart{position:relative;aspect-ratio:2/3;border-radius:12px;background:var(--bg2) center/cover;border:1px solid var(--line);overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.schtime{position:absolute;top:6px;left:6px;font:800 11px ui-monospace,monospace;color:#fff;background:rgba(139,92,246,.92);padding:3px 7px;border-radius:7px;letter-spacing:-.3px}
+.schep{position:absolute;left:0;right:0;bottom:0;font:800 11px ui-monospace,monospace;color:#fff;padding:14px 8px 6px;background:linear-gradient(transparent,rgba(0,0,0,.82))}
+.schflag{position:absolute;top:6px;right:6px;font:800 9px ui-monospace,monospace;background:rgba(236,72,153,.92);color:#fff;padding:3px 6px;border-radius:6px}
+.schscore{position:absolute;top:6px;right:6px;font:800 10px ui-monospace,monospace;background:rgba(0,0,0,.72);color:#ffd54a;padding:3px 6px;border-radius:6px}
+.schcard .schflag~.schscore{top:28px}
+.schname{font-size:12px;font-weight:700;line-height:1.25;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* settings sheet */
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:6px 0 14px}
 .setlabel b{font-size:14.5px;display:block}
