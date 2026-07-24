@@ -1,0 +1,48 @@
+# taku · iOS build + upload to App Store Connect, no Mac required.
+# Runs on Codemagic (codemagic.io) — connect this repo, add your App Store Connect
+# API key as an integration named "taku-asc-key", and hit Start build.
+# Full setup walkthrough: store/ci-setup.md
+
+workflows:
+  ios-appstore:
+    name: taku iOS -> App Store Connect
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: taku-asc-key
+    environment:
+      vars:
+        BUNDLE_ID: com.carter.taku
+        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_SCHEME: App
+      node: 20
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.carter.taku
+    scripts:
+      - name: Install dependencies and add the iOS platform
+        script: |
+          npm install
+          npx cap add ios
+      - name: Generate iOS app icons and splash screens
+        script: |
+          npm install @capacitor/assets --save-dev
+          npx @capacitor/assets generate --ios
+      - name: Sync web app into the iOS project
+        script: npx cap sync ios
+      - name: Stamp build number
+        script: |
+          cd ios/App
+          agvtool new-version -all $PROJECT_BUILD_NUMBER
+      - name: Apply code-signing profiles
+        script: xcode-project use-profiles
+      - name: Build the IPA
+        script: xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
