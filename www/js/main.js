@@ -23,6 +23,7 @@ function initNav(){
   $("#bWantTop").onclick=()=>doAction("want");
   $("#bNope").onclick=()=>doAction("nope");
   $("#bWatch").onclick=()=>doAction("watch");
+  $("#bUndo").onclick=()=>undoLast();
 
   // genre filter
   $("#filterBtn").onclick=()=>{
@@ -47,6 +48,7 @@ function initNav(){
     if(document.querySelector(".modal.on"))return;
     if(e.key==="ArrowRight")doAction("watch");
     if(e.key==="ArrowLeft")doAction("nope");
+    if(e.key==="z"||e.key==="Backspace")undoLast();
   });
 }
 

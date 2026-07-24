@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=17" />
+<link rel="stylesheet" href="css/app.css?v=18" />
 </head>
 <body>
 
@@ -30,12 +30,13 @@
       <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     </div>
     <div class="deckwrap">
+      <button class="deck-fab deck-undo off" id="bUndo" title="Undo last swipe" aria-label="Undo last swipe"><span class="icw" data-ic="rotate"></span></button>
       <button class="deck-fab deck-want" id="bWantTop" title="Want to watch" aria-label="Want to watch"><span class="icw" data-ic="star"></span></button>
       <div id="deck"></div>
     </div>
     <div class="actions">
       <button class="btn mid nope" id="bNope" title="Pass" aria-label="Pass"><span class="icw" data-ic="x"></span></button>
-      <button class="btn big watch" id="bWatch" title="Seen it — rate" aria-label="Seen it, rate"><span class="icw" data-ic="check"></span></button>
+      <button class="btn mid watch" id="bWatch" title="Seen it — rate" aria-label="Seen it, rate"><span class="icw" data-ic="check"></span></button>
     </div>
   </section>
 
@@ -209,16 +210,16 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=17"></script>
-<script src="js/state.js?v=17"></script>
-<script src="js/api.js?v=17"></script>
-<script src="js/rec.js?v=17"></script>
-<script src="js/deck.js?v=17"></script>
-<script src="js/lists.js?v=17"></script>
-<script src="js/search.js?v=17"></script>
-<script src="js/profile.js?v=17"></script>
-<script src="js/detail.js?v=17"></script>
-<script src="js/share.js?v=17"></script>
-<script src="js/main.js?v=17"></script>
+<script src="js/data.js?v=18"></script>
+<script src="js/state.js?v=18"></script>
+<script src="js/api.js?v=18"></script>
+<script src="js/rec.js?v=18"></script>
+<script src="js/deck.js?v=18"></script>
+<script src="js/lists.js?v=18"></script>
+<script src="js/search.js?v=18"></script>
+<script src="js/profile.js?v=18"></script>
+<script src="js/detail.js?v=18"></script>
+<script src="js/share.js?v=18"></script>
+<script src="js/main.js?v=18"></script>
 </body>
 </html>

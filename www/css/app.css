@@ -63,7 +63,7 @@ nav.bottom{
 .deck-fab .icw{width:16px;height:16px}
 .deck-fab:active{transform:scale(.9)}
 .deck-undo{top:15px}
-.deck-want{top:15px}
+.deck-want{top:59px}
 .deck-undo.off{opacity:.32;pointer-events:none}
 #deck{position:relative;height:min(calc(100dvh - 232px),640px);margin:2px 0 0}
 .card{
@@ -112,7 +112,7 @@ nav.bottom{
 .btn.want .ic{fill:currentColor;stroke:none}
 .btn.nope{color:var(--nope)}
 .btn.want{color:var(--want);box-shadow:0 10px 30px rgba(34,197,94,.35)}
-.btn.watch{color:var(--want);box-shadow:0 10px 30px rgba(34,197,94,.35)}
+.btn.watch{color:var(--want)}
 .btn.watch .ic{stroke-width:2.6}
 .btn.undo{color:#f5c518}
 .btn.off{opacity:.35;pointer-events:none}
