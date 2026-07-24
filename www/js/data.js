@@ -50,7 +50,8 @@ const ICON_PATHS={
   share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>',
   download:'<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
   upload:'<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>',
-  filter:'<path d="M3 4h18l-7 8v6l-4 2v-8Z"/>'
+  filter:'<path d="M3 4h18l-7 8v6l-4 2v-8Z"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>'
 };
 function icSvg(n,fill){return '<svg class="ic" viewBox="0 0 24 24" fill="'+(fill?'currentColor':'none')+'" stroke="'+(fill?'none':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON_PATHS[n]+'</svg>';}
 

@@ -42,7 +42,7 @@ function cardEl(m){
     <div class="shade"></div>
     ${r?`<div class="reason ${r.cls}">${r.txt}</div>`:""}
     ${m.averageScore?`<div class="score ${scoreClass(m.averageScore)}">${icSvg("star",true)} ${(m.averageScore/10).toFixed(1)}</div>`:""}
-    <div class="badge want">Want</div><div class="badge nope">Nope</div><div class="badge watch">Seen</div>
+    <div class="badge seen">Seen</div><div class="badge nope">Nope</div>
     <div class="info">
       <h2>${mTitle(m)}</h2>
       <div class="meta">${meta}</div>
@@ -108,8 +108,8 @@ function undoLast(){
   refreshCounts();renderDeck();
 }
 function flyOut(el,dir,cb){
-  const x=dir==="want"?600:dir==="nope"?-600:0;
-  const y=dir==="watch"?-700:0;
+  const x=dir==="right"?600:dir==="left"?-600:0;
+  const y=dir==="up"?-700:0;
   el.style.transition="transform .35s ease, opacity .35s ease";
   el.style.transform=`translate(${x}px,${y}px) rotate(${x/20}deg)`;el.style.opacity="0";
   setTimeout(cb,300);
@@ -118,13 +118,14 @@ function topCard(){const c=$("#deck").querySelectorAll(".card");return c[c.lengt
 function doAction(action){
   const top=topCard();if(!top)return;
   const id=+top.dataset.id;
-  flyOut(top,action,()=>{decide(id,action);renderDeck();});
+  const dir=action==="nope"?"left":action==="watch"?"right":"up"; // want (star button) tosses up
+  flyOut(top,dir,()=>{decide(id,action);renderDeck();});
 }
 
 /* pointer-capture drag: no global listeners, no leaks */
 function attachDrag(el,m){
   let sx=0,sy=0,dx=0,dy=0,drag=false,t0=0;
-  const bw=el.querySelector(".badge.want"),bn=el.querySelector(".badge.nope"),bs=el.querySelector(".badge.watch");
+  const bSeen=el.querySelector(".badge.seen"),bn=el.querySelector(".badge.nope");
   el.addEventListener("pointerdown",e=>{
     drag=true;sx=e.clientX;sy=e.clientY;dx=dy=0;t0=Date.now();
     el.setPointerCapture(e.pointerId);el.style.transition="none";
@@ -132,11 +133,9 @@ function attachDrag(el,m){
   el.addEventListener("pointermove",e=>{
     if(!drag)return;
     dx=e.clientX-sx;dy=e.clientY-sy;
-    el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/22}deg)`;
-    const up=dy<-60&&Math.abs(dy)>Math.abs(dx);
-    bw.style.opacity=up?0:Math.max(0,dx/90);
-    bn.style.opacity=up?0:Math.max(0,-dx/90);
-    bs.style.opacity=up?Math.min(1,-dy/120):0;
+    el.style.transform=`translate(${dx}px,0) rotate(${dx/22}deg)`; // horizontal only — left/right swipes
+    bSeen.style.opacity=Math.max(0,dx/90);  // right = seen
+    bn.style.opacity=Math.max(0,-dx/90);    // left = pass
   });
   el.addEventListener("pointerup",e=>{
     if(!drag)return;drag=false;
@@ -145,11 +144,9 @@ function attachDrag(el,m){
       el.style.transition="transform .25s ease";el.style.transform="";
       openDetails(m);return;
     }
-    const up=dy<-90&&Math.abs(dy)>Math.abs(dx);
-    if(up)flyOut(el,"watch",()=>{decide(m.id,"watch");renderDeck();});
-    else if(dx>110)flyOut(el,"want",()=>{decide(m.id,"want");renderDeck();});
-    else if(dx<-110)flyOut(el,"nope",()=>{decide(m.id,"nope");renderDeck();});
-    else{el.style.transition="transform .25s ease";el.style.transform="";bw.style.opacity=bn.style.opacity=bs.style.opacity=0;}
+    if(dx>110)flyOut(el,"right",()=>{decide(m.id,"watch");renderDeck();});        // right = seen it
+    else if(dx<-110)flyOut(el,"left",()=>{decide(m.id,"nope");renderDeck();});    // left = pass
+    else{el.style.transition="transform .25s ease";el.style.transform="";bSeen.style.opacity=bn.style.opacity=0;}
     dx=dy=0;
   });
   el.addEventListener("pointercancel",()=>{drag=false;el.style.transition="transform .25s ease";el.style.transform="";});

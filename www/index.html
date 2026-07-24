@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=16" />
+<link rel="stylesheet" href="css/app.css?v=17" />
 </head>
 <body>
 
@@ -30,14 +30,12 @@
       <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     </div>
     <div class="deckwrap">
-      <button class="deck-fab deck-undo off" id="bUndo" title="Undo last swipe" aria-label="Undo last swipe"><span class="icw" data-ic="rotate"></span></button>
-      <button class="deck-fab deck-want" id="bWantTop" title="Want to watch" aria-label="Want to watch"><span class="icw" data-ic="heart"></span></button>
+      <button class="deck-fab deck-want" id="bWantTop" title="Want to watch" aria-label="Want to watch"><span class="icw" data-ic="star"></span></button>
       <div id="deck"></div>
     </div>
     <div class="actions">
       <button class="btn mid nope" id="bNope" title="Pass" aria-label="Pass"><span class="icw" data-ic="x"></span></button>
-      <button class="btn sm watch" id="bWatch" title="Seen it — rate" aria-label="Seen it, rate"><span class="icw" data-ic="star"></span></button>
-      <button class="btn big want" id="bWant" title="Want to watch" aria-label="Want to watch"><span class="icw" data-ic="heart"></span></button>
+      <button class="btn big watch" id="bWatch" title="Seen it — rate" aria-label="Seen it, rate"><span class="icw" data-ic="check"></span></button>
     </div>
   </section>
 
@@ -125,9 +123,9 @@
 <div class="coach" id="coach" hidden>
   <div class="coach-in">
     <h3>How it works</h3>
-    <div class="crow want"><span class="icw" data-ic="arrowR"></span><div><b>Swipe right</b><span>Want to watch — saves it to your list</span></div></div>
-    <div class="crow nope"><span class="icw" data-ic="arrowL"></span><div><b>Swipe left</b><span>Pass — you won't see it again</span></div></div>
-    <div class="crow watch"><span class="icw" data-ic="arrowU"></span><div><b>Swipe up</b><span>Already seen — give it a tier</span></div></div>
+    <div class="crow seen"><span class="icw" data-ic="check"></span><div><b>Swipe right</b><span>Seen it — rate and rank it</span></div></div>
+    <div class="crow nope"><span class="icw" data-ic="x"></span><div><b>Swipe left</b><span>Pass — you won't see it again</span></div></div>
+    <div class="crow star"><span class="icw" data-ic="star"></span><div><b>Tap the star</b><span>Want to watch — save it for later</span></div></div>
     <div class="crow tap"><span class="icw" data-ic="tap"></span><div><b>Tap a card</b><span>Characters, MBTI &amp; similar anime</span></div></div>
     <button class="savebtn" id="coachOk">Got it</button>
   </div>
@@ -211,16 +209,16 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=16"></script>
-<script src="js/state.js?v=16"></script>
-<script src="js/api.js?v=16"></script>
-<script src="js/rec.js?v=16"></script>
-<script src="js/deck.js?v=16"></script>
-<script src="js/lists.js?v=16"></script>
-<script src="js/search.js?v=16"></script>
-<script src="js/profile.js?v=16"></script>
-<script src="js/detail.js?v=16"></script>
-<script src="js/share.js?v=16"></script>
-<script src="js/main.js?v=16"></script>
+<script src="js/data.js?v=17"></script>
+<script src="js/state.js?v=17"></script>
+<script src="js/api.js?v=17"></script>
+<script src="js/rec.js?v=17"></script>
+<script src="js/deck.js?v=17"></script>
+<script src="js/lists.js?v=17"></script>
+<script src="js/search.js?v=17"></script>
+<script src="js/profile.js?v=17"></script>
+<script src="js/detail.js?v=17"></script>
+<script src="js/share.js?v=17"></script>
+<script src="js/main.js?v=17"></script>
 </body>
 </html>

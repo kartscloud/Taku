@@ -20,11 +20,9 @@ function initNav(){
     document.querySelectorAll("#modes .pill").forEach(x=>x.classList.toggle("active",x===p));
     renderDeck();
   });
-  $("#bWant").onclick=()=>doAction("want");
   $("#bWantTop").onclick=()=>doAction("want");
   $("#bNope").onclick=()=>doAction("nope");
   $("#bWatch").onclick=()=>doAction("watch");
-  $("#bUndo").onclick=()=>undoLast();
 
   // genre filter
   $("#filterBtn").onclick=()=>{
@@ -47,10 +45,8 @@ function initNav(){
   document.addEventListener("keydown",e=>{
     if(currentView!=="deck")return;
     if(document.querySelector(".modal.on"))return;
-    if(e.key==="ArrowRight")doAction("want");
+    if(e.key==="ArrowRight")doAction("watch");
     if(e.key==="ArrowLeft")doAction("nope");
-    if(e.key==="ArrowUp")doAction("watch");
-    if(e.key==="z"||e.key==="Backspace")undoLast();
   });
 }
 
