@@ -45,11 +45,11 @@ python -m http.server 5180 -d www
 
 1. Create an empty GitHub repo named `taku`, then:
    ```bash
-   git remote add origin https://github.com/<you>/taku.git
+   git remote add origin https://github.com/kartscloud/Taku.git
    git push -u origin main
    ```
 2. GitHub → repo **Settings → Pages → Source: GitHub Actions**. The bundled workflow publishes
-   `www/` as the site root on every push → `https://<you>.github.io/taku/`.
+   `www/` as the site root on every push → `https://kartscloud.github.io/Taku/`.
 3. iPhone: open in Safari → Share → **Add to Home Screen**. Fullscreen, offline shell, installable.
 
 ## App Store (Capacitor + Xcode)
@@ -69,7 +69,7 @@ drop `store/appstore-icon-1024.png` into the AppIcon set, Archive → Distribute
 
 In App Store Connect, everything to paste — name, subtitle, keywords, description, age-rating
 answers, privacy label ("Data Not Collected"), and reviewer notes — is in
-**`store/app-store-listing.md`**. Privacy Policy URL: `https://<you>.github.io/taku/privacy.html`.
+**`store/app-store-listing.md`**. Privacy Policy URL: `https://kartscloud.github.io/Taku/privacy.html`.
 
 **Before submitting:** send `store/anilist-authorization-email.md` to AniList (their ToS asks
 tracker-style apps to get authorized), and take 6.7" screenshots from the deployed app.

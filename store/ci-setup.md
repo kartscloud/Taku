@@ -7,11 +7,11 @@ Total hands-on time: ~30 minutes, mostly clicking.
 1. Create an empty GitHub repo named **taku** (no README/license).
 2. ```bash
    cd C:\Users\karti\projects\taku
-   git remote add origin https://github.com/<you>/taku.git
+   git remote add origin https://github.com/kartscloud/Taku.git
    git push -u origin main
    ```
 3. Repo **Settings → Pages → Source: GitHub Actions** — this also puts your privacy policy
-   live at `https://<you>.github.io/taku/privacy.html` (you'll paste that URL in step 4).
+   live at `https://kartscloud.github.io/Taku/privacy.html` (you'll paste that URL in step 4).
 
 ## 2 · App Store Connect: key + app record (10 min)
 At [appstoreconnect.apple.com](https://appstoreconnect.apple.com):
@@ -54,7 +54,7 @@ In App Store Connect → your app:
 3. Screenshots: 6.7" set (1290×2796), taken from the app.
 4. Age rating questionnaire + privacy label ("Data Not Collected") — answers are in the
    listing pack.
-5. Privacy Policy URL: `https://<you>.github.io/taku/privacy.html`
+5. Privacy Policy URL: `https://kartscloud.github.io/Taku/privacy.html`
 6. Add the build to the version → **Submit for Review**. Typical review: 1–3 days.
 
 ## Don't forget

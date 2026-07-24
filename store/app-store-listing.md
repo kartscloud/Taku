@@ -72,7 +72,7 @@ Expected result: **13+** (16+ also acceptable; do NOT voluntarily set 18+).
 
 ## Privacy label ("App Privacy" section)
 **Data Not Collected** — across every category. No account, no analytics, no identifiers, no tracking. The only network traffic is anonymous queries to the public AniList API for catalog data.
-- Privacy Policy URL: `https://<your-username>.github.io/taku/privacy.html` (live once Pages deploys; update if you use a custom domain)
+- Privacy Policy URL: `https://kartscloud.github.io/Taku/privacy.html` (live once Pages deploys; update if you use a custom domain)
 
 ## App Review notes (paste into "Notes" in App Store Connect)
 ```
