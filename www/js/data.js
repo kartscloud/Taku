@@ -51,8 +51,14 @@ const ICON_PATHS={
   download:'<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
   upload:'<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>',
   filter:'<path d="M3 4h18l-7 8v6l-4 2v-8Z"/>',
-  check:'<path d="M20 6 9 17l-5-5"/>'
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  compass:'<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+  cards:'<rect x="3" y="5" width="14" height="16" rx="2"/><path d="M7 3h10a2 2 0 0 1 2 2v12"/>'
 };
+
+/* Western streaming platforms = reliable "watchable in English" signal.
+   (AniList exposes streaming SITES but not dub/sub audio tracks, so platform is the honest proxy.) */
+const WESTERN_SITES=["Crunchyroll","Funimation","Netflix","Hulu","HIDIVE","Adult Swim","Amazon Prime Video","Disney Plus","Max","HBO Max","VRV","Tubi","Hidive"];
 function icSvg(n,fill){return '<svg class="ic" viewBox="0 0 24 24" fill="'+(fill?'currentColor':'none')+'" stroke="'+(fill?'none':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON_PATHS[n]+'</svg>';}
 
 /* MBTI — AniList has no MBTI field, so this is a curated community-consensus starter set

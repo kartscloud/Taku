@@ -3,7 +3,7 @@ const API="https://graphql.anilist.co";
 const MEDIA_FIELDS=`id title{english romaji} averageScore popularity genres episodes duration seasonYear season status format
 startDate{year month day} nextAiringEpisode{airingAt episode}
 coverImage{large extraLarge} bannerImage description(asHtml:false)
-studios(isMain:true){nodes{name}} trailer{id site} externalLinks{site url type}`;
+studios(isMain:true){nodes{name}} trailer{id site} externalLinks{site url type language}`;
 
 async function gql(query,variables){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query,variables})});
@@ -31,7 +31,9 @@ function trimMedia(m){
     description:(m.description||"").replace(/<[^>]*>/g,"").slice(0,420),
     studio:(m.studios&&m.studios.nodes&&m.studios.nodes[0]&&m.studios.nodes[0].name)||null,
     trailer:(m.trailer&&m.trailer.site==="youtube")?m.trailer.id:null,
-    links:(m.externalLinks||[]).filter(l=>l.type==="STREAMING").slice(0,3).map(l=>({site:l.site,url:l.url}))
+    links:(m.externalLinks||[]).filter(l=>l.type==="STREAMING").slice(0,4).map(l=>({site:l.site,url:l.url})),
+    // English-availability signal: on a Western streaming platform, OR a streaming link explicitly tagged English
+    en:(m.externalLinks||[]).some(l=>l.type==="STREAMING"&&(WESTERN_SITES.includes(l.site)||(l.language&&/english/i.test(l.language))))
   };
 }
 
@@ -95,6 +97,18 @@ async function fetchNextAiring(ids){
     const map={};(d.Page.media||[]).forEach(m=>{map[m.id]={status:m.status,eps:m.episodes,next:m.nextAiringEpisode?{at:m.nextAiringEpisode.airingAt,ep:m.nextAiringEpisode.episode}:null};});
     return map;
   }catch(e){return {};}
+}
+
+/* popular anime in a single genre — for the Discover browse shelves */
+async function fetchGenre(genre,page){
+  const key="cache_g1_"+genre+"_"+(page||1);
+  const hit=store.get(key,null);
+  if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
+  const q=`query($p:Int){Page(page:$p,perPage:24){media(sort:POPULARITY_DESC,genre_in:["${genre}"],type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED,countryOfOrigin:JP){${MEDIA_FIELDS}}}}`;
+  const data=await gql(q,{p:page||1});
+  const list=(data.Page.media||[]).map(trimMedia);
+  store.set(key,{t:Date.now(),d:list});
+  return list;
 }
 
 async function searchAnime(qs){
