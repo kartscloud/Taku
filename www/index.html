@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=22" />
+<link rel="stylesheet" href="css/app.css?v=23" />
 </head>
 <body>
 
@@ -41,7 +41,11 @@
   <!-- DISCOVER (browse) -->
   <section id="view-browse" style="display:none">
     <div class="browsehead">
-      <button class="gearbtn" id="browseGear"><span class="icw" data-ic="gear"></span>Filters</button>
+      <div class="segmented dtabs" id="browseTabs">
+        <button class="seg on" data-btab="browse">Browse</button>
+        <button class="seg" data-btab="schedule">Schedule</button>
+      </div>
+      <button class="gearbtn icononly" id="browseGear" title="Filters"><span class="icw" data-ic="gear"></span></button>
     </div>
     <div id="browseShelves"></div>
   </section>
@@ -235,17 +239,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=22"></script>
-<script src="js/state.js?v=22"></script>
-<script src="js/api.js?v=22"></script>
-<script src="js/rec.js?v=22"></script>
-<script src="js/deck.js?v=22"></script>
-<script src="js/lists.js?v=22"></script>
-<script src="js/search.js?v=22"></script>
-<script src="js/profile.js?v=22"></script>
-<script src="js/detail.js?v=22"></script>
-<script src="js/browse.js?v=22"></script>
-<script src="js/share.js?v=22"></script>
-<script src="js/main.js?v=22"></script>
+<script src="js/data.js?v=23"></script>
+<script src="js/state.js?v=23"></script>
+<script src="js/api.js?v=23"></script>
+<script src="js/rec.js?v=23"></script>
+<script src="js/deck.js?v=23"></script>
+<script src="js/lists.js?v=23"></script>
+<script src="js/search.js?v=23"></script>
+<script src="js/profile.js?v=23"></script>
+<script src="js/detail.js?v=23"></script>
+<script src="js/browse.js?v=23"></script>
+<script src="js/share.js?v=23"></script>
+<script src="js/main.js?v=23"></script>
 </body>
 </html>

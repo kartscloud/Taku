@@ -131,6 +131,31 @@ async function fetchSeason(page,country){
 }
 function seasonLabel(){const {s,y}=curSeason();return s.charAt(0)+s.slice(1).toLowerCase()+" "+y;}
 
+/* weekly airing calendar — every episode airing in the next 7 days, with exact air time */
+async function fetchSchedule(){
+  const now=Math.floor(Date.now()/1000), end=now+7*86400;
+  const key="cache_sched_"+Math.floor(now/3600);   // refresh hourly so countdowns stay honest
+  const hit=store.get(key,null);
+  if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
+  const out=[];
+  for(let p=1;p<=5;p++){
+    const q=`query($s:Int,$e:Int,$p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage} airingSchedules(airingAt_greater:$s,airingAt_lesser:$e,sort:TIME){airingAt episode media{id title{english romaji} coverImage{large} format countryOfOrigin averageScore genres isAdult externalLinks{site type}}}}}`;
+    let data;try{data=await gql(q,{s:now,e:end,p});}catch(e){break;}
+    (data.Page.airingSchedules||[]).forEach(a=>{
+      const md=a.media;if(!md||md.isAdult)return;
+      const g=md.genres||[];if(g.includes("Ecchi")||g.includes("Hentai"))return;
+      out.push({at:a.airingAt,ep:a.episode,m:{
+        id:md.id,title:md.title,coverImage:md.coverImage,format:md.format,
+        country:md.countryOfOrigin,averageScore:md.averageScore,genres:g,
+        en:(md.externalLinks||[]).some(l=>l.type==="STREAMING"&&WESTERN_SITES.includes(l.site))
+      }});
+    });
+    if(!data.Page.pageInfo||!data.Page.pageInfo.hasNextPage)break;
+  }
+  store.set(key,{t:Date.now(),d:out});
+  return out;
+}
+
 async function searchAnime(qs){
   const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{q:qs});

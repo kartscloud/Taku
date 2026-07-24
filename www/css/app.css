@@ -118,11 +118,26 @@ nav.bottom{
 .btn.off{opacity:.35;pointer-events:none}
 
 /* ============ discover / browse ============ */
-.browsehead{display:flex;justify-content:flex-end;margin:8px 0 0}
+.browsehead{display:flex;align-items:center;gap:10px;margin:8px 0 4px}
+.dtabs{flex:1;margin:0}
 .gearbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;cursor:pointer;position:relative}
 .gearbtn .icw{width:15px;height:15px}
+.gearbtn.icononly{padding:0;width:40px;height:40px;justify-content:center;border-radius:50%;flex:none}
+.gearbtn.icononly .icw{width:17px;height:17px}
 .gearbtn.active{border-color:var(--accent);color:var(--accent)}
-.gearbtn.active::after{content:"";position:absolute;top:6px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--accent2)}
+.gearbtn.active::after{content:"";position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent2);border:2px solid var(--bg)}
+/* weekly airing schedule */
+.schday{margin:18px 0 4px}
+.schdayhead{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;letter-spacing:-.2px;margin:0 2px 8px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.schcount{font:700 10px ui-monospace,monospace;color:var(--dim);background:var(--bg2);border:1px solid var(--line);padding:2px 7px;border-radius:999px}
+.schrow{display:flex;align-items:center;gap:12px;padding:8px 4px;cursor:pointer;border-radius:12px}
+.schrow:active{background:var(--bg2)}
+.schtime{font:800 12.5px ui-monospace,monospace;color:var(--accent);width:66px;flex:none;text-align:right}
+.schposter{width:44px;height:60px;flex:none;border-radius:8px;background:var(--bg2) center/cover;border:1px solid var(--line)}
+.schmeta{flex:1;min-width:0}
+.schmeta h4{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.schsub{font:600 11px ui-monospace,monospace;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.schflag{font:800 9px ui-monospace,monospace;background:rgba(236,72,153,.9);color:#fff;padding:3px 6px;border-radius:6px;flex:none}
 /* settings sheet */
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:6px 0 14px}
 .setlabel b{font-size:14.5px;display:block}
