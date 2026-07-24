@@ -59,9 +59,11 @@ nav.bottom{
 
 /* ============ deck ============ */
 .deckwrap{position:relative}
-.deck-undo{position:absolute;top:15px;left:12px;z-index:15;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(12,10,20,.5);backdrop-filter:blur(8px);color:#f5c518;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:opacity .2s,transform .12s}
-.deck-undo .icw{width:16px;height:16px}
-.deck-undo:active{transform:scale(.9)}
+.deck-fab{position:absolute;left:12px;z-index:15;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(12,10,20,.5);backdrop-filter:blur(8px);color:#f5c518;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:opacity .2s,transform .12s}
+.deck-fab .icw{width:16px;height:16px}
+.deck-fab:active{transform:scale(.9)}
+.deck-undo{top:15px}
+.deck-want{top:59px}
 .deck-undo.off{opacity:.32;pointer-events:none}
 #deck{position:relative;height:min(calc(100dvh - 232px),640px);margin:2px 0 0}
 .card{

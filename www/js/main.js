@@ -21,6 +21,7 @@ function initNav(){
     renderDeck();
   });
   $("#bWant").onclick=()=>doAction("want");
+  $("#bWantTop").onclick=()=>doAction("want");
   $("#bNope").onclick=()=>doAction("nope");
   $("#bWatch").onclick=()=>doAction("watch");
   $("#bUndo").onclick=()=>undoLast();
