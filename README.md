@@ -1,69 +1,82 @@
 # taku — swipe your next anime
 
-Tinder-style anime discovery. Swipe right = want to watch, left = nope, up = watched (then tier-rate it S–D). A client-side rec engine learns your taste from every action and biases the **For You** feed toward new & currently-airing shows. Neural-network profile page classifies you into an archetype (go deep on niche Slice of Life and you ascend to **TAKU**). Friends work peer-to-peer via shareable profile codes. All data stays in the browser (`localStorage`) — no accounts, no backend.
+Tinder-style anime discovery with a taste-identity game on top. Swipe right = want to watch,
+left = pass, up = seen (then tier-rate it S–D, as Finished or Still Watching with live
+next-episode air dates). A client-side rec engine learns your taste from every action and biases
+the **For You** feed toward new & currently-airing shows, with genre filtering. A neural-network
+profile classifies you into an earnable archetype (grind niche slice of life and ascend to
+**TAKU**), friends compete on a squad leaderboard via share codes, and your rank exports as a
+share-ready image. Every anime opens into a full info page — characters with community-sourced
+MBTI, tags, and "More like this."
 
-## Project layout
+**No accounts. No ads. No data collected.** Everything lives in the browser (`localStorage`),
+with one-tap backup/restore. Data: [AniList](https://anilist.co) GraphQL API.
+
+## Repo layout
 
 ```
 taku/
-  www/              ← the entire app (this is what Capacitor wraps / what you deploy)
-    index.html
-    css/app.css
-    js/             data, state, api (AniList + cache), rec engine, deck, lists, search, profile, main
-    sw.js           service worker (offline shell + poster cache)
-    manifest.webmanifest
-    icons/
-  capacitor.config.json
-  package.json
-  index.html        ← redirect stub → www/
+  www/                ← the entire app (deploy target / Capacitor webDir)
+    index.html        app shell
+    privacy.html      privacy policy (App Store requirement, deploys with the app)
+    css/app.css       design system + views
+    js/               data, state, api (AniList + cache), rec engine, deck, lists,
+                      search, profile, detail (info pages), share (rank card + backup), main
+    sw.js             service worker — versioned shell cache, network-first navigations
+    manifest.webmanifest, icons/
+  store/              ← App Store launch kit
+    app-store-listing.md          name/subtitle/keywords/description/review notes (paste-ready)
+    appstore-icon-1024.png        1024×1024 RGB icon (regenerate: node store/make-icon.js)
+    anilist-authorization-email.md  send to contact@anilist.co before store launch
+  .github/workflows/deploy.yml    auto-deploys www/ to GitHub Pages on push to main
+  capacitor.config.json           appId com.carter.taku, webDir www
+  package.json                    Capacitor deps incl. push-notifications
 ```
 
-## Run it now (Windows, no install)
+## Run locally (Windows, no install)
 
 ```powershell
-cd C:\Users\karti\projects\taku
+cd taku
 python -m http.server 5180 -d www
 # open http://localhost:5180
 ```
 
-## Ship it as a PWA today (installable on iPhone/Android immediately)
+## Deploy the PWA (live link today)
 
-1. Create an empty GitHub repo named `taku` (no README/license — this repo has them), then push:
+1. Create an empty GitHub repo named `taku`, then:
    ```bash
    git remote add origin https://github.com/<you>/taku.git
    git push -u origin main
    ```
-2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The bundled workflow (`.github/workflows/deploy.yml`) publishes the `www/` folder as the site root on every push to `main` — so the app lives at `https://<you>.github.io/taku/` with the service worker scoped correctly (no `/www/` in the URL, no redirect hop). Watch it under the repo's **Actions** tab.
-3. **HTTPS is automatic** on Pages — required for the service worker + install prompt.
-4. iPhone: open the URL in Safari → Share → **Add to Home Screen**. Fullscreen, offline-shell, native-feeling. Fastest way onto your friend's phone **today**. (Alternatively point Netlify/Vercel at the `www/` folder.)
+2. GitHub → repo **Settings → Pages → Source: GitHub Actions**. The bundled workflow publishes
+   `www/` as the site root on every push → `https://<you>.github.io/taku/`.
+3. iPhone: open in Safari → Share → **Add to Home Screen**. Fullscreen, offline shell, installable.
 
-## App Store launch (Capacitor + Xcode)
+## App Store (Capacitor + Xcode)
 
-**Reality check: Xcode only runs on macOS.** You cannot build/submit an iOS app from this Windows machine. Options:
-- Use any Mac (friend's, library, used Mac mini)
-- Cloud Mac: MacStadium / MacinCloud / Scaleway
-- CI build: Ionic Appflow / Codemagic can build + upload to App Store Connect from this repo without you owning a Mac
+Xcode is macOS-only. Routes: any Mac, a cloud Mac (MacinCloud), or CI (Codemagic/Appflow builds
+and uploads to App Store Connect straight from this repo — no Mac owned).
 
-Once on a Mac (Node + Xcode 15+ installed):
-
+On a Mac (Node + Xcode 15+):
 ```bash
-cd taku
 npm install
-npx cap add ios        # generates ios/ native project wrapping www/
+npx cap add ios
 npx cap sync ios
-npx cap open ios       # opens Xcode
+npx cap open ios
 ```
+Then in Xcode: set your Team (Apple Developer Program, $99/yr), bundle id `com.carter.taku`,
+drop `store/appstore-icon-1024.png` into the AppIcon set, Archive → Distribute.
 
-Then in Xcode:
-1. Set your Team (needs an Apple Developer account, $99/yr) + bundle id `com.carter.taku`
-2. Replace AppIcon with a 1024×1024 raster export of `www/icons/icon.svg` (App Store requires PNG, no alpha)
-3. Product → Archive → Distribute → App Store Connect
-4. In App Store Connect: screenshots (6.7" + 5.5"), description, **content rating** (mind that AniList data includes anime artwork; the app filters `isAdult`), privacy label = "Data Not Collected" (everything is on-device)
+In App Store Connect, everything to paste — name, subtitle, keywords, description, age-rating
+answers, privacy label ("Data Not Collected"), and reviewer notes — is in
+**`store/app-store-listing.md`**. Privacy Policy URL: `https://<you>.github.io/taku/privacy.html`.
 
-### App Review notes worth knowing
-- "Data Not Collected" privacy label is accurate and is a big review plus — keep it that way.
-- Guideline 4.2 (minimum functionality): the rec engine, tiers, neural profile and squad codes put you comfortably past "just a repackaged website", but expect to demo it in review notes.
-- AniList API is free for non-commercial use; attribute it in the app description.
+**Before submitting:** send `store/anilist-authorization-email.md` to AniList (their ToS asks
+tracker-style apps to get authorized), and take 6.7" screenshots from the deployed app.
 
 ## Version bumps (important)
-Shell files are version-pinned: `index.html` loads assets with `?v=N` and `www/sw.js` has matching `VER`/`AV` constants. **On every shell change bump all three together** (the `?v=` in index.html, and `VER`+`AV` in sw.js). Navigations are network-first and a `controllerchange` listener reloads the page once when a new SW activates, so clients can never run mixed old/new versions — but only if the versions are bumped.
+
+Shell assets are version-pinned: `index.html` loads them with `?v=N`, and `www/sw.js` has
+matching `VER`/`AV` constants. **Bump all three together on every shell change** — navigations
+are network-first and clients auto-reload once when a new service worker activates, so mixed
+old/new versions can't happen, but only if the pins move together.
