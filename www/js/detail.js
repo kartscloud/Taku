@@ -20,12 +20,16 @@ function enableDragScroll(el){
   el.addEventListener("pointerdown",e=>{
     if(e.pointerType!=="mouse")return;
     down=true;sx=e.clientX;sl=el.scrollLeft;moved=false;pid=e.pointerId;
-    el.setPointerCapture(pid);el.classList.add("dragging");
+    // NOTE: do NOT capture the pointer here — capturing on pointerdown makes the
+    // browser dispatch the ensuing `click` to the rail instead of the card, which
+    // eats every plain click on a cover. Capture lazily once a real drag begins.
   });
   el.addEventListener("pointermove",e=>{
-    if(!down)return;const dx=e.clientX-sx;if(Math.abs(dx)>4)moved=true;el.scrollLeft=sl-dx;
+    if(!down)return;const dx=e.clientX-sx;
+    if(!moved&&Math.abs(dx)>4){moved=true;el.classList.add("dragging");try{el.setPointerCapture(pid);}catch(_){}}
+    if(moved)el.scrollLeft=sl-dx;
   });
-  const end=()=>{if(!down)return;down=false;el.classList.remove("dragging");if(pid!=null){try{el.releasePointerCapture(pid);}catch(_){}}if(moved){el._sc=true;setTimeout(()=>{el._sc=false;},60);}};
+  const end=()=>{if(!down)return;down=false;el.classList.remove("dragging");if(moved&&pid!=null){try{el.releasePointerCapture(pid);}catch(_){}}if(moved){el._sc=true;setTimeout(()=>{el._sc=false;},60);}};
   el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
   el.addEventListener("click",e=>{if(el._sc){e.stopPropagation();e.preventDefault();}},true); // swallow the click that ends a drag
 }
