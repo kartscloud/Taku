@@ -1,6 +1,6 @@
 /* taku · AniList client + cached pools (trending / season / popular / gems / search) */
 const API="https://graphql.anilist.co";
-const MEDIA_FIELDS=`id title{english romaji} averageScore popularity genres episodes duration seasonYear season status format
+const MEDIA_FIELDS=`id title{english romaji} averageScore popularity genres episodes duration seasonYear season status format countryOfOrigin
 startDate{year month day} nextAiringEpisode{airingAt episode}
 coverImage{large extraLarge} bannerImage description(asHtml:false)
 studios(isMain:true){nodes{name}} trailer{id site} externalLinks{site url type language}`;
@@ -24,6 +24,7 @@ function trimMedia(m){
   return{
     id:m.id,title:m.title,averageScore:m.averageScore,popularity:m.popularity,genres:m.genres,
     episodes:m.episodes,duration:m.duration,seasonYear:m.seasonYear,season:m.season,status:m.status,format:m.format,
+    country:m.countryOfOrigin,
     aired:m.startDate?((m.startDate.year||0)*10000+(m.startDate.month||0)*100+(m.startDate.day||0)):0,
     next:m.nextAiringEpisode?{at:m.nextAiringEpisode.airingAt,ep:m.nextAiringEpisode.episode}:null,
     coverImage:{large:m.coverImage&&m.coverImage.large,extraLarge:m.coverImage&&m.coverImage.extraLarge},
@@ -99,17 +100,31 @@ async function fetchNextAiring(ids){
   }catch(e){return {};}
 }
 
-/* popular anime in a single genre — for the Discover browse shelves */
+/* popular anime in a single genre — for the Discover browse shelves (all countries) */
 async function fetchGenre(genre,page){
-  const key="cache_g1_"+genre+"_"+(page||1);
+  const key="cache_g2_"+genre+"_"+(page||1);
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
-  const q=`query($p:Int){Page(page:$p,perPage:24){media(sort:POPULARITY_DESC,genre_in:["${genre}"],type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED,countryOfOrigin:JP){${MEDIA_FIELDS}}}}`;
+  const q=`query($p:Int){Page(page:$p,perPage:24){media(sort:POPULARITY_DESC,genre_in:["${genre}"],type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{p:page||1});
   const list=(data.Page.media||[]).map(trimMedia);
   store.set(key,{t:Date.now(),d:list});
   return list;
 }
+
+/* the FULL current season — every anime coming out, all countries, all statuses */
+async function fetchSeason(page){
+  const {s,y}=curSeason();
+  const key="cache_season_"+s+y+"_"+(page||1);
+  const hit=store.get(key,null);
+  if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
+  const q=`query($p:Int){Page(page:$p,perPage:50){media(season:${s},seasonYear:${y},type:ANIME,sort:POPULARITY_DESC,isAdult:false,genre_not_in:["Ecchi","Hentai"]){${MEDIA_FIELDS}}}}`;
+  const data=await gql(q,{p:page||1});
+  const list=(data.Page.media||[]).map(trimMedia);
+  store.set(key,{t:Date.now(),d:list});
+  return list;
+}
+function seasonLabel(){const {s,y}=curSeason();return s.charAt(0)+s.slice(1).toLowerCase()+" "+y;}
 
 async function searchAnime(qs){
   const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;

@@ -41,7 +41,7 @@ function initNav(){
   document.querySelectorAll("#rateModal .tierbtn").forEach(b=>b.onclick=()=>commitRate(b.dataset.tier));
   document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.onclick=()=>{rateStatus=b.dataset.status;syncRateToggle();});
   $("#rateSkip").onclick=()=>commitRate(null);
-  ["rateModal","detailModal","editModal","friendModal","genreModal"].forEach(id=>{
+  ["rateModal","detailModal","editModal","friendModal","genreModal","browseSettings"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{

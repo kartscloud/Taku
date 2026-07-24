@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=19" />
+<link rel="stylesheet" href="css/app.css?v=20" />
 </head>
 <body>
 
@@ -25,8 +25,6 @@
   <section id="view-deck">
     <div class="modes" id="modes">
       <button class="pill active" data-mode="foryou"><span class="icw" data-ic="sparkles"></span>For You</button>
-      <button class="pill" data-mode="new"><span class="icw" data-ic="leaf"></span>New</button>
-      <button class="pill" data-mode="trending"><span class="icw" data-ic="flame"></span>Trending</button>
       <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     </div>
     <div class="deckwrap">
@@ -42,10 +40,8 @@
 
   <!-- DISCOVER (browse) -->
   <section id="view-browse" style="display:none">
-    <div class="browsebar">
-      <button class="bchip" data-bf="new">New releases</button>
-      <button class="bchip" data-bf="english">English</button>
-      <span class="bnote">English = on a Western platform (Crunchyroll, Netflix…)</span>
+    <div class="browsehead">
+      <button class="gearbtn" id="browseGear"><span class="icw" data-ic="gear"></span>Filters</button>
     </div>
     <div id="browseShelves"></div>
   </section>
@@ -168,6 +164,23 @@
   <div class="sheet" id="detailSheet"></div>
 </div>
 
+<!-- DISCOVER FILTERS SHEET -->
+<div class="modal" id="browseSettings">
+  <div class="sheet">
+    <h3>Discover filters</h3>
+    <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew"></button></div>
+    <div class="seth">Language</div>
+    <div class="langopts">
+      <button class="langopt on" data-lang="all">All</button>
+      <button class="langopt" data-lang="japanese">Japanese</button>
+      <button class="langopt" data-lang="chinese">Chinese</button>
+      <button class="langopt" data-lang="korean">Korean</button>
+    </div>
+    <p class="setnote">Language = the anime's original language. AniList's API doesn't publish per-title dub/sub audio tracks, so English-dub availability can't be filtered from its data.</p>
+    <button class="savebtn" id="browseSettingsDone">Done</button>
+  </div>
+</div>
+
 <!-- GENRE FILTER SHEET -->
 <div class="modal" id="genreModal">
   <div class="sheet">
@@ -221,17 +234,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=19"></script>
-<script src="js/state.js?v=19"></script>
-<script src="js/api.js?v=19"></script>
-<script src="js/rec.js?v=19"></script>
-<script src="js/deck.js?v=19"></script>
-<script src="js/lists.js?v=19"></script>
-<script src="js/search.js?v=19"></script>
-<script src="js/profile.js?v=19"></script>
-<script src="js/detail.js?v=19"></script>
-<script src="js/browse.js?v=19"></script>
-<script src="js/share.js?v=19"></script>
-<script src="js/main.js?v=19"></script>
+<script src="js/data.js?v=20"></script>
+<script src="js/state.js?v=20"></script>
+<script src="js/api.js?v=20"></script>
+<script src="js/rec.js?v=20"></script>
+<script src="js/deck.js?v=20"></script>
+<script src="js/lists.js?v=20"></script>
+<script src="js/search.js?v=20"></script>
+<script src="js/profile.js?v=20"></script>
+<script src="js/detail.js?v=20"></script>
+<script src="js/browse.js?v=20"></script>
+<script src="js/share.js?v=20"></script>
+<script src="js/main.js?v=20"></script>
 </body>
 </html>

@@ -53,7 +53,8 @@ const ICON_PATHS={
   filter:'<path d="M3 4h18l-7 8v6l-4 2v-8Z"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
   compass:'<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
-  cards:'<rect x="3" y="5" width="14" height="16" rx="2"/><path d="M7 3h10a2 2 0 0 1 2 2v12"/>'
+  cards:'<rect x="3" y="5" width="14" height="16" rx="2"/><path d="M7 3h10a2 2 0 0 1 2 2v12"/>',
+  gear:'<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>'
 };
 
 /* Western streaming platforms = reliable "watchable in English" signal.
