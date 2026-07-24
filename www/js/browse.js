@@ -1,32 +1,39 @@
 /* taku · Discover — browse: genre shelves, personalized, full-season "new releases", language filter */
-let browseFilters={new:false,lang:"all"};   // lang: all | japanese | chinese | korean
-let _browseData=null, _seasonData=null, _browseLoading=false, _seasonLoading=false;
+let browseFilters={new:false,lang:"all"};   // lang: all | english | japanese | chinese | korean
+let _browseData=null, _seasonData=null, _loadedLang="all", _browseToken=0;
 const LANG_COUNTRY={japanese:"JP",chinese:"CN",korean:"KR"};
+function langCountry(){return LANG_COUNTRY[browseFilters.lang]||null;} // JP/CN/KR, or null for all/english
 
 function genreOrder(){return [...OB_GENRES].sort((a,b)=>(affinity[b]||0)-(affinity[a]||0));}
 function browsePasses(m){
-  if(browseFilters.lang!=="all"&&m.country!==LANG_COUNTRY[browseFilters.lang])return false;
+  if(browseFilters.lang==="english")return !!m.en;                 // English = available on a Western platform
+  const c=langCountry();
+  if(c&&m.country&&m.country!==c)return false;                     // guards mixed-source shelves (recs)
   return true;
 }
 
-async function loadBrowseData(){
-  _browseData={genres:{},rec:[],loved:null};
+async function buildBrowse(){
+  const data={genres:{},rec:[],loved:null};
+  const country=langCountry();
   const top=genreOrder().slice(0,8);
-  for(const g of top){ _browseData.genres[g]=await fetchGenre(g).catch(()=>[]); }
+  for(const g of top){ data.genres[g]=await fetchGenre(g,country).catch(()=>[]); }
   const acted=new Set([...seen,...want.map(w=>w.id),...watched.map(w=>w.id)]);
   const recBy=new Map();
-  genreOrder().slice(0,4).forEach(g=>(_browseData.genres[g]||[]).forEach(m=>{if(!acted.has(m.id)&&!recBy.has(m.id))recBy.set(m.id,m);}));
-  _browseData.rec=[...recBy.values()].sort((a,b)=>(b.averageScore||0)-(a.averageScore||0)).slice(0,20);
+  genreOrder().slice(0,4).forEach(g=>(data.genres[g]||[]).forEach(m=>{if(!acted.has(m.id)&&!recBy.has(m.id))recBy.set(m.id,m);}));
+  data.rec=[...recBy.values()].sort((a,b)=>(b.averageScore||0)-(a.averageScore||0)).slice(0,20);
   const fav=watched.find(m=>m.tier==="S"&&m.status!=="watching")||watched.find(m=>m.tier==="A"&&m.status!=="watching");
-  if(fav){try{const d=await fetchDetail(fav.id);if(d.recs&&d.recs.length)_browseData.loved={title:fav.title,items:d.recs};}catch(e){}}
+  if(fav){try{const d=await fetchDetail(fav.id);if(d.recs&&d.recs.length)data.loved={title:fav.title,items:d.recs};}catch(e){}}
+  return data;
 }
-async function loadSeasonData(){
-  _seasonData={all:[],genres:{}};
+async function buildSeason(){
+  const data={all:[],genres:{}};
+  const country=langCountry();
   let all=[];
-  for(let p=1;p<=3;p++){const list=await fetchSeason(p).catch(()=>[]);all.push(...list);if(list.length<50)break;}
+  for(let p=1;p<=3;p++){const list=await fetchSeason(p,country).catch(()=>[]);all.push(...list);if(list.length<50)break;}
   const byId=new Map();all.forEach(m=>{if(!byId.has(m.id))byId.set(m.id,m);});
-  _seasonData.all=[...byId.values()];
-  OB_GENRES.forEach(g=>{_seasonData.genres[g]=_seasonData.all.filter(m=>(m.genres||[]).includes(g));});
+  data.all=[...byId.values()];
+  OB_GENRES.forEach(g=>{data.genres[g]=data.all.filter(m=>(m.genres||[]).includes(g));});
+  return data;
 }
 
 function bcard(m){
@@ -74,8 +81,13 @@ function _browseItem(id){
 
 async function renderBrowse(){
   paintBrowse();
-  if(browseFilters.new&&!_seasonData&&!_seasonLoading){_seasonLoading=true;await loadSeasonData();_seasonLoading=false;if(currentView==="browse")paintBrowse();}
-  if(!browseFilters.new&&!_browseData&&!_browseLoading){_browseLoading=true;await loadBrowseData();_browseLoading=false;if(currentView==="browse")paintBrowse();}
+  const tok=++_browseToken;   // any newer render (e.g. language changed) invalidates this load
+  if(browseFilters.new){
+    if(!_seasonData){const d=await buildSeason();if(tok!==_browseToken)return;_seasonData=d;}
+  }else{
+    if(!_browseData){const d=await buildBrowse();if(tok!==_browseToken)return;_browseData=d;}
+  }
+  if(currentView==="browse")paintBrowse();
 }
 
 function _syncSettingsUI(){
@@ -88,7 +100,11 @@ function initBrowse(){
   $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");};
   $("#bsNew").onclick=()=>{browseFilters.new=!browseFilters.new;_syncSettingsUI();};
   document.querySelectorAll("#browseSettings .langopt").forEach(b=>b.onclick=()=>{browseFilters.lang=b.dataset.lang;_syncSettingsUI();});
-  $("#browseSettingsDone").onclick=()=>{$("#browseSettings").classList.remove("on");_updateGearDot();renderBrowse();};
+  $("#browseSettingsDone").onclick=()=>{
+    $("#browseSettings").classList.remove("on");_updateGearDot();
+    if(browseFilters.lang!==_loadedLang){_browseData=null;_seasonData=null;_loadedLang=browseFilters.lang;} // language changed → re-fetch the right country
+    renderBrowse();
+  };
   document.addEventListener("click",e=>{
     const c=e.target.closest?e.target.closest("#browseShelves .bcard"):null;
     if(!c)return;

@@ -100,25 +100,30 @@ async function fetchNextAiring(ids){
   }catch(e){return {};}
 }
 
-/* popular anime in a single genre — for the Discover browse shelves (all countries) */
-async function fetchGenre(genre,page){
-  const key="cache_g2_"+genre+"_"+(page||1);
+/* popular anime in a single genre — for the Discover browse shelves.
+   country (JP/CN/KR) optional; when set, pulls that country's animation. */
+async function fetchGenre(genre,country,page){
+  const cc=country||"";
+  const key="cache_g3_"+genre+"_"+cc+"_"+(page||1);
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
-  const q=`query($p:Int){Page(page:$p,perPage:24){media(sort:POPULARITY_DESC,genre_in:["${genre}"],type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED){${MEDIA_FIELDS}}}}`;
+  const cf=country?`,countryOfOrigin:${country}`:"";
+  const q=`query($p:Int){Page(page:$p,perPage:24){media(sort:POPULARITY_DESC,genre_in:["${genre}"]${cf},type:ANIME,isAdult:false,genre_not_in:["Ecchi","Hentai"],status_not:NOT_YET_RELEASED){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{p:page||1});
   const list=(data.Page.media||[]).map(trimMedia);
   store.set(key,{t:Date.now(),d:list});
   return list;
 }
 
-/* the FULL current season — every anime coming out, all countries, all statuses */
-async function fetchSeason(page){
+/* the FULL current season — every anime coming out, all statuses. country optional. */
+async function fetchSeason(page,country){
   const {s,y}=curSeason();
-  const key="cache_season_"+s+y+"_"+(page||1);
+  const cc=country||"";
+  const key="cache_season_"+s+y+"_"+cc+"_"+(page||1);
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
-  const q=`query($p:Int){Page(page:$p,perPage:50){media(season:${s},seasonYear:${y},type:ANIME,sort:POPULARITY_DESC,isAdult:false,genre_not_in:["Ecchi","Hentai"]){${MEDIA_FIELDS}}}}`;
+  const cf=country?`,countryOfOrigin:${country}`:"";
+  const q=`query($p:Int){Page(page:$p,perPage:50){media(season:${s},seasonYear:${y},type:ANIME,sort:POPULARITY_DESC,isAdult:false,genre_not_in:["Ecchi","Hentai"]${cf}){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{p:page||1});
   const list=(data.Page.media||[]).map(trimMedia);
   store.set(key,{t:Date.now(),d:list});
