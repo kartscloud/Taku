@@ -58,6 +58,11 @@ nav.bottom{
 .filterpill.active .fcount{display:grid}
 
 /* ============ deck ============ */
+.deckwrap{position:relative}
+.deck-undo{position:absolute;top:15px;left:12px;z-index:15;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(12,10,20,.5);backdrop-filter:blur(8px);color:#f5c518;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:opacity .2s,transform .12s}
+.deck-undo .icw{width:16px;height:16px}
+.deck-undo:active{transform:scale(.9)}
+.deck-undo.off{opacity:.32;pointer-events:none}
 #deck{position:relative;height:min(calc(100dvh - 232px),640px);margin:2px 0 0}
 .card{
   position:absolute;inset:0;background:var(--card);border-radius:22px;overflow:hidden;
@@ -73,7 +78,7 @@ nav.bottom{
 .card .cinfo .ic{width:16px;height:16px}
 .card .score{position:absolute;top:14px;right:14px;z-index:3;background:rgba(12,10,20,.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:5px}
 .card .score.hi{color:#22c55e}.card .score.mid{color:#f59e0b}.card .score.lo{color:#ef4444}
-.card .reason{position:absolute;top:14px;left:14px;z-index:3;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:1px;text-transform:uppercase;background:rgba(12,10,20,.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:#c9bfff}
+.card .reason{position:absolute;top:16px;left:58px;z-index:3;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:1px;text-transform:uppercase;background:rgba(12,10,20,.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:#c9bfff}
 .card .reason.new{color:#4ade80;border-color:rgba(74,222,128,.4)}
 .card .reason.airing{color:#f59e0b;border-color:rgba(245,158,11,.4)}
 .card h2{font-size:29px;font-weight:900;line-height:1.08;letter-spacing:-.7px;margin-bottom:9px;text-shadow:0 2px 14px #000}

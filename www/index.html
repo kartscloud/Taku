@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=14" />
+<link rel="stylesheet" href="css/app.css?v=15" />
 </head>
 <body>
 
@@ -29,9 +29,11 @@
       <button class="pill" data-mode="trending"><span class="icw" data-ic="flame"></span>Trending</button>
       <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     </div>
-    <div id="deck"></div>
+    <div class="deckwrap">
+      <button class="deck-undo off" id="bUndo" title="Undo last swipe" aria-label="Undo last swipe"><span class="icw" data-ic="rotate"></span></button>
+      <div id="deck"></div>
+    </div>
     <div class="actions">
-      <button class="btn xs undo off" id="bUndo" title="Undo last swipe" aria-label="Undo last swipe"><span class="icw" data-ic="rotate"></span></button>
       <button class="btn mid nope" id="bNope" title="Pass" aria-label="Pass"><span class="icw" data-ic="x"></span></button>
       <button class="btn sm watch" id="bWatch" title="Seen it — rate" aria-label="Seen it, rate"><span class="icw" data-ic="star"></span></button>
       <button class="btn big want" id="bWant" title="Want to watch" aria-label="Want to watch"><span class="icw" data-ic="heart"></span></button>
@@ -208,16 +210,16 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=14"></script>
-<script src="js/state.js?v=14"></script>
-<script src="js/api.js?v=14"></script>
-<script src="js/rec.js?v=14"></script>
-<script src="js/deck.js?v=14"></script>
-<script src="js/lists.js?v=14"></script>
-<script src="js/search.js?v=14"></script>
-<script src="js/profile.js?v=14"></script>
-<script src="js/detail.js?v=14"></script>
-<script src="js/share.js?v=14"></script>
-<script src="js/main.js?v=14"></script>
+<script src="js/data.js?v=15"></script>
+<script src="js/state.js?v=15"></script>
+<script src="js/api.js?v=15"></script>
+<script src="js/rec.js?v=15"></script>
+<script src="js/deck.js?v=15"></script>
+<script src="js/lists.js?v=15"></script>
+<script src="js/search.js?v=15"></script>
+<script src="js/profile.js?v=15"></script>
+<script src="js/detail.js?v=15"></script>
+<script src="js/share.js?v=15"></script>
+<script src="js/main.js?v=15"></script>
 </body>
 </html>
