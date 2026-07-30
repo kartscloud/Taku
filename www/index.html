@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=26" />
+<link rel="stylesheet" href="css/app.css?v=27" />
 </head>
 <body>
 
@@ -56,16 +56,11 @@
     <div class="list" id="searchList" style="display:none"></div>
   </section>
 
-  <!-- WANT -->
-  <section id="view-want" style="display:none">
-    <div class="listhead"><span class="t">Want to watch</span><span class="c" id="wantCount"></span></div>
-    <div class="list" id="wantList"></div>
-  </section>
-
-  <!-- TIERS -->
+  <!-- TIERS (Want · Watched · Watching) -->
   <section id="view-watched" style="display:none">
     <div class="segmented" id="tierTabs">
-      <button class="seg on" data-tiertab="ranked">Watched<span class="segn" id="cRanked"></span></button>
+      <button class="seg on" data-tiertab="want">Want<span class="segn" id="cWant"></span></button>
+      <button class="seg" data-tiertab="ranked">Watched<span class="segn" id="cRanked"></span></button>
       <button class="seg" data-tiertab="watching">Watching<span class="segn" id="cWatching"></span></button>
     </div>
     <div class="list" id="watchedList"></div>
@@ -121,11 +116,9 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom">
-  <button class="navbtn active" data-view="deck"><span class="icw" data-ic="cards"></span><small>Swipe</small></button>
   <button class="navbtn" data-view="browse"><span class="icw" data-ic="compass"></span><small>Discover</small></button>
-  <button class="navbtn" data-view="want"><span class="icw" data-ic="heart"></span><small>Want</small><span class="n" id="nWant" style="display:none">0</span></button>
+  <button class="navbtn navmain active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span></button>
   <button class="navbtn" data-view="watched"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
-  <button class="navbtn" data-view="profile"><span class="icw" data-ic="user"></span><small>Profile</small></button>
 </nav>
 
 <!-- FIRST-RUN GESTURE COACH -->
@@ -236,17 +229,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=26"></script>
-<script src="js/state.js?v=26"></script>
-<script src="js/api.js?v=26"></script>
-<script src="js/rec.js?v=26"></script>
-<script src="js/deck.js?v=26"></script>
-<script src="js/lists.js?v=26"></script>
-<script src="js/search.js?v=26"></script>
-<script src="js/profile.js?v=26"></script>
-<script src="js/detail.js?v=26"></script>
-<script src="js/browse.js?v=26"></script>
-<script src="js/share.js?v=26"></script>
-<script src="js/main.js?v=26"></script>
+<script src="js/data.js?v=27"></script>
+<script src="js/state.js?v=27"></script>
+<script src="js/api.js?v=27"></script>
+<script src="js/rec.js?v=27"></script>
+<script src="js/deck.js?v=27"></script>
+<script src="js/lists.js?v=27"></script>
+<script src="js/search.js?v=27"></script>
+<script src="js/profile.js?v=27"></script>
+<script src="js/detail.js?v=27"></script>
+<script src="js/browse.js?v=27"></script>
+<script src="js/share.js?v=27"></script>
+<script src="js/main.js?v=27"></script>
 </body>
 </html>

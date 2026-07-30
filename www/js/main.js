@@ -3,9 +3,9 @@ let currentView="deck";
 function setView(v){
   currentView=v;
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-  ["deck","browse","want","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
+  $("#miniAv").classList.toggle("active",v==="profile");
+  ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
-  if(v==="want")renderWant();
   if(v==="watched")renderWatched();
   if(v==="deck")renderDeck();
   if(v==="browse")renderBrowse();

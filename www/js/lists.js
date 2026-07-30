@@ -1,10 +1,9 @@
 /* taku · Want (swipe-to-reveal) + Tiers views */
 function refreshCounts(){
-  const nw=$("#nWant"),nt=$("#nWatched");
-  nw.textContent=want.length;nw.style.display=want.length?"grid":"none";
-  nt.textContent=watched.length;nt.style.display=watched.length?"grid":"none";
-  $("#wantCount").textContent=want.length+" title"+(want.length!==1?"s":"");
-  if(currentView==="want")renderWant();
+  const nt=$("#nWatched");
+  const total=want.length+watched.length;             // Tiers now holds Want + Watched + Watching
+  if(nt){nt.textContent=total;nt.style.display=total?"grid":"none";}
+  updateTierCounts();
   if(currentView==="watched")renderWatched();
 }
 
@@ -51,7 +50,7 @@ function attachSwipe(front,width,onTap){
 }
 
 function renderWant(){
-  const c=$("#wantList");_openRow=null;
+  const c=$("#watchedList");_openRow=null;
   if(!want.length){c.innerHTML=`<div class="emptylist">Nothing saved yet.<br>Swipe right on anything that looks worth your time.</div>`;return;}
   c.innerHTML=want.map(m=>`
     <div class="swrow">
@@ -74,14 +73,15 @@ function renderWant(){
   });
 }
 
-let tierTab="ranked";
+let tierTab="want";
 function updateTierCounts(){
   const w=watched.filter(m=>m.status==="watching").length, r=watched.length-w;
-  const cr=$("#cRanked"),cw=$("#cWatching");
-  if(cr)cr.textContent=r||"";if(cw)cw.textContent=w||"";
+  const cr=$("#cRanked"),cw=$("#cWatching"),cwant=$("#cWant");
+  if(cr)cr.textContent=r||"";if(cw)cw.textContent=w||"";if(cwant)cwant.textContent=want.length||"";
 }
 function renderWatched(){
   updateTierCounts();
+  if(tierTab==="want")return renderWant();
   return tierTab==="watching"?renderWatching():renderRanked();
 }
 function renderRanked(){
