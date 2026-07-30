@@ -177,9 +177,16 @@ nav.bottom{
 .bcard.sk .bposter{background:linear-gradient(100deg,var(--bg2) 30%,#241f38 50%,var(--bg2) 70%);background-size:200% 100%;animation:shim 1.2s linear infinite}
 
 /* ============ search ============ */
-.searchbar{display:flex;gap:8px;margin:8px 0 12px}
-.searchbar input{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:13px 16px;color:var(--txt);font-size:15px;outline:none}
-.searchbar input:focus{border-color:var(--accent)}
+/* unified Discover search bar */
+.discsearch{position:relative;display:flex;align-items:center;margin:6px 0 12px}
+.discsearch .dsicon{position:absolute;left:15px;width:17px;height:17px;color:var(--dim);pointer-events:none}
+.discsearch input{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:13px 44px;color:var(--txt);font-size:15px;outline:none;transition:border-color .15s}
+.discsearch input::-webkit-search-cancel-button{display:none}
+.discsearch input:focus{border-color:var(--accent)}
+.discsearch input:focus~.dsicon{color:var(--accent)}
+.dsclear{position:absolute;right:8px;width:32px;height:32px;border:0;background:transparent;color:var(--dim);cursor:pointer;display:grid;place-items:center;border-radius:50%}
+.dsclear .icw{width:15px;height:15px}
+.dsclear:active{background:var(--bg2)}
 .srow-actions{display:flex;gap:6px;flex:none}
 .sact{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;display:grid;place-items:center;transition:transform .1s}
 .sact .icw{width:16px;height:16px}

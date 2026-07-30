@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=25" />
+<link rel="stylesheet" href="css/app.css?v=26" />
 </head>
 <body>
 
@@ -38,9 +38,14 @@
     </div>
   </section>
 
-  <!-- DISCOVER (browse) -->
+  <!-- DISCOVER (search + browse + schedule, unified) -->
   <section id="view-browse" style="display:none">
-    <div class="browsehead">
+    <div class="discsearch">
+      <span class="dsicon icw" data-ic="search"></span>
+      <input id="searchInput" type="search" placeholder="Search any anime…" autocomplete="off" />
+      <button class="dsclear" id="searchClear" title="Clear" hidden><span class="icw" data-ic="x"></span></button>
+    </div>
+    <div class="browsehead" id="browseHead">
       <div class="segmented dtabs" id="browseTabs">
         <button class="seg on" data-btab="browse">Browse</button>
         <button class="seg" data-btab="schedule">Schedule</button>
@@ -48,14 +53,7 @@
       <button class="gearbtn icononly" id="browseGear" title="Filters"><span class="icw" data-ic="gear"></span></button>
     </div>
     <div id="browseShelves"></div>
-  </section>
-
-  <!-- SEARCH -->
-  <section id="view-search" style="display:none">
-    <div class="searchbar">
-      <input id="searchInput" type="search" placeholder="Search any anime…" autocomplete="off" />
-    </div>
-    <div class="list" id="searchList"><div class="searchmsg"><b>Find any anime</b>Save it, rate it, or pass — straight from the results.</div></div>
+    <div class="list" id="searchList" style="display:none"></div>
   </section>
 
   <!-- WANT -->
@@ -125,7 +123,6 @@
 <nav class="bottom">
   <button class="navbtn active" data-view="deck"><span class="icw" data-ic="cards"></span><small>Swipe</small></button>
   <button class="navbtn" data-view="browse"><span class="icw" data-ic="compass"></span><small>Discover</small></button>
-  <button class="navbtn" data-view="search"><span class="icw" data-ic="search"></span><small>Search</small></button>
   <button class="navbtn" data-view="want"><span class="icw" data-ic="heart"></span><small>Want</small><span class="n" id="nWant" style="display:none">0</span></button>
   <button class="navbtn" data-view="watched"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
   <button class="navbtn" data-view="profile"><span class="icw" data-ic="user"></span><small>Profile</small></button>
@@ -239,17 +236,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=25"></script>
-<script src="js/state.js?v=25"></script>
-<script src="js/api.js?v=25"></script>
-<script src="js/rec.js?v=25"></script>
-<script src="js/deck.js?v=25"></script>
-<script src="js/lists.js?v=25"></script>
-<script src="js/search.js?v=25"></script>
-<script src="js/profile.js?v=25"></script>
-<script src="js/detail.js?v=25"></script>
-<script src="js/browse.js?v=25"></script>
-<script src="js/share.js?v=25"></script>
-<script src="js/main.js?v=25"></script>
+<script src="js/data.js?v=26"></script>
+<script src="js/state.js?v=26"></script>
+<script src="js/api.js?v=26"></script>
+<script src="js/rec.js?v=26"></script>
+<script src="js/deck.js?v=26"></script>
+<script src="js/lists.js?v=26"></script>
+<script src="js/search.js?v=26"></script>
+<script src="js/profile.js?v=26"></script>
+<script src="js/detail.js?v=26"></script>
+<script src="js/browse.js?v=26"></script>
+<script src="js/share.js?v=26"></script>
+<script src="js/main.js?v=26"></script>
 </body>
 </html>

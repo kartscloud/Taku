@@ -1,13 +1,24 @@
-/* taku · search view */
+/* taku · search — lives inside Discover; empty box shows the browse feed, typing shows results */
 let _searchT=null,_lastQ="",_searchResults=[];
+function _searchMode(on){
+  const head=$("#browseHead"),shelves=$("#browseShelves"),list=$("#searchList"),clr=$("#searchClear");
+  if(head)head.style.display=on?"none":"";
+  if(shelves)shelves.style.display=on?"none":"";
+  if(list)list.style.display=on?"block":"none";
+  if(clr)clr.hidden=!on;
+}
 function initSearch(){
   const inp=$("#searchInput");
   inp.addEventListener("input",()=>{
     clearTimeout(_searchT);
     const q=inp.value.trim();
-    if(q.length<2){$("#searchList").innerHTML=`<div class="searchmsg"><b>Find any anime</b>Save it, rate it, or pass — straight from the results.</div>`;return;}
+    if(q.length<2){_lastQ="";_searchMode(false);return;}   // back to the discovery feed
+    _searchMode(true);
+    $("#searchList").innerHTML=`<div class="searchmsg"><div class="spin" style="margin:0 auto 12px"></div>Searching…</div>`;
     _searchT=setTimeout(()=>runSearch(q),350);
   });
+  const clr=$("#searchClear");
+  if(clr)clr.onclick=()=>{inp.value="";_lastQ="";_searchMode(false);inp.focus();};
 }
 async function runSearch(q){
   if(q===_lastQ)return;_lastQ=q;

@@ -3,14 +3,13 @@ let currentView="deck";
 function setView(v){
   currentView=v;
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-  ["deck","browse","search","want","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
+  ["deck","browse","want","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
   if(v==="want")renderWant();
   if(v==="watched")renderWatched();
   if(v==="deck")renderDeck();
   if(v==="browse")renderBrowse();
   if(v==="profile")renderProfile();
-  if(v==="search")setTimeout(()=>$("#searchInput").focus(),50);
 }
 
 function initNav(){
