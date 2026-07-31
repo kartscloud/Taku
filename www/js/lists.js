@@ -73,16 +73,20 @@ function renderWant(){
   });
 }
 
-let tierTab="want";
+let tierTab="list";      // list | want
+let listTab="watching";  // within List: watching | ranked
 function updateTierCounts(){
   const w=watched.filter(m=>m.status==="watching").length, r=watched.length-w;
-  const cr=$("#cRanked"),cw=$("#cWatching"),cwant=$("#cWant");
-  if(cr)cr.textContent=r||"";if(cw)cw.textContent=w||"";if(cwant)cwant.textContent=want.length||"";
+  const cr=$("#cRanked"),cw=$("#cWatching"),cwant=$("#cWant"),cl=$("#cList");
+  if(cr)cr.textContent=r||"";if(cw)cw.textContent=w||"";
+  if(cwant)cwant.textContent=want.length||"";
+  if(cl)cl.textContent=watched.length||"";
 }
 function renderWatched(){
   updateTierCounts();
+  const sub=$("#listSub");if(sub)sub.style.display=tierTab==="list"?"":"none";
   if(tierTab==="want")return renderWant();
-  return tierTab==="watching"?renderWatching():renderRanked();
+  return listTab==="watching"?renderWatching():renderRanked();
 }
 function renderRanked(){
   const c=$("#watchedList");
@@ -115,7 +119,7 @@ async function renderWatching(){
       <button class="x" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
   const map=await fetchNextAiring(list.map(m=>m.id));
-  if(currentView!=="watched"||tierTab!=="watching")return;
+  if(currentView!=="watched"||tierTab!=="list"||listTab!=="watching")return;
   list.forEach(m=>{
     const el=c.querySelector(`[data-air="${m.id}"]`);if(!el)return;
     const info=map[m.id];
@@ -129,6 +133,9 @@ document.addEventListener("click",e=>{
   // tier sub-tabs (Watched / Watching)
   const seg=e.target.closest?e.target.closest("#tierTabs .seg"):null;
   if(seg){tierTab=seg.dataset.tiertab;document.querySelectorAll("#tierTabs .seg").forEach(s=>s.classList.toggle("on",s===seg));renderWatched();return;}
+  // Watching / Watched buttons inside List
+  const sb=e.target.closest?e.target.closest("#listSub .subbtn"):null;
+  if(sb){listTab=sb.dataset.listtab;document.querySelectorAll("#listSub .subbtn").forEach(s=>s.classList.toggle("on",s===sb));renderWatched();return;}
 
   const t=e.target.closest?e.target.closest("[data-sw-watched],[data-sw-unadd],[data-watch-remove],[data-rewatch],[data-open-watched],[data-finish]"):null;
   if(!t)return;const d=t.dataset;
