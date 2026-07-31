@@ -75,7 +75,9 @@ nav.bottom{
 .deck-undo{top:15px}
 .deck-want{top:59px}
 .deck-undo.off{opacity:.32;pointer-events:none}
-#deck{position:relative;height:min(calc(100dvh - 232px),640px);margin:2px 0 0}
+/* dvh is the FULL viewport — it does not exclude the notch/home-indicator insets,
+   so subtract them or the action row slides under the bottom nav on notched iPhones */
+#deck{position:relative;height:min(calc(100dvh - var(--sat) - var(--sab) - 232px),640px);margin:2px 0 0}
 .card{
   position:absolute;inset:0;background:var(--card);border-radius:22px;overflow:hidden;
   border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.55);
