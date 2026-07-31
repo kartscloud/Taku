@@ -108,7 +108,7 @@ nav.bottom{
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Tinder-style floating actions: overlap the card bottom, glass circles */
-.actions{display:flex;align-items:center;justify-content:center;gap:14px;position:relative;z-index:20;margin-top:-38px;pointer-events:none}
+.actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px;position:relative;z-index:20;margin-top:-38px;pointer-events:none}
 .btn{border:1px solid rgba(255,255,255,.14);border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:transform .12s, box-shadow .12s;background:rgba(18,14,30,.62);backdrop-filter:blur(10px);pointer-events:auto;box-shadow:0 10px 26px rgba(0,0,0,.45)}
 .btn:active{transform:scale(.88)}
 .btn.big{width:64px;height:64px}
@@ -124,7 +124,7 @@ nav.bottom{
 .btn.want{color:#f5c518}
 .btn.watch{color:var(--want)}
 .btn.watch .ic{stroke-width:2.6}
-.btn.undo{color:var(--dim)}
+.btn.undo{color:#f5c518}
 .btn.off{opacity:.35;pointer-events:none}
 
 /* ============ discover / browse ============ */
