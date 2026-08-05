@@ -5,7 +5,7 @@ function setView(v){
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   $("#miniAv").classList.toggle("active",v==="profile");
   $("#filterBtn").style.display=v==="deck"?"":"none";   // genre filter only applies to the deck
-  document.body.classList.toggle("nav-side",v==="browse"); // Discover: island goes vertical on the right
+  document.body.classList.toggle("nav-side",v==="deck");  // Swipe: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
   if(v==="watched")renderWatched();
@@ -106,6 +106,7 @@ sortWatched();
 hydrateIcons();
 initNav();initSearch();initProfile();initOnboard();initCoach();initBrowse();
 refreshCounts();updateFilterBadge();
+document.body.classList.toggle("nav-side",currentView==="deck"); // boot lands on the deck without calling setView
 $("#miniAv").textContent=profile.avatar||"🍥";
 if(store.get("onboarded",false))renderDeck();
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{}); // ask the browser not to evict our data
