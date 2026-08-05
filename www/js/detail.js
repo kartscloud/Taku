@@ -85,9 +85,20 @@ function renderDetail(m,full){
         </div>
         <div class="rectitle">${mTitle(r)}</div>
       </div>`).join("");
+    // sequels / prequels / side stories — the "is there a season 2" question
+    const rels=(m.relations||[]).map(r=>`
+      <div class="reccard" data-rec="${r.id}">
+        <div class="recposter" style="background-image:url('${(r.coverImage&&r.coverImage.large)||""}')">
+          <span class="relbadge ${r.rel==="SEQUEL"||r.rel==="PREQUEL"?"key":""}">${r.relLabel}</span>
+          ${r.averageScore?`<span class="recscore">${(r.averageScore/10).toFixed(1)}</span>`:""}
+          <button class="recadd" data-recwant="${r.id}" title="Want to watch">${icSvg("heart")}</button>
+        </div>
+        <div class="rectitle">${mTitle(r)}</div>
+      </div>`).join("");
     const tags=(m.tags||[]).map(_chip).join("");
     reel=`<div id="detailReel">
       ${tags?`<div class="dsection tight"><h4>Tags</h4><div class="dmeta">${tags}</div></div>`:""}
+      ${rels?`<div class="dsection"><h4>Series <span class="dsmall">— ${m.relations.length} related</span></h4><div class="recscroll relscroll">${rels}</div></div>`:""}
       <div class="dsection"><h4>Characters ${chars?"":'<span class="dsmall">— none listed</span>'}</h4>
         <div class="charscroll">${chars||""}</div>
         <div class="dnote mbti-note">MBTI is community-sourced — shown for well-known characters, blank otherwise.</div>
@@ -136,7 +147,7 @@ function renderDetail(m,full){
 
   $("#dClose").onclick=closeDetail;
   enableDragScroll($("#detailSheet").querySelector(".charscroll"));
-  enableDragScroll($("#detailSheet").querySelector(".recscroll"));
+  $("#detailSheet").querySelectorAll(".recscroll").forEach(el=>enableDragScroll(el));
   const b=$("#dBack");if(b)b.onclick=()=>{_detailStack.pop();const prev=_detailStack[_detailStack.length-1];openDetails(prev,false);};
   $("#detailSheet").querySelectorAll(".dact").forEach(btn=>btn.onclick=()=>{
     const a=btn.dataset.da;
@@ -147,6 +158,12 @@ function renderDetail(m,full){
   });
 }
 
+/* both rails ("Series" and "More like this") use data-rec, so search both pools */
+function _findRelated(cur,id){
+  if(!cur)return null;
+  return (cur.relations||[]).find(x=>x.id==id)||(cur.recs||[]).find(x=>x.id==id)||null;
+}
+
 /* recommendation navigation + quick-add (delegated) */
 document.addEventListener("click",e=>{
   if(!e.target.closest)return;
@@ -154,7 +171,7 @@ document.addEventListener("click",e=>{
   if(add){
     e.stopPropagation();
     const cur=_detailStack[_detailStack.length-1];
-    const r=(cur&&cur.recs||[]).find(x=>x.id==add.dataset.recwant);
+    const r=_findRelated(cur,add.dataset.recwant);
     if(r){addWant(slim(r));bumpAffinity(r.genres,1.5);markSeen(r.id);add.classList.add("done");toast("Added to Want");refreshCounts();}
     return;
   }
@@ -163,7 +180,7 @@ document.addEventListener("click",e=>{
   const rec=e.target.closest("[data-rec]");
   if(rec&&$("#detailModal").classList.contains("on")){
     const cur=_detailStack[_detailStack.length-1];
-    const r=(cur&&cur.recs||[]).find(x=>x.id==rec.dataset.rec);
+    const r=_findRelated(cur,rec.dataset.rec);
     if(r)openDetails(r);
   }
 });

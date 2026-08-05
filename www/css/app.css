@@ -350,6 +350,11 @@ nav.bottom{
 .recadd.done{color:var(--want);background:rgba(34,197,94,.25)}
 .recadd.done .ic{fill:currentColor;stroke:none}
 .rectitle{font-size:12px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* relation type badge — sequel/prequel get the accent, side material stays muted */
+.relbadge{position:absolute;bottom:7px;left:7px;font:800 8.5px ui-monospace,monospace;letter-spacing:.4px;
+  text-transform:uppercase;padding:4px 7px;border-radius:7px;background:rgba(12,10,20,.85);
+  backdrop-filter:blur(4px);color:#cfc9e6;border:1px solid rgba(255,255,255,.14)}
+.relbadge.key{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
 /* skeletons */
 .sk{background:linear-gradient(100deg,var(--bg2) 30%,#241f38 50%,var(--bg2) 70%);background-size:200% 100%;animation:shim 1.2s linear infinite;border:1px solid var(--line)}
 .charcard.sk{height:150px;border-radius:14px}

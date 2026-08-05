@@ -70,6 +70,7 @@ async function fetchDetail(id){
   if(_detailCache.has(id))return _detailCache.get(id);
   const q=`query($id:Int){Media(id:$id){${MEDIA_FIELDS}
     tags{name rank isGeneralSpoiler isAdult}
+    relations{edges{relationType(version:2) node{id type title{english romaji} coverImage{large} averageScore seasonYear format status episodes}}}
     characters(sort:[ROLE,RELEVANCE],perPage:10){edges{role node{id name{full} image{medium} gender age description(asHtml:false)}}}
     recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id title{english romaji} coverImage{large} averageScore seasonYear format genres}}}
   }}`;
@@ -83,10 +84,33 @@ async function fetchDetail(id){
       gender:e.node.gender,age:e.node.age,
       desc:(e.node.description||"").replace(/<[^>]*>/g,"").replace(/\[([^\]]+)\]\([^)]*\)/g,"$1").replace(/[_~]/g,"").trim()
     })),
-    recs:(m.recommendations&&m.recommendations.nodes||[]).map(n=>n.mediaRecommendation).filter(Boolean).map(trimMedia)
+    recs:(m.recommendations&&m.recommendations.nodes||[]).map(n=>n.mediaRecommendation).filter(Boolean).map(trimMedia),
+    relations:parseRelations(m.relations)
   };
   _detailCache.set(id,detail);
   return detail;
+}
+
+/* Series relations — sequels/prequels/side stories.
+   Chronological-ish order so the row reads like a timeline: what came before,
+   then this show's continuations, then the side material. ANIME only — the
+   graph also returns the source manga/novel, which isn't watchable. */
+const REL_ORDER=["PREQUEL","PARENT","SEQUEL","SIDE_STORY","SPIN_OFF","ALTERNATIVE","SUMMARY"];
+const REL_LABEL={PREQUEL:"Prequel",PARENT:"Parent story",SEQUEL:"Sequel",SIDE_STORY:"Side story",
+                 SPIN_OFF:"Spin-off",ALTERNATIVE:"Alt version",SUMMARY:"Recap"};
+function parseRelations(rel){
+  return (rel&&rel.edges||[])
+    .filter(e=>e&&e.node&&e.node.type==="ANIME"&&REL_ORDER.includes(e.relationType))
+    .map(e=>({
+      id:e.node.id,title:e.node.title,coverImage:e.node.coverImage,
+      averageScore:e.node.averageScore,seasonYear:e.node.seasonYear,
+      format:e.node.format,status:e.node.status,episodes:e.node.episodes,
+      rel:e.relationType,relLabel:REL_LABEL[e.relationType]
+    }))
+    .sort((a,b)=>{
+      const d=REL_ORDER.indexOf(a.rel)-REL_ORDER.indexOf(b.rel);
+      return d||((a.seasonYear||0)-(b.seasonYear||0));
+    });
 }
 
 /* next-airing episode for a set of ids (for the Watching list) — always fresh, never cached */
