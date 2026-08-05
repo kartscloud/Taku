@@ -66,16 +66,43 @@ function shelfHTML(title,items,sub){
 }
 function _loadingHTML(t){return `<div class="browseload"><div class="spin"></div><p>${t||"Loading…"}</p></div>`;}
 
+/* full-bleed spotlight at the top of the feed — the tall cover art reads far better
+   than AniList's banners here (those are ~1900x400 and go to mush when cropped tall) */
+function heroHTML(m,kicker){
+  if(!m)return "";
+  const img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
+  const inWant=want.some(x=>x.id===m.id);
+  const meta=[m.format,m.seasonYear,(m.genres||[]).slice(0,2).join(" · ")].filter(Boolean).join("  ·  ");
+  const score=m.averageScore?`<b>★ ${(m.averageScore/10).toFixed(1)}</b> · `:"";
+  return `<div class="hero" data-bopen="${m.id}" style="background-image:url('${img}')">
+    <div class="heroin">
+      <span class="herokick">${score}${kicker||"Top pick for you"}</span>
+      <h2>${mTitle(m)}</h2>
+      <div class="herometa">${meta}</div>
+      <div class="heroacts">
+        <button class="herobtn primary${inWant?" done":""}" data-hwant="${m.id}"><span class="icw">${icSvg("star")}</span>${inWant?"Saved":"Want"}</button>
+        <button class="herobtn" data-bopen="${m.id}"><span class="icw">${icSvg("info")}</span>Details</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 function paintBrowse(){
   const host=$("#browseShelves");
   if(browseFilters.new){
     if(!_seasonData){host.innerHTML=_loadingHTML("Pulling the full "+seasonLabel()+" lineup…");return;}
-    let html=shelfHTML("New this season",_seasonData.all,seasonLabel()+" · "+_seasonData.all.filter(browsePasses).length+" titles");
+    const pool=_seasonData.all.filter(browsePasses);
+    const star=pool.slice().sort((a,b)=>(b.averageScore||0)-(a.averageScore||0))[0];
+    let html=heroHTML(star,"Biggest of "+seasonLabel());
+    html+=shelfHTML("New this season",_seasonData.all.filter(m=>!star||m.id!==star.id),seasonLabel()+" · "+pool.length+" titles");
     genreOrder().forEach(g=>{html+=shelfHTML(g,_seasonData.genres[g]);});
     host.innerHTML=html||`<div class="emptylist">No titles match this language filter this season.</div>`;
   }else{
     if(!_browseData){host.innerHTML=_loadingHTML("Building your Discover feed…");return;}
-    let html=shelfHTML("Recommended for you",_browseData.rec,"from your taste");
+    const rec=_browseData.rec.filter(browsePasses);
+    const star=rec[0];                                   // rec is already score-sorted
+    let html=heroHTML(star);
+    html+=shelfHTML("Recommended for you",_browseData.rec.filter(m=>!star||m.id!==star.id),"from your taste");
     if(_browseData.loved)html+=shelfHTML("Because you loved "+_browseData.loved.title,_browseData.loved.items);
     genreOrder().slice(0,8).forEach(g=>{html+=shelfHTML(g,_browseData.genres[g]);});
     host.innerHTML=html||`<div class="emptylist">Nothing matches this filter.</div>`;
@@ -154,7 +181,18 @@ function initBrowse(){
     buzz(6);$("#browseShelves").scrollTop=0;renderBrowse();
   });
   document.addEventListener("click",e=>{
-    const c=e.target.closest?e.target.closest("#browseShelves [data-bopen]"):null;
+    if(!e.target.closest)return;
+    // hero Want — must win over the hero's own data-bopen
+    const hw=e.target.closest("[data-hwant]");
+    if(hw){
+      e.stopPropagation();
+      const m=_browseItem(hw.dataset.hwant);
+      if(m){addWant(slim(m));bumpAffinity(m.genres,1.5);markSeen(m.id);
+        hw.classList.add("done");hw.innerHTML=`<span class="icw">${icSvg("star")}</span>Saved`;
+        buzz(8);toast("Added to Want");refreshCounts();}
+      return;
+    }
+    const c=e.target.closest("#browseShelves [data-bopen]");
     if(!c)return;
     const rail=c.closest(".shelfscroll");if(rail&&rail._sc)return;
     const m=_browseItem(c.dataset.bopen);
