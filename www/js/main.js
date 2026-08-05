@@ -4,6 +4,8 @@ function setView(v){
   currentView=v;
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   $("#miniAv").classList.toggle("active",v==="profile");
+  $("#filterBtn").style.display=v==="deck"?"":"none";   // genre filter only applies to the deck
+  document.body.classList.toggle("nav-side",v==="browse"); // Discover: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
   if(v==="watched")renderWatched();

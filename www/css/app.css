@@ -3,7 +3,7 @@
   --txt:#f4f1ff; --dim:#a79fc4; --accent:#8b5cf6; --accent2:#ec4899;
   --want:#22c55e; --nope:#ef4444; --watch:#f59e0b;
   --s:#ff4d6d; --a:#ff9a3c; --b:#ffd23f; --c:#4ade80; --d:#60a5fa;
-  --nav-h:64px;
+  --nav-h:66px;   /* floating island: 54px button + 6px padding top/bottom */
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -30,28 +30,47 @@ header{width:100%;max-width:480px;display:flex;align-items:center;justify-conten
 main{width:100%;max-width:480px;flex:1;padding:4px 14px calc(var(--nav-h) + var(--sab) + 18px);display:flex;flex-direction:column}
 
 /* ============ bottom nav ============ */
+/* floating island nav — frees the full width of the screen for content */
 nav.bottom{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;z-index:40;
-  display:flex;background:rgba(15,12,24,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);
-  padding-bottom:var(--sab);height:calc(var(--nav-h) + var(--sab));
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 9px);
+  width:auto;z-index:40;display:flex;align-items:center;gap:4px;
+  background:rgba(24,20,42,.78);backdrop-filter:blur(22px) saturate(150%);
+  border:1px solid rgba(255,255,255,.11);border-radius:999px;padding:6px 8px;
+  box-shadow:0 12px 36px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.4);
 }
-.navbtn{flex:1;border:0;background:transparent;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;transition:color .15s}
+.navbtn{flex:none;width:66px;border:0;background:transparent;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:color .15s;border-radius:999px;padding:7px 0}
 .navbtn .icw{width:22px;height:22px}
 .navbtn.active .ic{stroke-width:2.4}
 .navbtn small{font-size:9.5px;font-weight:600;letter-spacing:.4px}
 .navbtn.active{color:var(--txt)}
-.navbtn.active::before{content:"";position:absolute;top:0;width:26px;height:3px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.navbtn.active::before{content:"";position:absolute;bottom:2px;width:16px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 .navbtn .n{position:absolute;top:7px;right:calc(50% - 22px);background:var(--accent2);color:#fff;font-size:8.5px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
 /* Tinder-style raised center Swipe */
-.navbtn.navmain{flex:0 0 auto;align-self:center;width:62px;height:62px;border-radius:50%;
+.navbtn.navmain{flex:0 0 auto;align-self:center;width:54px;height:54px;padding:0;border-radius:50%;
   background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
-  box-shadow:0 7px 18px rgba(139,92,246,.5),0 0 0 5px var(--bg);
-  transform:translateY(-16px);transition:transform .12s ease}
-.navbtn.navmain .icw{width:27px;height:27px}
-.navbtn.navmain:active{transform:translateY(-16px) scale(.92)}
+  box-shadow:0 6px 16px rgba(139,92,246,.55);
+  transform:none;transition:transform .12s ease}
+.navbtn.navmain .icw{width:25px;height:25px}
+.navbtn.navmain:active{transform:scale(.92)}
 .navbtn.navmain.active{color:#fff}
 .navbtn.navmain.active::before{display:none}
 .miniav.active{border-color:var(--accent);color:var(--accent)}
+
+/* Discover: shrink the island and stand it up on the right so the feed runs
+   the full height of the screen */
+body.nav-side nav.bottom{
+  left:auto;right:8px;bottom:auto;top:50%;transform:translateY(-50%);
+  flex-direction:column;gap:2px;padding:6px 5px;border-radius:999px;
+}
+body.nav-side .navbtn{width:46px;padding:6px 0}
+body.nav-side .navbtn small{display:none}
+body.nav-side .navbtn .icw{width:19px;height:19px}
+body.nav-side .navbtn.navmain{width:42px;height:42px}
+body.nav-side .navbtn.navmain .icw{width:20px;height:20px}
+body.nav-side .navbtn.active{color:var(--txt)}
+body.nav-side .navbtn.active::before{bottom:auto;left:2px;width:3px;height:16px;top:50%;transform:translateY(-50%)}
+body.nav-side .navbtn .n{top:2px;right:4px}
+body.nav-side main{padding-bottom:22px}    /* nav no longer sits at the bottom */
 
 /* ============ mode pills ============ */
 .modes{display:flex;gap:7px;margin:8px 0 8px;overflow-x:auto;scrollbar-width:none}
@@ -63,6 +82,8 @@ nav.bottom{
 .genregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:2px 0 20px}
 .genregrid .ob-g{width:100%;text-align:center;padding:11px 6px;font-size:12.5px;border-radius:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .filterpill{margin-left:auto}
+.hactions{display:flex;align-items:center;gap:9px}
+.hactions .filterpill{margin-left:0;padding:7px 13px;font-size:12px}
 .filterpill.active{background:transparent;border-color:var(--accent);color:var(--accent);box-shadow:none}
 .fcount{background:var(--accent);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:none;place-items:center;padding:0 4px}
 .filterpill.active .fcount{display:grid}
@@ -77,7 +98,7 @@ nav.bottom{
 .deck-undo.off{opacity:.32;pointer-events:none}
 /* dvh is the FULL viewport — it does not exclude the notch/home-indicator insets,
    so subtract them or the action row slides under the bottom nav on notched iPhones */
-#deck{position:relative;height:min(calc(100dvh - var(--sat) - var(--sab) - 232px),640px);margin:2px 0 0}
+#deck{position:relative;height:min(calc(100dvh - var(--sat) - var(--sab) - 162px),780px);margin:2px 0 0}
 .card{
   position:absolute;inset:0;background:var(--card);border-radius:22px;overflow:hidden;
   border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.55);
