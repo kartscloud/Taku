@@ -103,7 +103,7 @@ async function buildShareCard(prof){
 
   // top-rated covers (up to 3, best tiers first) — y1662..1902
   const top=[...watched].slice(0,3);
-  const imgs=await Promise.all(top.map(m=>m.img&&m.img!=="x"?_loadImg(m.img,6500):Promise.resolve(null)));
+  const imgs=await Promise.all(top.map(m=>m.img&&m.img!=="x"?_loadImg(m.ximg||hiRes(m.img),6500):Promise.resolve(null)));
   const cw=143,ch=200,gap=34,CY=1656,totalW=imgs.filter(Boolean).length*(cw+gap)-gap; // bars end 1626, footer top ~1879
   let x=(W-Math.max(totalW,0))/2;
   imgs.forEach((img,i)=>{

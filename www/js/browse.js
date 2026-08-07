@@ -111,7 +111,7 @@ async function buildSeason(){
 }
 
 function bcard(m){
-  const img=(m.coverImage&&m.coverImage.large)||"";
+  const img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
   const flag=m.country&&m.country!=="JP"?`<span class="btag cn">${m.country}</span>`:"";
   return `<div class="bcard" data-bopen="${m.id}">
     <div class="bposter" style="background-image:url('${img}')">
@@ -203,7 +203,7 @@ function yearBannerHTML(){
   </div>`;
 }
 function ycard(m,i){
-  const img=(m.coverImage&&m.coverImage.large)||"";
+  const img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
   const flag=m.country&&m.country!=="JP"?`<span class="schflag">${m.country}</span>`:"";
   return `<div class="schcard" data-bopen="${m.id}">
     <div class="schart" style="background-image:url('${img}')">
@@ -252,7 +252,7 @@ function exitYear(){
 
 /* weekly airing schedule (animeschedule-style poster grid) */
 function schcard(e){
-  const m=e.m,img=(m.coverImage&&m.coverImage.large)||"";
+  const m=e.m,img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
   const flag=m.country&&m.country!=="JP"?`<span class="schflag">${m.country}</span>`:"";
   const score=m.averageScore?`<span class="schscore">${(m.averageScore/10).toFixed(1)}</span>`:"";
   return `<div class="schcard" data-bopen="${m.id}">
@@ -439,6 +439,6 @@ function initBrowse(){
     if(!c)return;
     const rail=c.closest(".shelfscroll");if(rail&&rail._sc)return;
     const m=_browseItem(c.dataset.bopen);
-    if(m)openDetails({id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,genres:m.genres});
+    if(m)openDetails({id:m.id,title:mTitle(m),img:m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large),genres:m.genres});
   });
 }

@@ -104,5 +104,10 @@ function sortWatched(){
     ||(b.score||0)-(a.score||0));
 }
 
-function slim(m){return{id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,score:m.averageScore,year:m.seasonYear,eps:m.episodes||null,dur:m.duration||null,genres:(m.genres||[]).slice(0,3)};}
+/* AniList's CDN paths are offset from its API names: the API's "large" serves
+   from /cover/medium/ (230px) and "extraLarge" from /cover/large/ (460px, its
+   max). Saved records made before ximg existed only kept the small URL — same
+   filename one folder up IS its 2x version, so old libraries upgrade for free. */
+function hiRes(u){return u&&u.indexOf("/cover/medium/")>=0?u.replace("/cover/medium/","/cover/large/"):u;}
+function slim(m){return{id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,ximg:m.coverImage&&m.coverImage.extraLarge,score:m.averageScore,year:m.seasonYear,eps:m.episodes||null,dur:m.duration||null,genres:(m.genres||[]).slice(0,3)};}
 function mTitle(m){return (m.title&&(m.title.english||m.title.romaji))||m.title||"Untitled";}

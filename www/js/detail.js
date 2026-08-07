@@ -79,7 +79,7 @@ function renderDetail(m,full){
     }).join("");
     const recs=(m.recs||[]).slice(0,12).map(r=>`
       <div class="reccard" data-rec="${r.id}">
-        <div class="recposter" style="background-image:url('${(r.coverImage&&r.coverImage.large)||""}')">
+        <div class="recposter" style="background-image:url('${(r.coverImage&&(r.coverImage.extraLarge||r.coverImage.large))||""}')">
           ${r.averageScore?`<span class="recscore">${(r.averageScore/10).toFixed(1)}</span>`:""}
           <button class="recadd" data-recwant="${r.id}" title="Want to watch">${icSvg("heart")}</button>
         </div>
@@ -88,7 +88,7 @@ function renderDetail(m,full){
     // sequels / prequels / side stories — the "is there a season 2" question
     const rels=(m.relations||[]).map(r=>`
       <div class="reccard" data-rec="${r.id}">
-        <div class="recposter" style="background-image:url('${(r.coverImage&&r.coverImage.large)||""}')">
+        <div class="recposter" style="background-image:url('${(r.coverImage&&(r.coverImage.extraLarge||r.coverImage.large))||""}')">
           <span class="relbadge ${r.rel==="SEQUEL"||r.rel==="PREQUEL"?"key":""}">${r.relLabel}</span>
           ${r.averageScore?`<span class="recscore">${(r.averageScore/10).toFixed(1)}</span>`:""}
           <button class="recadd" data-recwant="${r.id}" title="Want to watch">${icSvg("heart")}</button>

@@ -72,9 +72,9 @@ async function fetchDetail(id){
   if(_detailCache.has(id))return _detailCache.get(id);
   const q=`query($id:Int){Media(id:$id){${MEDIA_FIELDS}
     tags{name rank isGeneralSpoiler isAdult}
-    relations{edges{relationType(version:2) node{id type title{english romaji} coverImage{large} averageScore seasonYear format status episodes}}}
-    characters(sort:[ROLE,RELEVANCE],perPage:10){edges{role node{id name{full} image{medium} gender age description(asHtml:false)}}}
-    recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id title{english romaji} coverImage{large} averageScore seasonYear format genres}}}
+    relations{edges{relationType(version:2) node{id type title{english romaji} coverImage{large extraLarge} averageScore seasonYear format status episodes}}}
+    characters(sort:[ROLE,RELEVANCE],perPage:10){edges{role node{id name{full} image{large} gender age description(asHtml:false)}}}
+    recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id title{english romaji} coverImage{large extraLarge} averageScore seasonYear format genres}}}
   }}`;
   const data=await gql(q,{id});
   const m=data.Media;
@@ -82,7 +82,7 @@ async function fetchDetail(id){
     ...trimMedia(m),
     tags:(m.tags||[]).filter(t=>!t.isAdult&&!t.isGeneralSpoiler&&t.rank>=60).slice(0,8).map(t=>t.name),
     characters:(m.characters&&m.characters.edges||[]).map(e=>({
-      id:e.node.id,name:e.node.name.full,role:e.role,img:e.node.image&&e.node.image.medium,
+      id:e.node.id,name:e.node.name.full,role:e.role,img:e.node.image&&e.node.image.large,
       gender:e.node.gender,age:e.node.age,
       desc:(e.node.description||"").replace(/<[^>]*>/g,"").replace(/\[([^\]]+)\]\([^)]*\)/g,"$1").replace(/[_~]/g,"").trim()
     })),
@@ -186,12 +186,12 @@ async function fetchSchedule(weekOffset){
   const off=weekOffset||0;                          // 0 = next 7 days, -1 = last week, +1 = week after
   const base=Math.floor(Date.now()/1000);
   const now=base+off*7*86400, end=now+7*86400;
-  const key="cache_sched2_"+off+"_"+Math.floor(base/3600);   // refresh hourly so countdowns stay honest
+  const key="cache_sched3_"+off+"_"+Math.floor(base/3600);   // refresh hourly so countdowns stay honest
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
   const out=[];
   for(let p=1;p<=5;p++){
-    const q=`query($s:Int,$e:Int,$p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage} airingSchedules(airingAt_greater:$s,airingAt_lesser:$e,sort:TIME){airingAt episode media{id title{english romaji} coverImage{large} format countryOfOrigin averageScore popularity genres isAdult externalLinks{site type}}}}}`;
+    const q=`query($s:Int,$e:Int,$p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage} airingSchedules(airingAt_greater:$s,airingAt_lesser:$e,sort:TIME){airingAt episode media{id title{english romaji} coverImage{large extraLarge} format countryOfOrigin averageScore popularity genres isAdult externalLinks{site type}}}}}`;
     let data;try{data=await gql(q,{s:now,e:end,p});}catch(e){break;}
     (data.Page.airingSchedules||[]).forEach(a=>{
       const md=a.media;if(!md||md.isAdult)return;
