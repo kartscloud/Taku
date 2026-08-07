@@ -300,6 +300,45 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .listhead .c{font-size:12px;color:var(--dim)}
 .emptylist{text-align:center;color:var(--dim);padding:50px 20px;font-size:14px;line-height:1.6}
 
+/* "N shows need a tier" prompt in Tiers */
+.rankcta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(236,72,153,.16));
+  border:1px solid rgba(139,92,246,.45);border-radius:14px;padding:13px 14px;margin-bottom:12px;color:var(--txt)}
+.rankcta:active{transform:scale(.985)}
+.rankcta .rcicon{width:22px;height:22px;color:var(--accent);flex:none}
+.rankcta .rctext{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rankcta .rctext b{font-size:14px;font-weight:800}
+.rankcta .rctext span{font-size:11.5px;color:var(--dim)}
+.rankcta .rcgo{width:16px;height:16px;color:var(--accent);flex:none}
+
+/* full-screen rank flow */
+.rankmode{position:fixed;inset:0;z-index:95;background:var(--bg);display:flex;flex-direction:column;
+  padding:calc(var(--sat) + 10px) 16px calc(var(--sab) + 14px);opacity:0;transition:opacity .2s;
+  pointer-events:none}   /* dead during the fade-out so late taps can't re-tier the last card */
+.rankmode.on{opacity:1;pointer-events:auto}
+.rankhead{display:flex;align-items:center;gap:12px;flex:none;margin-bottom:12px}
+.rankx{width:36px;height:36px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--bg2);
+  color:var(--txt);display:grid;place-items:center;cursor:pointer}
+.rankx .icw{width:15px;height:15px}
+.rankprog{flex:1}
+.rankprog b{display:block;font:800 11px ui-monospace,monospace;color:var(--dim);margin-bottom:5px}
+.rankbar{height:4px;border-radius:3px;background:var(--bg2);overflow:hidden}
+.rankbar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  width:0;transition:width .25s ease}
+.rankart{flex:1;min-height:0;border-radius:18px;background:var(--bg2) center/cover;border:1px solid var(--line);
+  position:relative;display:flex;align-items:flex-end;overflow:hidden;box-shadow:0 12px 34px rgba(0,0,0,.5)}
+.rankart::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(8,6,14,.95) 4%,rgba(8,6,14,.55) 30%,transparent 62%)}
+.rankmeta{position:relative;z-index:2;padding:16px 16px 14px;width:100%}
+.rankmeta h2{font-size:23px;font-weight:800;letter-spacing:-.6px;line-height:1.1;margin-bottom:6px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ranksub{font-size:12px;color:#cfc9e6;font-weight:600}
+.ranktiers{display:flex;gap:7px;flex:none;margin-top:14px}
+.ranktiers .tierbtn{flex:1}
+.rankskip{flex:none;margin-top:10px;border:0;background:transparent;color:var(--dim);font-size:12.5px;
+  font-weight:700;padding:9px;cursor:pointer;font-family:inherit}
+.rankskip:active{color:var(--txt)}
+
 /* segmented controls (Tiers tabs, rate status) */
 .segmented{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;margin:8px 0 12px}
 .segmented .seg,.segmented .segs{flex:1;border:0;background:transparent;color:var(--dim);font-size:13px;font-weight:700;padding:9px 8px;border-radius:9px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}

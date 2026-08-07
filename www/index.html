@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=43" />
+<link rel="stylesheet" href="css/app.css?v=45" />
 </head>
 <body>
 
@@ -123,6 +123,28 @@
   <button class="navbtn navmain active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span></button>
   <button class="navbtn" data-view="watched"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
 </nav>
+
+<!-- RANK MODE — tier your unrated shows one tap at a time -->
+<div class="rankmode" id="rankMode" hidden>
+  <div class="rankhead">
+    <button class="rankx" id="rankClose" title="Close"><span class="icw" data-ic="x"></span></button>
+    <div class="rankprog"><b id="rankCount">0 of 0</b><div class="rankbar"><i id="rankFill"></i></div></div>
+  </div>
+  <div class="rankart" id="rankArt">
+    <div class="rankmeta">
+      <h2 id="rankTitleTxt">—</h2>
+      <div class="ranksub" id="rankSub"></div>
+    </div>
+  </div>
+  <div class="ranktiers" id="rankTiers">
+    <button class="tierbtn" style="background:var(--s)" data-rtier="S">S<small>peak</small></button>
+    <button class="tierbtn" style="background:var(--a)" data-rtier="A">A<small>great</small></button>
+    <button class="tierbtn" style="background:var(--b)" data-rtier="B">B<small>good</small></button>
+    <button class="tierbtn" style="background:var(--c)" data-rtier="C">C<small>meh</small></button>
+    <button class="tierbtn" style="background:var(--d)" data-rtier="D">D<small>nah</small></button>
+  </div>
+  <button class="rankskip" id="rankSkip">Skip this one</button>
+</div>
 
 <!-- SWIPE SETTINGS -->
 <div class="modal" id="swipeSettings">
@@ -267,17 +289,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=43"></script>
-<script src="js/state.js?v=43"></script>
-<script src="js/api.js?v=43"></script>
-<script src="js/rec.js?v=43"></script>
-<script src="js/deck.js?v=43"></script>
-<script src="js/lists.js?v=43"></script>
-<script src="js/search.js?v=43"></script>
-<script src="js/profile.js?v=43"></script>
-<script src="js/detail.js?v=43"></script>
-<script src="js/browse.js?v=43"></script>
-<script src="js/share.js?v=43"></script>
-<script src="js/main.js?v=43"></script>
+<script src="js/data.js?v=45"></script>
+<script src="js/state.js?v=45"></script>
+<script src="js/api.js?v=45"></script>
+<script src="js/rec.js?v=45"></script>
+<script src="js/deck.js?v=45"></script>
+<script src="js/lists.js?v=45"></script>
+<script src="js/search.js?v=45"></script>
+<script src="js/profile.js?v=45"></script>
+<script src="js/detail.js?v=45"></script>
+<script src="js/browse.js?v=45"></script>
+<script src="js/share.js?v=45"></script>
+<script src="js/main.js?v=45"></script>
 </body>
 </html>

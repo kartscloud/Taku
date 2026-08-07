@@ -92,7 +92,13 @@ function renderRanked(){
   const c=$("#watchedList");
   const list=watched.filter(m=>m.status!=="watching");
   if(!list.length){c.innerHTML=`<div class="emptylist">No ratings yet.<br>Swipe up on something you've finished and give it a tier.</div>`;return;}
-  c.innerHTML=list.map((m,i)=>`
+  const untiered=list.filter(m=>!m.tier).length;
+  const banner=untiered?`<button class="rankcta" id="rankCta">
+      <span class="rcicon icw">${icSvg("trophy")}</span>
+      <span class="rctext"><b>${untiered} show${untiered>1?"s":""} need${untiered>1?"":"s"} a tier</b><span>Rank them in one pass</span></span>
+      <span class="rcgo icw">${icSvg("arrowR")}</span>
+    </button>`:"";
+  c.innerHTML=banner+list.map((m,i)=>`
     <div class="row">
       <span class="rank">${i+1}</span>
       <div class="tier" style="background:${TIER_COLOR[m.tier]||"var(--line)"}">${m.tier||"–"}</div>
@@ -129,7 +135,45 @@ async function renderWatching(){
   });
 }
 
+/* ---- Rank mode: tier the backlog one tap at a time, no modal round-trip ---- */
+let _rankQ=[],_rankAt=0,_rankDone=0;
+function openRankMode(){
+  _rankQ=watched.filter(m=>m.status!=="watching"&&!m.tier);
+  if(!_rankQ.length)return;
+  _rankAt=0;_rankDone=0;
+  const el=$("#rankMode");el.hidden=false;requestAnimationFrame(()=>el.classList.add("on"));
+  _rankPaint();
+}
+function closeRankMode(){
+  const el=$("#rankMode");el.classList.remove("on");
+  setTimeout(()=>{el.hidden=true;},200);
+  if(_rankDone)toast("Ranked "+_rankDone+" show"+(_rankDone>1?"s":""));
+  renderWatched();refreshCounts();
+}
+function _rankPaint(){
+  if(_rankAt>=_rankQ.length){closeRankMode();return;}
+  const m=_rankQ[_rankAt];
+  $("#rankArt").style.backgroundImage=`url('${m.img||""}')`;
+  $("#rankTitleTxt").textContent=m.title;
+  $("#rankSub").textContent=[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ");
+  $("#rankCount").textContent=(_rankAt+1)+" of "+_rankQ.length;
+  $("#rankFill").style.width=Math.round(_rankAt/_rankQ.length*100)+"%";
+}
+function _rankAssign(tier){
+  const m=_rankQ[_rankAt];if(!m)return;
+  addWatched({...m,tier,status:"watched"});
+  bumpAffinity(m.genres,TIER_AFFINITY[tier]);
+  _rankDone++;buzz(tier==="S"?[15,40,15]:10);
+  _rankAt++;_rankPaint();
+}
+
 document.addEventListener("click",e=>{
+  if(e.target.closest&&e.target.closest("#rankCta")){openRankMode();return;}
+  const rt=e.target.closest?e.target.closest("[data-rtier]"):null;
+  if(rt){_rankAssign(rt.dataset.rtier);return;}
+  if(e.target.closest&&e.target.closest("#rankSkip")){_rankAt++;_rankPaint();return;}
+  if(e.target.closest&&e.target.closest("#rankClose")){closeRankMode();return;}
+
   // tier sub-tabs (Watched / Watching)
   const seg=e.target.closest?e.target.closest("#tierTabs .seg"):null;
   if(seg){tierTab=seg.dataset.tiertab;document.querySelectorAll("#tierTabs .seg").forEach(s=>s.classList.toggle("on",s===seg));renderWatched();return;}
