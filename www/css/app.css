@@ -140,8 +140,8 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .btn.mid{width:56px;height:56px}
 .btn.sm{width:48px;height:48px}
 .btn.xs{width:42px;height:42px}
-.btn.half{width:28px;height:28px}   /* exactly half of .btn.mid */
-.btn.half .icw{width:14px;height:14px}
+.btn.half{width:46px;height:46px}   /* secondary actions: a step down from .btn.mid's 56 */
+.btn.half .icw{width:20px;height:20px}
 /* premium hollow gold — outlined, champagne tone, faint metallic glow */
 .btn.half.undo,.btn.half.want{
   color:#e2c275;
