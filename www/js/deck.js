@@ -159,7 +159,22 @@ function attachDrag(el,m){
 
 /* rating (+ watching/watched status) */
 let rateStatus="watched";
-function syncRateToggle(){document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.classList.toggle("on",b.dataset.status===rateStatus));}
+function syncRateToggle(){
+  document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.classList.toggle("on",b.dataset.status===rateStatus));
+  // an unfinished show can't be fairly tiered — swap the tiers for a single "add it" action
+  const w=rateStatus==="watching";
+  const fin=$("#rateFinished"),wat=$("#rateWatching");
+  if(fin)fin.hidden=w;
+  if(wat)wat.hidden=!w;
+}
+/* park it in the Watching deck untiered; ranked later, once actually finished */
+function commitWatching(){
+  if(!pendingWatch)return;
+  addWatched({...pendingWatch.rec,tier:null,status:"watching"});
+  bumpAffinity(pendingWatch.genres,1);
+  $("#rateModal").classList.remove("on");pendingWatch=null;
+  buzz(12);toast("Added to Watching");refreshCounts();
+}
 function openRate(m,status){openRateFor(slim(m),status||"watched");}
 function openRateFor(rec,status){
   pendingWatch={rec:rec,genres:rec.genres||[]};

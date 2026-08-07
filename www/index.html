@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=45" />
+<link rel="stylesheet" href="css/app.css?v=46" />
 </head>
 <body>
 
@@ -180,15 +180,21 @@
       <button class="segs on" data-status="watched">Finished it</button>
       <button class="segs" data-status="watching">Still watching</button>
     </div>
-    <p>Drop it in a tier — this trains your feed and builds your rank.</p>
-    <div class="tiers">
-      <button class="tierbtn" style="background:var(--s)" data-tier="S">S<small>peak</small></button>
-      <button class="tierbtn" style="background:var(--a)" data-tier="A">A<small>great</small></button>
-      <button class="tierbtn" style="background:var(--b)" data-tier="B">B<small>good</small></button>
-      <button class="tierbtn" style="background:var(--c)" data-tier="C">C<small>meh</small></button>
-      <button class="tierbtn" style="background:var(--d)" data-tier="D">D<small>nah</small></button>
+    <div id="rateFinished">
+      <p>Drop it in a tier — this trains your feed and builds your rank.</p>
+      <div class="tiers">
+        <button class="tierbtn" style="background:var(--s)" data-tier="S">S<small>peak</small></button>
+        <button class="tierbtn" style="background:var(--a)" data-tier="A">A<small>great</small></button>
+        <button class="tierbtn" style="background:var(--b)" data-tier="B">B<small>good</small></button>
+        <button class="tierbtn" style="background:var(--c)" data-tier="C">C<small>meh</small></button>
+        <button class="tierbtn" style="background:var(--d)" data-tier="D">D<small>nah</small></button>
+      </div>
+      <button class="skip" id="rateSkip">Add without a tier</button>
     </div>
-    <button class="skip" id="rateSkip">Add without a tier</button>
+    <div id="rateWatching" hidden>
+      <p>No tier yet — you haven't finished it. It goes to your <b>Watching</b> deck and you can rank it the moment you're done.</p>
+      <button class="savebtn" id="rateWatchingGo">Add to Watching</button>
+    </div>
   </div>
 </div>
 
@@ -289,17 +295,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=45"></script>
-<script src="js/state.js?v=45"></script>
-<script src="js/api.js?v=45"></script>
-<script src="js/rec.js?v=45"></script>
-<script src="js/deck.js?v=45"></script>
-<script src="js/lists.js?v=45"></script>
-<script src="js/search.js?v=45"></script>
-<script src="js/profile.js?v=45"></script>
-<script src="js/detail.js?v=45"></script>
-<script src="js/browse.js?v=45"></script>
-<script src="js/share.js?v=45"></script>
-<script src="js/main.js?v=45"></script>
+<script src="js/data.js?v=46"></script>
+<script src="js/state.js?v=46"></script>
+<script src="js/api.js?v=46"></script>
+<script src="js/rec.js?v=46"></script>
+<script src="js/deck.js?v=46"></script>
+<script src="js/lists.js?v=46"></script>
+<script src="js/search.js?v=46"></script>
+<script src="js/profile.js?v=46"></script>
+<script src="js/detail.js?v=46"></script>
+<script src="js/browse.js?v=46"></script>
+<script src="js/share.js?v=46"></script>
+<script src="js/main.js?v=46"></script>
 </body>
 </html>
