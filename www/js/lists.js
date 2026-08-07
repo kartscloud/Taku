@@ -120,39 +120,50 @@ function renderRanked(){
    shows its true post-drop state. Only the rank number is a drag handle, so
    tapping the row still opens details and the buttons still work. */
 function enableTierDrag(container){
-  let dragEl=null;
-  container.querySelectorAll("[data-grip]").forEach(grip=>{
-    grip.addEventListener("pointerdown",e=>{
-      const row=grip.closest(".rankrow");if(!row)return;
-      e.preventDefault();
-      dragEl=row;row.classList.add("dragging");
-      try{grip.setPointerCapture(e.pointerId);}catch(_){}
-      buzz(8);
-    });
-    grip.addEventListener("pointermove",e=>{
-      if(!dragEl)return;
-      // hide the dragged row so elementFromPoint reports what's underneath
-      dragEl.style.pointerEvents="none";
-      const under=document.elementFromPoint(e.clientX,e.clientY);
-      dragEl.style.pointerEvents="";
-      const over=under&&under.closest?under.closest(".rankrow"):null;
-      if(over&&over!==dragEl&&over.parentNode===container){
-        const b=over.getBoundingClientRect();
-        const after=e.clientY>b.top+b.height/2;
-        container.insertBefore(dragEl,after?over.nextSibling:over);
-      }
-    });
-    const end=e=>{
-      if(!dragEl)return;
-      const movedId=+dragEl.dataset.rid;
-      dragEl.classList.remove("dragging");
-      try{grip.releasePointerCapture(e.pointerId);}catch(_){}
-      dragEl=null;
-      commitTierOrder(container,movedId);
-    };
-    grip.addEventListener("pointerup",end);
-    grip.addEventListener("pointercancel",end);
-  });
+  if(container._dragBound)return;      // one binding per container, survives re-render
+  container._dragBound=true;
+  let row=null,dragging=false,startY=0,pid=null;
+
+  const onDown=e=>{
+    if(e.button!==undefined&&e.button!==0)return;          // left button only
+    if(e.target.closest("button"))return;                  // let re-rate / remove work
+    const r=e.target.closest(".rankrow");
+    if(!r||r.parentNode!==container)return;
+    row=r;startY=e.clientY;pid=e.pointerId;dragging=false;
+  };
+  const onMove=e=>{
+    if(!row||(pid!=null&&e.pointerId!==pid))return;
+    if(!dragging){
+      if(Math.abs(e.clientY-startY)<8)return;              // let taps and scrolls through
+      dragging=true;row.classList.add("dragging");buzz(8);
+      document.body.classList.add("dragging-row");         // kills text selection
+    }
+    e.preventDefault();
+    row.style.pointerEvents="none";                        // see what's underneath
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    row.style.pointerEvents="";
+    const over=under&&under.closest?under.closest(".rankrow"):null;
+    if(over&&over!==row&&over.parentNode===container){
+      const b=over.getBoundingClientRect();
+      container.insertBefore(row,e.clientY>b.top+b.height/2?over.nextSibling:over);
+    }
+  };
+  const onUp=()=>{
+    if(!row)return;
+    const wasDragging=dragging,id=+row.dataset.rid;
+    row.classList.remove("dragging");
+    document.body.classList.remove("dragging-row");
+    row=null;dragging=false;pid=null;
+    if(wasDragging)commitTierOrder(container,id);
+  };
+
+  // Bound to the DOCUMENT, not the row: pointer capture on a small child proved
+  // unreliable — the capture reported success yet pointermove never reached it,
+  // so the drag silently did nothing. Document-level listeners always fire.
+  container.addEventListener("pointerdown",onDown);
+  document.addEventListener("pointermove",onMove,{passive:false});
+  document.addEventListener("pointerup",onUp);
+  document.addEventListener("pointercancel",onUp);
 }
 function commitTierOrder(container,movedId){
   const ids=[...container.querySelectorAll(".rankrow")].map(r=>+r.dataset.rid);

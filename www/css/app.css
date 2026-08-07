@@ -599,3 +599,8 @@ footer{display:none}
 .rankrow{transition:transform .12s ease, box-shadow .12s ease}
 .rankrow.dragging{opacity:.94;transform:scale(1.025);border-color:var(--accent);
   box-shadow:0 14px 34px rgba(0,0,0,.6),0 0 0 1px var(--accent);position:relative;z-index:5}
+
+/* whole-row drag: the grip is a visual affordance, the row is the target */
+.rankrow{touch-action:pan-y}
+body.dragging-row{user-select:none;-webkit-user-select:none}
+body.dragging-row .rankrow{cursor:grabbing}
