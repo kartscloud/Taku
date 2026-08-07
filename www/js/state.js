@@ -95,7 +95,14 @@ function restoreTrash(id){
   purgeTrash(id);
   return from;
 }
-function sortWatched(){watched.sort((a,b)=>(TIER_ORDER[a.tier]??9)-(TIER_ORDER[b.tier]??9)||(b.score||0)-(a.score||0));}
+/* tier is always the primary key, so an S can never sit below an A no matter
+   what was dragged. `ord` is the hand-placed position inside a tier; untouched
+   items fall back to score, which is how the list behaved before dragging. */
+function sortWatched(){
+  watched.sort((a,b)=>(TIER_ORDER[a.tier]??9)-(TIER_ORDER[b.tier]??9)
+    ||(a.ord??9999)-(b.ord??9999)
+    ||(b.score||0)-(a.score||0));
+}
 
 function slim(m){return{id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,score:m.averageScore,year:m.seasonYear,eps:m.episodes||null,dur:m.duration||null,genres:(m.genres||[]).slice(0,3)};}
 function mTitle(m){return (m.title&&(m.title.english||m.title.romaji))||m.title||"Untitled";}

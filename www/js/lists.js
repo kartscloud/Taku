@@ -101,8 +101,8 @@ function renderRanked(){
       <span class="rcgo icw">${icSvg("arrowR")}</span>
     </button>`:"";
   c.innerHTML=banner+list.map((m,i)=>`
-    <div class="row">
-      <span class="rank">${i+1}</span>
+    <div class="row rankrow" data-rid="${m.id}">
+      <span class="rank grip" data-grip title="Drag to reorder">${i+1}</span>
       <div class="tier" style="background:${TIER_COLOR[m.tier]||"var(--line)"}">${m.tier||"–"}</div>
       <div class="rc rc-open" data-open-watched="${m.id}">
         <h4>${m.title}</h4>
@@ -111,7 +111,70 @@ function renderRanked(){
       <button class="x" data-rewatch="${m.id}" title="Re-rate"><span class="icw">${icSvg("rotate")}</span></button>
       <button class="x danger" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
+  enableTierDrag(c);
 }
+
+/* ---- drag to re-rank ----
+   Live DOM reordering (the dragged row swaps places as you pass others) rather
+   than a floating ghost — far less to go wrong on touch, and the list always
+   shows its true post-drop state. Only the rank number is a drag handle, so
+   tapping the row still opens details and the buttons still work. */
+function enableTierDrag(container){
+  let dragEl=null;
+  container.querySelectorAll("[data-grip]").forEach(grip=>{
+    grip.addEventListener("pointerdown",e=>{
+      const row=grip.closest(".rankrow");if(!row)return;
+      e.preventDefault();
+      dragEl=row;row.classList.add("dragging");
+      try{grip.setPointerCapture(e.pointerId);}catch(_){}
+      buzz(8);
+    });
+    grip.addEventListener("pointermove",e=>{
+      if(!dragEl)return;
+      // hide the dragged row so elementFromPoint reports what's underneath
+      dragEl.style.pointerEvents="none";
+      const under=document.elementFromPoint(e.clientX,e.clientY);
+      dragEl.style.pointerEvents="";
+      const over=under&&under.closest?under.closest(".rankrow"):null;
+      if(over&&over!==dragEl&&over.parentNode===container){
+        const b=over.getBoundingClientRect();
+        const after=e.clientY>b.top+b.height/2;
+        container.insertBefore(dragEl,after?over.nextSibling:over);
+      }
+    });
+    const end=e=>{
+      if(!dragEl)return;
+      const movedId=+dragEl.dataset.rid;
+      dragEl.classList.remove("dragging");
+      try{grip.releasePointerCapture(e.pointerId);}catch(_){}
+      dragEl=null;
+      commitTierOrder(container,movedId);
+    };
+    grip.addEventListener("pointerup",end);
+    grip.addEventListener("pointercancel",end);
+  });
+}
+function commitTierOrder(container,movedId){
+  const ids=[...container.querySelectorAll(".rankrow")].map(r=>+r.dataset.rid);
+  const byId=new Map(watched.map(m=>[m.id,m]));
+  const ranked=ids.map(id=>byId.get(id)).filter(Boolean);
+  if(!ranked.length)return;
+  // ONLY the row you dragged can change tier, and it takes whichever tier it
+  // was dropped among — so the badge can never contradict where it now sits.
+  const i=ranked.findIndex(m=>m.id===movedId);
+  if(i>=0){
+    const neighbour=ranked[i-1]||ranked[i+1];
+    if(neighbour&&neighbour.tier&&neighbour.tier!==ranked[i].tier){
+      ranked[i].tier=neighbour.tier;
+      toast("Moved to "+neighbour.tier+" tier");
+    }
+  }
+  ranked.forEach((m,n)=>{m.ord=n;});
+  watched=ranked.concat(watched.filter(m=>m.status==="watching"));
+  sortWatched();store.set("watched",watched);
+  renderWatched();refreshCounts();
+}
+
 async function renderWatching(){
   const c=$("#watchedList");
   const list=watched.filter(m=>m.status==="watching");
