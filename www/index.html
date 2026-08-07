@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=40" />
+<link rel="stylesheet" href="css/app.css?v=41" />
 </head>
 <body>
 
@@ -173,7 +173,28 @@
       <button class="langopt" data-lang="chinese">Chinese</button>
       <button class="langopt" data-lang="korean">Korean</button>
     </div>
-    <p class="setnote">Japanese / Chinese / Korean = the anime's country of origin. English = available on a Western platform (Crunchyroll, Netflix…) — AniList's API has no per-title dub/sub audio data, so that's the closest real signal.</p>
+    <div class="seth">Streaming on</div>
+    <div class="langopts" id="bsPlatforms">
+      <button class="langopt on" data-plat="all">Any</button>
+      <button class="langopt" data-plat="Crunchyroll">Crunchyroll</button>
+      <button class="langopt" data-plat="Netflix">Netflix</button>
+      <button class="langopt" data-plat="Hulu">Hulu</button>
+      <button class="langopt" data-plat="Amazon Prime Video">Prime Video</button>
+      <button class="langopt" data-plat="HIDIVE">HIDIVE</button>
+      <button class="langopt" data-plat="Disney Plus">Disney+</button>
+      <button class="langopt" data-plat="Bilibili TV">Bilibili</button>
+    </div>
+    <div class="seth">Type</div>
+    <div class="langopts" id="bsFormats">
+      <button class="langopt on" data-fmt="all">Any</button>
+      <button class="langopt" data-fmt="TV">TV</button>
+      <button class="langopt" data-fmt="TV_SHORT">Short</button>
+      <button class="langopt" data-fmt="MOVIE">Movie</button>
+      <button class="langopt" data-fmt="ONA">ONA</button>
+      <button class="langopt" data-fmt="OVA">OVA</button>
+      <button class="langopt" data-fmt="SPECIAL">Special</button>
+    </div>
+    <p class="setnote">Japanese / Chinese / Korean = the anime's country of origin. English = available on a Western platform — AniList has no per-title dub/sub or simulcast data, so platform availability is the closest real signal.</p>
     <button class="savebtn" id="browseSettingsDone">Done</button>
   </div>
 </div>
@@ -231,17 +252,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=40"></script>
-<script src="js/state.js?v=40"></script>
-<script src="js/api.js?v=40"></script>
-<script src="js/rec.js?v=40"></script>
-<script src="js/deck.js?v=40"></script>
-<script src="js/lists.js?v=40"></script>
-<script src="js/search.js?v=40"></script>
-<script src="js/profile.js?v=40"></script>
-<script src="js/detail.js?v=40"></script>
-<script src="js/browse.js?v=40"></script>
-<script src="js/share.js?v=40"></script>
-<script src="js/main.js?v=40"></script>
+<script src="js/data.js?v=41"></script>
+<script src="js/state.js?v=41"></script>
+<script src="js/api.js?v=41"></script>
+<script src="js/rec.js?v=41"></script>
+<script src="js/deck.js?v=41"></script>
+<script src="js/lists.js?v=41"></script>
+<script src="js/search.js?v=41"></script>
+<script src="js/profile.js?v=41"></script>
+<script src="js/detail.js?v=41"></script>
+<script src="js/browse.js?v=41"></script>
+<script src="js/share.js?v=41"></script>
+<script src="js/main.js?v=41"></script>
 </body>
 </html>

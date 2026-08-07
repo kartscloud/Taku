@@ -156,9 +156,11 @@ async function fetchSeason(page,country){
 function seasonLabel(){const {s,y}=curSeason();return s.charAt(0)+s.slice(1).toLowerCase()+" "+y;}
 
 /* weekly airing calendar — every episode airing in the next 7 days, with exact air time */
-async function fetchSchedule(){
-  const now=Math.floor(Date.now()/1000), end=now+7*86400;
-  const key="cache_sched_"+Math.floor(now/3600);   // refresh hourly so countdowns stay honest
+async function fetchSchedule(weekOffset){
+  const off=weekOffset||0;                          // 0 = next 7 days, -1 = last week, +1 = week after
+  const base=Math.floor(Date.now()/1000);
+  const now=base+off*7*86400, end=now+7*86400;
+  const key="cache_sched_"+off+"_"+Math.floor(base/3600);   // refresh hourly so countdowns stay honest
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
   const out=[];
@@ -168,10 +170,11 @@ async function fetchSchedule(){
     (data.Page.airingSchedules||[]).forEach(a=>{
       const md=a.media;if(!md||md.isAdult)return;
       const g=md.genres||[];if(g.includes("Ecchi")||g.includes("Hentai"))return;
+      const sites=(md.externalLinks||[]).filter(l=>l.type==="STREAMING").map(l=>l.site);
       out.push({at:a.airingAt,ep:a.episode,m:{
         id:md.id,title:md.title,coverImage:md.coverImage,format:md.format,
-        country:md.countryOfOrigin,averageScore:md.averageScore,genres:g,
-        en:(md.externalLinks||[]).some(l=>l.type==="STREAMING"&&WESTERN_SITES.includes(l.site))
+        country:md.countryOfOrigin,averageScore:md.averageScore,genres:g,sites,
+        en:sites.some(s=>WESTERN_SITES.includes(s))
       }});
     });
     if(!data.Page.pageInfo||!data.Page.pageInfo.hasNextPage)break;

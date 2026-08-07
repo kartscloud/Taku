@@ -1,7 +1,10 @@
 /* taku · Discover — browse: genre shelves, personalized, full-season "new releases", language filter */
-let browseFilters={new:false,lang:"all"};   // lang: all | english | japanese | chinese | korean
+let browseFilters={new:false,lang:"all",platform:"all",format:"all"};
 let browseTab="browse";                      // browse | schedule
-let _browseData=null, _seasonData=null, _schedData=null, _loadedLang="all", _browseToken=0, _schedToken=0;
+let _browseData=null, _seasonData=null, _loadedLang="all", _browseToken=0, _schedToken=0;
+let _schedWeek=0, _schedCache={};            // week offset: 0 = next 7 days, -1 = last week
+const PLATFORMS=["Crunchyroll","Netflix","Hulu","Amazon Prime Video","HIDIVE","Disney Plus","Bilibili TV"];
+const FORMATS=["TV","TV_SHORT","MOVIE","ONA","OVA","SPECIAL"];
 const LANG_COUNTRY={japanese:"JP",chinese:"CN",korean:"KR"};
 const _DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const _MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -17,6 +20,10 @@ function langCountry(){return LANG_COUNTRY[browseFilters.lang]||null;} // JP/CN/
 
 function genreOrder(){return [...OB_GENRES].sort((a,b)=>(affinity[b]||0)-(affinity[a]||0));}
 function browsePasses(m){
+  if(browseFilters.platform!=="all"){
+    if(!m.sites||!m.sites.includes(browseFilters.platform))return false;
+  }
+  if(browseFilters.format!=="all"&&m.format!==browseFilters.format)return false;
   if(browseFilters.lang==="english")return !!m.en;                 // English = available on a Western platform
   const c=langCountry();
   if(c&&m.country&&m.country!==c)return false;                     // guards mixed-source shelves (recs)
@@ -111,7 +118,7 @@ function paintBrowse(){
 }
 function _browseItem(id){
   const pools=[];
-  if(_schedData){const e=_schedData.find(x=>x.m.id==id);if(e)return e.m;}
+  for(const wk in _schedCache){const e=_schedCache[wk].find(x=>x.m.id==id);if(e)return e.m;}
   if(_seasonData)pools.push(_seasonData.all);
   if(_browseData){pools.push(_browseData.rec);if(_browseData.loved)pools.push(_browseData.loved.items);for(const g in _browseData.genres)pools.push(_browseData.genres[g]);}
   for(const p of pools){const f=p.find(m=>m.id==id);if(f)return f;}
@@ -132,19 +139,42 @@ function schcard(e){
     <div class="schname">${mTitle(m)}</div>
   </div>`;
 }
+function _weekRangeLabel(off){
+  const d0=new Date(Date.now()+off*7*864e5), d1=new Date(Date.now()+(off*7+6)*864e5);
+  return _MON[d0.getMonth()]+" "+d0.getDate()+" – "+_MON[d1.getMonth()]+" "+d1.getDate();
+}
+function _weekNavHTML(){
+  const label=_schedWeek===0?"This week":_schedWeek===-1?"Last week":_schedWeek===1?"Next week":
+    (_schedWeek<0?Math.abs(_schedWeek)+" weeks ago":"In "+_schedWeek+" weeks");
+  return `<div class="weeknav">
+    <button class="wkbtn" data-wk="-1" title="Earlier">${icSvg("arrowL")}</button>
+    <div class="wklabel"><b>${label}</b><span>${_weekRangeLabel(_schedWeek)}</span></div>
+    <button class="wkbtn" data-wk="1" title="Later">${icSvg("arrowR")}</button>
+    ${_schedWeek!==0?`<button class="wktoday" data-wk="0">Today</button>`:""}
+  </div>`;
+}
 function paintSchedule(){
   const host=$("#browseShelves");
-  if(!_schedData){host.innerHTML=_loadingHTML("Loading this week's airing schedule…");return;}
-  const entries=_schedData.filter(e=>browsePasses(e.m));
-  if(!entries.length){host.innerHTML=`<div class="emptylist">No airing anime match this language this week.</div>`;return;}
-  const order=[],map={};
-  entries.forEach(e=>{const k=_dayKey(e.at);if(!map[k]){map[k]={at:e.at,items:[]};order.push(k);}map[k].items.push(e);});
-  host.innerHTML=order.map(k=>`<div class="schday"><div class="schdayhead">${_dayLabel(map[k].at)}<span class="schcount">${map[k].items.length}</span></div><div class="schgrid">${map[k].items.map(schcard).join("")}</div></div>`).join("");
+  const data=_schedCache[_schedWeek];
+  if(!data){host.innerHTML=_weekNavHTML()+_loadingHTML("Loading the airing schedule…");return;}
+  const entries=data.filter(e=>browsePasses(e.m));
+  let body;
+  if(!entries.length){body=`<div class="emptylist">Nothing airing this week matches your filters.</div>`;}
+  else{
+    const order=[],map={};
+    entries.forEach(e=>{const k=_dayKey(e.at);if(!map[k]){map[k]={at:e.at,items:[]};order.push(k);}map[k].items.push(e);});
+    body=order.map(k=>`<div class="schday"><div class="schdayhead">${_dayLabel(map[k].at)}<span class="schcount">${map[k].items.length}</span></div><div class="schgrid">${map[k].items.map(schcard).join("")}</div></div>`).join("");
+  }
+  host.innerHTML=_weekNavHTML()+body;
 }
 async function renderSchedule(){
   paintSchedule();
-  const tok=++_schedToken;
-  if(!_schedData){const d=await fetchSchedule().catch(()=>[]);if(tok!==_schedToken)return;_schedData=d;}
+  const tok=++_schedToken, wk=_schedWeek;
+  if(!_schedCache[wk]){
+    const d=await fetchSchedule(wk).catch(()=>[]);
+    if(tok!==_schedToken)return;
+    _schedCache[wk]=d;
+  }
   if(currentView==="browse"&&browseTab==="schedule")paintSchedule();
 }
 
@@ -162,19 +192,37 @@ async function renderBrowse(){
 
 function _syncSettingsUI(){
   const t=$("#bsNew");if(t)t.classList.toggle("on",browseFilters.new);
-  document.querySelectorAll("#browseSettings .langopt").forEach(b=>b.classList.toggle("on",b.dataset.lang===browseFilters.lang));
+  document.querySelectorAll("#browseSettings [data-lang]").forEach(b=>b.classList.toggle("on",b.dataset.lang===browseFilters.lang));
+  document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.classList.toggle("on",b.dataset.plat===browseFilters.platform));
+  document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.classList.toggle("on",b.dataset.fmt===browseFilters.format));
 }
-function _updateGearDot(){const g=$("#browseGear");if(g)g.classList.toggle("active",browseFilters.new||browseFilters.lang!=="all");}
+function _updateGearDot(){
+  const g=$("#browseGear");if(!g)return;
+  const on=browseFilters.new||browseFilters.lang!=="all"||browseFilters.platform!=="all"||browseFilters.format!=="all";
+  g.classList.toggle("active",on);
+}
 
 function initBrowse(){
   $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");};
   $("#bsNew").onclick=()=>{browseFilters.new=!browseFilters.new;_syncSettingsUI();};
-  document.querySelectorAll("#browseSettings .langopt").forEach(b=>b.onclick=()=>{browseFilters.lang=b.dataset.lang;_syncSettingsUI();});
+  document.querySelectorAll("#browseSettings [data-lang]").forEach(b=>b.onclick=()=>{browseFilters.lang=b.dataset.lang;_syncSettingsUI();});
+  document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.onclick=()=>{browseFilters.platform=b.dataset.plat;_syncSettingsUI();});
+  document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.onclick=()=>{browseFilters.format=b.dataset.fmt;_syncSettingsUI();});
   $("#browseSettingsDone").onclick=()=>{
     $("#browseSettings").classList.remove("on");_updateGearDot();
     if(browseFilters.lang!==_loadedLang){_browseData=null;_seasonData=null;_loadedLang=browseFilters.lang;} // language changed → re-fetch the right country
     renderBrowse();
   };
+  // schedule week navigation
+  $("#browseShelves").addEventListener("click",e=>{
+    const w=e.target.closest?e.target.closest("[data-wk]"):null;
+    if(!w)return;
+    e.stopPropagation();
+    const v=w.dataset.wk;
+    _schedWeek=v==="0"?0:_schedWeek+(+v);
+    buzz(6);$("#browseShelves").scrollTop=0;window.scrollTo(0,0);
+    renderSchedule();
+  });
   document.querySelectorAll("#browseTabs .seg").forEach(b=>b.onclick=()=>{
     browseTab=b.dataset.btab;
     document.querySelectorAll("#browseTabs .seg").forEach(s=>s.classList.toggle("on",s===b));
