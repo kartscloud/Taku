@@ -307,16 +307,29 @@ async function tmdbPosterFor(m){
     return j.poster?TMDB_IMG+j.poster:null;
   }catch(e){_tmdbDead=true;return null;}      // proxy not running
 }
+/* Apply a background image ONLY if it's sharper than what's already there.
+   Several upgrades can be in flight for one element (stored thumb -> 460px ->
+   TMDB 780px) and they finish in whatever order the network decides — without
+   this, a slow small image lands last and undoes the big one. Resolution only
+   ever goes up. Call resetImgLevel() when the element starts showing a
+   different title, or the old width would block the new one. */
+function resetImgLevel(el){if(el)el.dataset.imgw=0;}
+function applyBestImage(el,url,guard){
+  if(!el||!url)return;
+  const pre=new Image();
+  pre.onload=()=>{
+    if(guard&&!guard())return;
+    if(pre.naturalWidth<=+(el.dataset.imgw||0))return;   // never downgrade
+    el.dataset.imgw=pre.naturalWidth;
+    el.style.backgroundImage=`url('${url}')`;
+  };
+  pre.src=url;
+}
 /* swap a background-image element up to the TMDB poster once it loads.
    `stillCurrent` guards against a late response landing on the wrong card. */
 function tmdbUpgrade(el,m,stillCurrent){
   if(!el||!m)return;
-  tmdbPosterFor(m).then(url=>{
-    if(!url)return;
-    const pre=new Image();
-    pre.onload=()=>{if(!stillCurrent||stillCurrent())el.style.backgroundImage=`url('${url}')`;};
-    pre.src=url;
-  }).catch(()=>{});
+  tmdbPosterFor(m).then(url=>{if(url)applyBestImage(el,url,stillCurrent);}).catch(()=>{});
 }
 
 async function searchAnime(qs){

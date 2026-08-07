@@ -270,15 +270,13 @@ function _rankPaint(){
   // full-screen art from a 230px thumb is grainy — show it instantly, then swap
   // in the 460px version (ximg on new records, URL-upgraded for old ones)
   const el=$("#rankArt");
-  el.style.backgroundImage=`url('${m.img||""}')`;
-  const hi=m.ximg||hiRes(m.img);
-  if(hi&&hi!==m.img){
-    const pre=new Image();
-    pre.onload=()=>{if(_rankQ[_rankAt]===m)el.style.backgroundImage=`url('${hi}')`;};
-    pre.src=hi;
-  }
-  // then, if TMDB has a confident match, go higher still (also full-screen here)
-  tmdbUpgrade(el,{id:m.id,title:{english:m.title},seasonYear:m.year},()=>_rankQ[_rankAt]===m);
+  const here=()=>_rankQ[_rankAt]===m;
+  resetImgLevel(el);                                  // new title: forget the old card's size
+  el.style.backgroundImage=`url('${m.img||""}')`;     // instant, however small
+  el.dataset.imgw=1;                                  // anything real beats this
+  applyBestImage(el,m.ximg||hiRes(m.img),here);       // AniList 460
+  tmdbUpgrade(el,{id:m.id,title:{english:m.title},seasonYear:m.year},here);  // TMDB 780
+
   $("#rankTitleTxt").textContent=m.title;
   $("#rankSub").textContent=[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ");
   $("#rankCount").textContent=(_rankAt+1)+" of "+_rankQ.length;
