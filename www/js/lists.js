@@ -277,6 +277,8 @@ function _rankPaint(){
     pre.onload=()=>{if(_rankQ[_rankAt]===m)el.style.backgroundImage=`url('${hi}')`;};
     pre.src=hi;
   }
+  // then, if TMDB has a confident match, go higher still (also full-screen here)
+  tmdbUpgrade(el,{id:m.id,title:{english:m.title},seasonYear:m.year},()=>_rankQ[_rankAt]===m);
   $("#rankTitleTxt").textContent=m.title;
   $("#rankSub").textContent=[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ");
   $("#rankCount").textContent=(_rankAt+1)+" of "+_rankQ.length;

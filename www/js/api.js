@@ -268,6 +268,57 @@ function annotateDubSub(entries,idx){
   return entries;
 }
 
+/* ---- TMDB poster upgrade ----
+   Only used where it can actually be seen: the swipe card and Rank mode fill
+   the screen, so AniList's 460px cover upscales ~2x there. A 144px shelf
+   thumbnail already has 3x the pixels it needs, so those are left alone —
+   fewer lookups, identical visible result.
+
+   Everything degrades to AniList art: proxy down, no key, no match, or the
+   user reverted this title. The art can fail to improve; it can never be
+   wrong-but-confident. */
+const TMDB_IMG="https://image.tmdb.org/t/p/w780";
+const TMDB_TTL=7*24*60*60*1000;
+let _tmdbCache=store.get("cache_tmdb",{});
+let tmdbOff=store.get("tmdbOff",{});        // anilistId -> true = user reverted it
+let _tmdbDead=false;                         // proxy unreachable: stop asking
+function tmdbRevert(id){tmdbOff[id]=true;store.set("tmdbOff",tmdbOff);}
+function tmdbAllowed(id){return !tmdbOff[id];}
+/* true only if we actually swapped this title's art — drives the revert prompt */
+function tmdbShowingFor(id){const c=_tmdbCache[id];return !!(c&&c.p&&tmdbAllowed(id));}
+async function tmdbPosterFor(m){
+  if(_tmdbDead||!m||!m.id||!tmdbAllowed(m.id))return null;
+  const hit=_tmdbCache[m.id];
+  if(hit&&Date.now()-hit.t<TMDB_TTL)return hit.p?TMDB_IMG+hit.p:null;
+  const en=(m.title&&m.title.english)||m.title||"";
+  const ro=(m.title&&m.title.romaji)||"";
+  const yr=m.seasonYear||0;
+  if(!en&&!ro)return null;
+  try{
+    const c=new AbortController(),to=setTimeout(()=>c.abort(),5000);
+    const u=AS_PROXY+"/tmdb/find?t="+encodeURIComponent(en||ro)+
+            "&a="+encodeURIComponent(ro||en)+"&y="+yr;
+    const r=await fetch(u,{signal:c.signal});clearTimeout(to);
+    if(!r.ok)return null;
+    const j=await r.json();
+    if(j.off){_tmdbDead=true;return null;}   // no key configured — stop trying
+    _tmdbCache[m.id]={p:j.poster||null,t:Date.now()};
+    store.set("cache_tmdb",_tmdbCache);
+    return j.poster?TMDB_IMG+j.poster:null;
+  }catch(e){_tmdbDead=true;return null;}      // proxy not running
+}
+/* swap a background-image element up to the TMDB poster once it loads.
+   `stillCurrent` guards against a late response landing on the wrong card. */
+function tmdbUpgrade(el,m,stillCurrent){
+  if(!el||!m)return;
+  tmdbPosterFor(m).then(url=>{
+    if(!url)return;
+    const pre=new Image();
+    pre.onload=()=>{if(!stillCurrent||stillCurrent())el.style.backgroundImage=`url('${url}')`;};
+    pre.src=url;
+  }).catch(()=>{});
+}
+
 async function searchAnime(qs){
   const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{q:qs});

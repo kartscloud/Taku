@@ -50,6 +50,10 @@ function cardEl(m){
       <span class="cinfo" title="Details">${icSvg("info")}</span>
     </div>`;
   attachDrag(el,m);
+  // the card is full-screen, so AniList's 460px cover upscales ~2x here.
+  // Swap to the TMDB poster if one clears the match gates; guard on the element
+  // still being in the deck so a late response can't paint a swiped-away card.
+  tmdbUpgrade(el.querySelector(".poster"),m,()=>el.isConnected);
   return el;
 }
 

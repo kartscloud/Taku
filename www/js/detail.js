@@ -104,6 +104,9 @@ function renderDetail(m,full){
         <div class="dnote mbti-note">MBTI is community-sourced — shown for well-known characters, blank otherwise.</div>
       </div>
       <div class="dsection"><h4>More like this ${recs?"":'<span class="dsmall">— none listed</span>'}</h4><div class="recscroll">${recs||""}</div></div>
+      ${typeof tmdbShowingFor==="function"&&tmdbShowingFor(m.id)
+        ? `<div class="dnote artnote">Artwork from TMDB. Wrong show?
+             <button class="artrevert" data-artrevert="${m.id}">Use original</button></div>`:""}
     </div>`;
   }
 
@@ -177,6 +180,14 @@ document.addEventListener("click",e=>{
   }
   const cc=e.target.closest(".charcard");
   if(cc&&!cc.classList.contains("sk")&&$("#detailModal").classList.contains("on")){cc.classList.toggle("expanded");return;}
+  const rv=e.target.closest("[data-artrevert]");
+  if(rv){
+    tmdbRevert(+rv.dataset.artrevert);
+    toast("Back to the original artwork");
+    const cur=_detailStack[_detailStack.length-1];
+    if(cur)renderDetail(cur,true);
+    return;
+  }
   const rec=e.target.closest("[data-rec]");
   if(rec&&$("#detailModal").classList.contains("on")){
     const cur=_detailStack[_detailStack.length-1];
