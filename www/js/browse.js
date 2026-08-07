@@ -3,8 +3,16 @@
    many-within-a-group is OR (Japan OR Korea), across groups is AND.
    An empty group means "any". */
 const FILTER_DEFAULTS={new:false,origins:[],platforms:[],formats:[],audio:[],sort:"time"};
+/* What a brand-new user sees before touching settings. Japanese only, because
+   that's what "anime" means to almost everyone opening this — the unfiltered
+   feed is otherwise half Chinese donghua and long-running kids' shows.
+   Shelves are already popularity-ordered by the API. Deliberately NO audio
+   default: sub/dub is a weekly airing feed, so it can't describe evergreen
+   shelf titles. The moment settings is saved once, the user's picks win. */
+const FILTER_FIRST_RUN={origins:["JP"]};
 let _audioAvailable=false;   // true once the animeschedule proxy has answered
-let browseFilters=Object.assign({},FILTER_DEFAULTS,store.get("browseFilters",{}));
+const _savedFilters=store.get("browseFilters",null);
+let browseFilters=Object.assign({},FILTER_DEFAULTS,_savedFilters||FILTER_FIRST_RUN);
 ["origins","platforms","formats","audio"].forEach(k=>{if(!Array.isArray(browseFilters[k]))browseFilters[k]=[];});
 function saveFilters(){store.set("browseFilters",browseFilters);}
 function toggleFilter(group,val){
@@ -54,9 +62,11 @@ function browsePasses(m){
     if(!(m.sites&&m.sites.some(s=>want.includes(s))))return false;
   }
   if(f.formats.length&&!f.formats.includes(m.format))return false;
-  // unmatched titles have no .audio — we don't know, so a filter excludes them
-  // rather than guessing. Never treat "unknown" as "not dubbed".
-  if(f.audio.length&&!(m.audio&&f.audio.some(a=>m.audio[a])))return false;
+  // Audio only means anything on the Schedule: sub/dub comes from a weekly airing
+  // timetable, so evergreen shelf titles are never in it and would all be culled.
+  // Unmatched schedule titles have no .audio — unknown, so excluded rather than
+  // guessed. Never treat "unknown" as "not dubbed".
+  if(browseTab==="schedule"&&f.audio.length&&!(m.audio&&f.audio.some(a=>m.audio[a])))return false;
   return true;
 }
 /* includeNew=false for the Schedule: browsePasses ignores `new`, so counting it
