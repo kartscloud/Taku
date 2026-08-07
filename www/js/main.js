@@ -128,7 +128,15 @@ $("#miniAv").textContent=profile.avatar||"🍥";
 if(store.get("onboarded",false))renderDeck();
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{}); // ask the browser not to evict our data
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
+  navigator.serviceWorker.register("sw.js").then(reg=>{
+    // A long-lived tab never re-checks sw.js on its own (update checks happen on
+    // navigation), so an app left open runs stale builds indefinitely — features
+    // "disappear" until a manual hard refresh. Check on refocus + every 30 min;
+    // the existing controllerchange handler below reloads once when one lands.
+    const check=()=>reg.update().catch(()=>{});
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check();});
+    setInterval(check,30*60*1000);
+  }).catch(()=>{});
   // when an updated SW takes over, reload once so HTML+assets can never run mixed versions
   let _swReloaded=false;
   navigator.serviceWorker.addEventListener("controllerchange",()=>{
