@@ -172,6 +172,11 @@ function openRate(m,status){openRateFor(slim(m),status||"watched");}
 function openRateFor(rec,status){
   pendingWatch={rec:rec,genres:rec.genres||[]};
   rateStatus=status||rec.status||"watched";syncRateToggle();
+  // it's already in Watching — offering "Still watching" here would do nothing
+  const already=watched.some(x=>x.id===rec.id&&x.status==="watching");
+  const w=$("#rateWatchingGo"),s=$("#rateSkip");
+  if(w)w.hidden=already;
+  if(s)s.classList.toggle("solo",already);
   $("#rateTitle").textContent=rec.title;$("#rateModal").classList.add("on");
 }
 function commitRate(tier){

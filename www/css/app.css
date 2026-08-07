@@ -380,6 +380,7 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .altbtn .icw{width:15px;height:15px;color:var(--watch)}
 .altbtn:active{transform:scale(.96)}
 .altbtn.ghost{flex:0 0 92px;color:var(--dim);font-weight:600}
+.altbtn.ghost.solo{flex:1}   /* "Still watching" hidden — take the full row */
 
 /* ===== detail / info page ===== */
 #detailModal .sheet{padding:0;height:92vh;max-height:92vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
