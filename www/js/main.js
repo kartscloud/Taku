@@ -18,7 +18,11 @@ function setView(v){
 function initNav(){
   document.querySelectorAll(".navbtn").forEach(t=>t.onclick=()=>{buzz(6);setView(t.dataset.view);});
   $("#miniAv").onclick=()=>setView("profile");
-  $("#homeBtn").onclick=()=>{buzz(6);setView("deck");};   // wordmark = home
+  // wordmark = home. It's a div (a <button> changed its metrics), so wire the
+  // keyboard activation a real button would have given us for free.
+  const goHome=()=>{buzz(6);setView("deck");};
+  $("#homeBtn").onclick=goHome;
+  $("#homeBtn").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goHome();}};
   document.querySelectorAll("#modes .pill").forEach(p=>p.onclick=()=>{
     deckMode=p.dataset.mode;buzz(6);
     document.querySelectorAll("#modes .pill").forEach(x=>x.classList.toggle("active",x===p));
