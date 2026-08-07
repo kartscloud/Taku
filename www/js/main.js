@@ -4,7 +4,8 @@ function setView(v){
   currentView=v;
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   $("#miniAv").classList.toggle("active",v==="profile");
-  $("#filterBtn").style.display=v==="deck"?"":"none";   // genre filter only applies to the deck
+  $("#filterBtn").style.display=v==="deck"?"":"none";   // deck-only controls
+  $("#swipeGear").style.display=v==="deck"?"":"none";
   document.body.classList.toggle("nav-side",v==="deck");  // Swipe: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
@@ -35,6 +36,17 @@ function initNav(){
   $("#filterGenres").onclick=e=>{const g=e.target.dataset.fg;if(!g)return;const i=deckGenres.indexOf(g);if(i>=0)deckGenres.splice(i,1);else deckGenres.push(g);e.target.classList.toggle("sel");buzz(6);};
   $("#applyGenres").onclick=()=>{store.set("deckGenres",deckGenres);$("#genreModal").classList.remove("on");updateFilterBadge();applyGenreFilter();toast(deckGenres.length?"Filtered to "+deckGenres.length+" genre"+(deckGenres.length>1?"s":""):"Showing everything");};
   $("#clearGenres").onclick=()=>{deckGenres.length=0;store.set("deckGenres",deckGenres);$("#genreModal").classList.remove("on");updateFilterBadge();applyGenreFilter();toast("Filter cleared");};
+  // swipe preferences
+  const syncSwipeUI=()=>document.querySelectorAll("#swRate .langopt").forEach(b=>b.classList.toggle("on",b.dataset.sw===swipePrefs.rate));
+  $("#swipeGear").onclick=()=>{syncSwipeUI();$("#swipeSettings").classList.add("on");};
+  document.querySelectorAll("#swRate .langopt").forEach(b=>b.onclick=()=>{swipePrefs.rate=b.dataset.sw;syncSwipeUI();buzz(6);});
+  $("#swipeSettingsDone").onclick=()=>{
+    store.set("swipePrefs",swipePrefs);
+    $("#swipeSettings").classList.remove("on");
+    $("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");
+    toast(swipePrefs.rate==="quick"?"Swiping right just marks watched":"You'll rate after each swipe");
+  };
+  $("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");
   $("#shareCard").onclick=()=>shareRankCard();
   $("#backupBtn").onclick=()=>exportData();
   $("#restoreBtn").onclick=()=>$("#restoreFile").click();
@@ -42,7 +54,7 @@ function initNav(){
   document.querySelectorAll("#rateModal .tierbtn").forEach(b=>b.onclick=()=>commitRate(b.dataset.tier));
   document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.onclick=()=>{rateStatus=b.dataset.status;syncRateToggle();});
   $("#rateSkip").onclick=()=>commitRate(null);
-  ["rateModal","detailModal","editModal","friendModal","genreModal","browseSettings"].forEach(id=>{
+  ["rateModal","detailModal","editModal","friendModal","genreModal","browseSettings","swipeSettings"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{

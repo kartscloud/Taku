@@ -22,6 +22,9 @@ let want=store.get("want",[]);
 let watched=store.get("watched",[]);          // slim records + tier + status ("watching"|"watched")
 watched.forEach(m=>{if(!m.status)m.status="watched";}); // records made before the watching/watched split
 let seen=new Set(store.get("seen",[]));        // every id acted on
+// how swiping behaves. rate: "ask" = tier sheet after every right-swipe,
+// "quick" = just log it as watched and keep the deck moving
+let swipePrefs=store.get("swipePrefs",{rate:"ask"});
 let profile=store.get("profile",{name:"",handle:"",bio:"",avatar:"🍥",created:0});
 let friends=store.get("friends",null);
 let affinity=store.get("affinity",{});         // genre -> learned weight

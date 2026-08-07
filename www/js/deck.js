@@ -88,7 +88,12 @@ function decide(id,action){
   lastUndo={m,action};updateUndoBtn();
   if(action==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);}
   if(action==="nope"){bumpAffinity(m.genres,-1);}
-  if(action==="watch"){openRate(m);}
+  if(action==="watch"){
+    if(swipePrefs.rate==="quick"){                 // log it and keep the deck moving; rank later from Tiers
+      addWatched({...slim(m),tier:null,status:"watched"});
+      bumpAffinity(m.genres,1);
+    }else openRate(m);
+  }
   refreshCounts();
 }
 function updateUndoBtn(){const b=$("#bUndo");if(b)b.classList.toggle("off",!lastUndo);}
