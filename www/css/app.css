@@ -7,6 +7,8 @@
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* any author `display` beats the UA's [hidden] rule — make hidden actually hide */
+[hidden]{display:none !important}
 html,body{height:100%}
 body{
   background:radial-gradient(1200px 600px at 50% -10%,#241a3a 0%,var(--bg) 55%);
