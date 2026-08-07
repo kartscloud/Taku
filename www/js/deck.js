@@ -159,15 +159,8 @@ function attachDrag(el,m){
 
 /* rating (+ watching/watched status) */
 let rateStatus="watched";
-function syncRateToggle(){
-  document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.classList.toggle("on",b.dataset.status===rateStatus));
-  // an unfinished show can't be fairly tiered — swap the tiers for a single "add it" action
-  const w=rateStatus==="watching";
-  const fin=$("#rateFinished"),wat=$("#rateWatching");
-  if(fin)fin.hidden=w;
-  if(wat)wat.hidden=!w;
-}
-/* park it in the Watching deck untiered; ranked later, once actually finished */
+function syncRateToggle(){}   // status is now implied: a tier means finished, "Still watching" is its own button
+/* park it in the Watching deck untiered and move on; ranked later, once actually finished */
 function commitWatching(){
   if(!pendingWatch)return;
   addWatched({...pendingWatch.rec,tier:null,status:"watching"});
@@ -183,7 +176,7 @@ function openRateFor(rec,status){
 }
 function commitRate(tier){
   if(!pendingWatch)return;
-  const rec={...pendingWatch.rec,tier,status:rateStatus};
+  const rec={...pendingWatch.rec,tier,status:"watched"};   // picking a tier means you finished it
   addWatched(rec);
   bumpAffinity(pendingWatch.genres, tier?TIER_AFFINITY[tier]:1);
   $("#rateModal").classList.remove("on");pendingWatch=null;

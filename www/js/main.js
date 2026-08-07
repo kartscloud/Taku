@@ -52,7 +52,6 @@ function initNav(){
   $("#restoreBtn").onclick=()=>$("#restoreFile").click();
   $("#restoreFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f);e.target.value="";});
   document.querySelectorAll("#rateModal .tierbtn").forEach(b=>b.onclick=()=>commitRate(b.dataset.tier));
-  document.querySelectorAll("#rateStatusToggle .segs").forEach(b=>b.onclick=()=>{rateStatus=b.dataset.status;syncRateToggle();});
   $("#rateSkip").onclick=()=>commitRate(null);
   $("#rateWatchingGo").onclick=()=>commitWatching();
   ["rateModal","detailModal","editModal","friendModal","genreModal","browseSettings","swipeSettings"].forEach(id=>{
