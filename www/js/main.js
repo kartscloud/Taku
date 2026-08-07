@@ -18,6 +18,7 @@ function setView(v){
 function initNav(){
   document.querySelectorAll(".navbtn").forEach(t=>t.onclick=()=>{buzz(6);setView(t.dataset.view);});
   $("#miniAv").onclick=()=>setView("profile");
+  $("#homeBtn").onclick=()=>{buzz(6);setView("deck");};   // wordmark = home
   document.querySelectorAll("#modes .pill").forEach(p=>p.onclick=()=>{
     deckMode=p.dataset.mode;buzz(6);
     document.querySelectorAll("#modes .pill").forEach(x=>x.classList.toggle("active",x===p));
