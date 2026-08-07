@@ -2,9 +2,10 @@
 /* Filters are three independent axes, so no two choices can ever contradict:
    many-within-a-group is OR (Japan OR Korea), across groups is AND.
    An empty group means "any". */
-const FILTER_DEFAULTS={new:false,origins:[],platforms:[],formats:[],sort:"time"};
+const FILTER_DEFAULTS={new:false,origins:[],platforms:[],formats:[],audio:[],sort:"time"};
+let _audioAvailable=false;   // true once the animeschedule proxy has answered
 let browseFilters=Object.assign({},FILTER_DEFAULTS,store.get("browseFilters",{}));
-["origins","platforms","formats"].forEach(k=>{if(!Array.isArray(browseFilters[k]))browseFilters[k]=[];});
+["origins","platforms","formats","audio"].forEach(k=>{if(!Array.isArray(browseFilters[k]))browseFilters[k]=[];});
 function saveFilters(){store.set("browseFilters",browseFilters);}
 function toggleFilter(group,val){
   const a=browseFilters[group],i=a.indexOf(val);
@@ -53,13 +54,16 @@ function browsePasses(m){
     if(!(m.sites&&m.sites.some(s=>want.includes(s))))return false;
   }
   if(f.formats.length&&!f.formats.includes(m.format))return false;
+  // unmatched titles have no .audio — we don't know, so a filter excludes them
+  // rather than guessing. Never treat "unknown" as "not dubbed".
+  if(f.audio.length&&!(m.audio&&f.audio.some(a=>m.audio[a])))return false;
   return true;
 }
 /* includeNew=false for the Schedule: browsePasses ignores `new`, so counting it
    there would blame a filter that had nothing to do with the empty result */
 function activeFilterCount(includeNew){
   const f=browseFilters;
-  return f.origins.length+f.platforms.length+f.formats.length+(includeNew&&f.new?1:0);
+  return f.origins.length+f.platforms.length+f.formats.length+f.audio.length+(includeNew&&f.new?1:0);
 }
 
 async function buildBrowse(){
@@ -168,6 +172,7 @@ function schcard(e){
       <span class="schtime">${_timeLabel(e.at)}</span>
       ${flag}${score}
       <span class="schep">EP ${e.ep}</span>
+      ${m.audio?`<span class="schaud">${m.audio.sub?'<i class="sub">SUB</i>':""}${m.audio.dub?'<i class="dub">DUB</i>':""}</span>`:""}
     </div>
     <div class="schname">${mTitle(m)}</div>
   </div>`;
@@ -214,6 +219,11 @@ async function renderSchedule(){
     if(tok!==_schedToken)return;
     _schedCache[wk]=d;
   }
+  // sub/dub is best-effort: if the proxy isn't up this is a no-op
+  const idx=await fetchDubSub().catch(()=>null);
+  if(tok!==_schedToken)return;
+  if(idx)annotateDubSub(_schedCache[wk],idx);
+  _audioAvailable=!!idx;
   if(currentView==="browse"&&browseTab==="schedule")paintSchedule();
 }
 
@@ -232,6 +242,11 @@ async function renderBrowse(){
 function _syncSettingsUI(){
   const t=$("#bsNew");if(t)t.classList.toggle("on",browseFilters.new);
   document.querySelectorAll("#bsSort [data-sort]").forEach(b=>b.classList.toggle("on",b.dataset.sort===browseFilters.sort));
+  document.querySelectorAll("#bsAudio [data-audio]").forEach(b=>b.classList.toggle("on",browseFilters.audio.includes(b.dataset.audio)));
+  const an=$("#audioNote");
+  if(an)an.textContent=_audioAvailable
+    ? "Live from animeschedule.net. Titles it doesn't track show no badge — that means unknown, not \"no dub\"."
+    : "Sub/dub comes from animeschedule.net and needs the local helper running. Without it these do nothing.";
   document.querySelectorAll("#bsOrigins [data-origin]").forEach(b=>b.classList.toggle("on",browseFilters.origins.includes(b.dataset.origin)));
   document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.classList.toggle("on",browseFilters.platforms.includes(b.dataset.plat)));
   document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.classList.toggle("on",browseFilters.formats.includes(b.dataset.fmt)));
@@ -245,11 +260,12 @@ function initBrowse(){
   $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");};
   $("#bsNew").onclick=()=>{browseFilters.new=!browseFilters.new;_syncSettingsUI();};
   document.querySelectorAll("#bsSort [data-sort]").forEach(b=>b.onclick=()=>{browseFilters.sort=b.dataset.sort;buzz(6);_syncSettingsUI();});
+  document.querySelectorAll("#bsAudio [data-audio]").forEach(b=>b.onclick=()=>{toggleFilter("audio",b.dataset.audio);buzz(6);_syncSettingsUI();});
   document.querySelectorAll("#bsOrigins [data-origin]").forEach(b=>b.onclick=()=>{toggleFilter("origins",b.dataset.origin);buzz(6);_syncSettingsUI();});
   document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.onclick=()=>{toggleFilter("platforms",b.dataset.plat);buzz(6);_syncSettingsUI();});
   document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.onclick=()=>{toggleFilter("formats",b.dataset.fmt);buzz(6);_syncSettingsUI();});
   $("#browseFiltersReset").onclick=()=>{
-    browseFilters=Object.assign({},FILTER_DEFAULTS,{origins:[],platforms:[],formats:[]});
+    browseFilters=Object.assign({},FILTER_DEFAULTS,{origins:[],platforms:[],formats:[],audio:[]});
     _syncSettingsUI();
   };
   function commitFilters(){
@@ -265,7 +281,7 @@ function initBrowse(){
   _updateGearDot();   // persisted filters must light the gear on boot, not only after Done
   document.addEventListener("click",e=>{
     if(e.target.closest&&e.target.closest("#clearFilters")){
-      browseFilters=Object.assign({},FILTER_DEFAULTS,{origins:[],platforms:[],formats:[]});
+      browseFilters=Object.assign({},FILTER_DEFAULTS,{origins:[],platforms:[],formats:[],audio:[]});
       saveFilters();_updateGearDot();_browseData=null;_seasonData=null;_loadedOrigin="";renderBrowse();
     }
   });

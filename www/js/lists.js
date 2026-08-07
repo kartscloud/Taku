@@ -137,13 +137,16 @@ async function renderWatching(){
   });
 }
 
-/* ---- Trash: removals are reversible, and you choose whether it can resurface ---- */
+/* ---- Dropped: removals are reversible, and you choose whether it can resurface ----
+   Users see "Dropped"; the code (listTab "trash", the `trash` array, addTrash/purgeTrash/
+   restoreTrash, id="cTrash", the localStorage key) keeps the old "trash" name on purpose —
+   renaming the storage key would orphan data already on people's devices. */
 const FROM_LABEL={want:"Want to watch",watching:"Watching",watched:"Watched"};
 let _pendingRemove=null;
 function askRemove(rec,from){
   _pendingRemove={rec,from};
-  $("#cfTitle").textContent="Remove “"+rec.title+"”?";
-  $("#cfBody").textContent="It moves to Trash — restore it any time from Tiers → Trash.";
+  $("#cfTitle").textContent="Drop “"+rec.title+"”?";
+  $("#cfBody").textContent="It goes to Dropped. You can put it back any time.";
   $("#confirmModal").classList.add("on");
 }
 function _doRemove(suggest){
@@ -154,12 +157,12 @@ function _doRemove(suggest){
   if(suggest){seen.delete(rec.id);store.set("seen",[...seen]);}  // let the deck offer it again
   else markSeen(rec.id);                                          // keep it out of the deck
   $("#confirmModal").classList.remove("on");_pendingRemove=null;
-  buzz(10);toast(suggest?"Moved to Trash — may resurface":"Moved to Trash — hidden from swipes");
+  buzz(10);toast(suggest?"Moved to Dropped — may resurface":"Moved to Dropped — hidden from swipes");
   refreshCounts();renderWatched();
 }
 function renderTrash(){
   const c=$("#watchedList");_openRow=null;
-  if(!trash.length){c.innerHTML=`<div class="emptylist">Trash is empty.<br>Anything you remove lands here first — nothing is lost.</div>`;return;}
+  if(!trash.length){c.innerHTML=`<div class="emptylist">Nothing dropped yet.<br>Anything you remove lands here first — nothing is lost.</div>`;return;}
   c.innerHTML=trash.map(m=>`
     <div class="row">
       <img src="${m.img||""}" loading="lazy" alt="" />

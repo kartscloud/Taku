@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=53" />
+<link rel="stylesheet" href="css/app.css?v=55" />
 </head>
 <body>
 
@@ -65,7 +65,9 @@
     <div class="listsub" id="listSub">
       <button class="subbtn on" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
       <button class="subbtn" data-listtab="ranked">Watched<span class="subn" id="cRanked"></span></button>
-      <button class="subbtn" data-listtab="trash">Trash<span class="subn" id="cTrash"></span></button>
+      <!-- Label says "Dropped"; the internal name stays "trash" (data-listtab, id="cTrash",
+           the localStorage key). Renaming those would orphan existing users' saved data. -->
+      <button class="subbtn" data-listtab="trash">Dropped<span class="subn" id="cTrash"></span></button>
     </div>
     <div class="list" id="watchedList"></div>
   </section>
@@ -128,10 +130,10 @@
 <!-- REMOVE CONFIRM -->
 <div class="modal" id="confirmModal">
   <div class="sheet">
-    <h3 id="cfTitle">Remove it?</h3>
-    <p id="cfBody">It moves to Trash — you can restore it any time.</p>
-    <button class="savebtn danger" id="cfHide"><span class="icw" data-ic="x"></span>Remove · don't suggest it again</button>
-    <button class="savebtn ghostbtn" id="cfKeep"><span class="icw" data-ic="rotate"></span>Remove · but keep suggesting it</button>
+    <h3 id="cfTitle">Drop this show?</h3>
+    <p id="cfBody">It goes to Dropped. You can put it back any time.</p>
+    <button class="savebtn danger" id="cfHide"><span class="icw" data-ic="x"></span>Drop it — don't show me again</button>
+    <button class="savebtn ghostbtn" id="cfKeep"><span class="icw" data-ic="rotate"></span>Drop it — I might change my mind</button>
     <button class="skip" id="cfCancel">Cancel</button>
   </div>
 </div>
@@ -225,6 +227,13 @@
       <button class="langopt" data-sort="title">A–Z</button>
     </div>
 
+    <div class="seth">Audio <span class="sethnote">sub / dub · schedule only</span></div>
+    <div class="langopts multi" id="bsAudio">
+      <button class="langopt" data-audio="sub">Subbed</button>
+      <button class="langopt" data-audio="dub">Dubbed</button>
+    </div>
+    <p class="setnote" id="audioNote">Sub/dub comes from animeschedule.net and needs the local helper running. Without it these do nothing.</p>
+
     <div class="seth">Original language <span class="sethnote">the audio it was made in</span></div>
     <div class="langopts multi" id="bsOrigins">
       <button class="langopt" data-origin="JP">Japanese</button>
@@ -315,17 +324,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=53"></script>
-<script src="js/state.js?v=53"></script>
-<script src="js/api.js?v=53"></script>
-<script src="js/rec.js?v=53"></script>
-<script src="js/deck.js?v=53"></script>
-<script src="js/lists.js?v=53"></script>
-<script src="js/search.js?v=53"></script>
-<script src="js/profile.js?v=53"></script>
-<script src="js/detail.js?v=53"></script>
-<script src="js/browse.js?v=53"></script>
-<script src="js/share.js?v=53"></script>
-<script src="js/main.js?v=53"></script>
+<script src="js/data.js?v=55"></script>
+<script src="js/state.js?v=55"></script>
+<script src="js/api.js?v=55"></script>
+<script src="js/rec.js?v=55"></script>
+<script src="js/deck.js?v=55"></script>
+<script src="js/lists.js?v=55"></script>
+<script src="js/search.js?v=55"></script>
+<script src="js/profile.js?v=55"></script>
+<script src="js/detail.js?v=55"></script>
+<script src="js/browse.js?v=55"></script>
+<script src="js/share.js?v=55"></script>
+<script src="js/main.js?v=55"></script>
 </body>
 </html>

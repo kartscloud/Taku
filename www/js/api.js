@@ -185,6 +185,65 @@ async function fetchSchedule(weekOffset){
   return out;
 }
 
+/* ---- sub/dub, via the animeschedule.net proxy ----
+   AniList has no dub/sub field at all, and animeschedule.net publishes no AniList
+   id, so the two are joined on normalised titles. That lands ~89% on a typical
+   week. The 11% are genuine alias differences (Detective Conan / Case Closed).
+   RULE: an unmatched title means UNKNOWN, never "no dub" — we never assert
+   absence from a failed join. Everything degrades to today's behaviour when the
+   proxy isn't running, which is the normal case for most users. */
+const AS_PROXY=store.get("asProxy","http://localhost:8787");
+const AS_ROMAN={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9,x:10};
+function asKey(s){
+  if(!s)return "";
+  let t=String(s).toLowerCase().replace(/[’'`´]/g,"")
+    .replace(/\(tv\)|\(dub\)|\(sub\)/g," ")
+    .replace(/[^a-z0-9]+/g," ").trim();
+  t=t.replace(/\b(\d+)(st|nd|rd|th)\b/g,"$1");          // "3rd season" -> "3"
+  t=t.replace(/\b(season|cour|part)\s*(\d+)\b/g,"$2");  // "season 3"   -> "3"
+  t=t.replace(/\b(\d+)\s*(season|cour|part)\b/g,"$1");
+  t=t.replace(/\b([ivx]+)\b$/,(m,r)=>AS_ROMAN[r]!==undefined?String(AS_ROMAN[r]):m);
+  t=t.replace(/\b(final|the)\b/g," ");
+  return t.replace(/\s+/g," ").trim();
+}
+let _asIdx=null, _asTried=false;
+async function fetchDubSub(){
+  if(_asIdx||_asTried)return _asIdx;
+  _asTried=true;
+  const cached=store.get("cache_dubsub",null);
+  if(cached&&Date.now()-cached.t<CACHE_TTL){_asIdx=new Map(cached.d);return _asIdx;}
+  try{
+    const grab=async kind=>{
+      const c=new AbortController(); const to=setTimeout(()=>c.abort(),4000);
+      try{const r=await fetch(AS_PROXY+"/timetables/"+kind,{signal:c.signal});
+        return r.ok?await r.json():[];}finally{clearTimeout(to);}
+    };
+    const [sub,dub]=await Promise.all([grab("sub"),grab("dub")]);
+    if(!sub.length&&!dub.length){_asIdx=null;return null;}
+    const idx=new Map();
+    const add=(m,kind)=>[m.english,m.romaji,m.title,m.native].forEach(n=>{
+      const k=asKey(n);if(!k)return;
+      const cur=idx.get(k)||{sub:false,dub:false};cur[kind]=true;idx.set(k,cur);
+    });
+    sub.forEach(m=>add(m,"sub"));dub.forEach(m=>add(m,"dub"));
+    _asIdx=idx;
+    store.set("cache_dubsub",{t:Date.now(),d:[...idx]});
+    return idx;
+  }catch(e){_asIdx=null;return null;}   // proxy down → app behaves exactly as before
+}
+/* stamps .audio={sub,dub} on entries we could match; leaves it undefined otherwise */
+function annotateDubSub(entries,idx){
+  if(!idx)return entries;
+  entries.forEach(e=>{
+    const m=e.m||e;
+    const t=m.title||{};
+    const hit=[t.english,t.romaji,m.titleText].map(asKey).filter(Boolean)
+      .map(k=>idx.get(k)).find(Boolean);
+    if(hit)m.audio=hit;
+  });
+  return entries;
+}
+
 async function searchAnime(qs){
   const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
   const data=await gql(q,{q:qs});

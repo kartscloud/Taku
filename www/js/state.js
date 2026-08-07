@@ -74,7 +74,9 @@ function addWatched(rec){
 }
 function removeWatched(id){watched=watched.filter(x=>x.id!==id);store.set("watched",watched);}
 
-/* Trash — nothing leaves the app outright. Removals land here with where they
+/* Trash — shown to users as "Dropped"; the internal name and the "trash" localStorage
+   key stay as-is so existing devices keep their saved data.
+   Nothing leaves the app outright. Removals land here with where they
    came from, so restoring puts them back exactly where they were.
    suggest:false also keeps the id in `seen`, so the swipe deck never shows it again. */
 let trash=store.get("trash",[]);
