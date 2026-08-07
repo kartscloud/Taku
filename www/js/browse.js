@@ -1,11 +1,31 @@
 /* taku · Discover — browse: genre shelves, personalized, full-season "new releases", language filter */
-let browseFilters={new:false,lang:"all",platform:"all",format:"all"};
+/* Filters are three independent axes, so no two choices can ever contradict:
+   many-within-a-group is OR (Japan OR Korea), across groups is AND.
+   An empty group means "any". */
+const FILTER_DEFAULTS={new:false,origins:[],platforms:[],formats:[],sort:"time"};
+let browseFilters=Object.assign({},FILTER_DEFAULTS,store.get("browseFilters",{}));
+["origins","platforms","formats"].forEach(k=>{if(!Array.isArray(browseFilters[k]))browseFilters[k]=[];});
+function saveFilters(){store.set("browseFilters",browseFilters);}
+function toggleFilter(group,val){
+  const a=browseFilters[group],i=a.indexOf(val);
+  if(i>=0)a.splice(i,1);else a.push(val);
+}
 let browseTab="browse";                      // browse | schedule
-let _browseData=null, _seasonData=null, _loadedLang="all", _browseToken=0, _schedToken=0;
+let _browseData=null, _seasonData=null, _browseToken=0, _schedToken=0;
+/* must mirror whatever langCountry() will use on the FIRST fetch, or clearing a
+   persisted single origin computes the same key and skips cache invalidation */
+let _loadedOrigin=browseFilters.origins.length===1?browseFilters.origins[0]:"";
 let _schedWeek=0, _schedCache={};            // week offset: 0 = next 7 days, -1 = last week
-const PLATFORMS=["Crunchyroll","Netflix","Hulu","Amazon Prime Video","HIDIVE","Disney Plus","Bilibili TV"];
-const FORMATS=["TV","TV_SHORT","MOVIE","ONA","OVA","SPECIAL"];
-const LANG_COUNTRY={japanese:"JP",chinese:"CN",korean:"KR"};
+
+/* Schedule ordering. Days always stay chronological — sorting reorders titles
+   *within* each day, so it stays a calendar instead of collapsing into a list. */
+const SCHED_SORT={
+  time:(a,b)=>a.at-b.at,
+  popularity:(a,b)=>(b.m.popularity||0)-(a.m.popularity||0),
+  score:(a,b)=>(b.m.averageScore||0)-(a.m.averageScore||0),
+  title:(a,b)=>mTitle(a.m).localeCompare(mTitle(b.m))
+};
+const SORT_LABEL={time:"Air time",popularity:"Most popular",score:"Highest rated",title:"A–Z"};
 const _DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const _MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function _dayKey(at){const d=new Date(at*1000);return d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate();}
@@ -16,18 +36,30 @@ function _dayLabel(at){
   return name+" · "+_MON[d.getMonth()]+" "+d.getDate();
 }
 function _timeLabel(at){try{return new Date(at*1000).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}catch(e){return "";}}
-function langCountry(){return LANG_COUNTRY[browseFilters.lang]||null;} // JP/CN/KR, or null for all/english
+/* AniList's countryOfOrigin takes one value, so a fetch-level narrow is only
+   possible when exactly one origin is picked. With several we fetch unfiltered
+   (which returns all countries) and narrow client-side. */
+function langCountry(){return browseFilters.origins.length===1?browseFilters.origins[0]:null;}
 
 function genreOrder(){return [...OB_GENRES].sort((a,b)=>(affinity[b]||0)-(affinity[a]||0));}
 function browsePasses(m){
-  if(browseFilters.platform!=="all"){
-    if(!m.sites||!m.sites.includes(browseFilters.platform))return false;
+  const f=browseFilters;
+  if(f.origins.length&&!(m.country&&f.origins.includes(m.country)))return false;
+  if(f.platforms.length){
+    // "__EN__" is a shortcut for the whole Western set — saves tapping seven chips
+    const want=f.platforms.includes("__EN__")
+      ? f.platforms.filter(p=>p!=="__EN__").concat(WESTERN_SITES)
+      : f.platforms;
+    if(!(m.sites&&m.sites.some(s=>want.includes(s))))return false;
   }
-  if(browseFilters.format!=="all"&&m.format!==browseFilters.format)return false;
-  if(browseFilters.lang==="english")return !!m.en;                 // English = available on a Western platform
-  const c=langCountry();
-  if(c&&m.country&&m.country!==c)return false;                     // guards mixed-source shelves (recs)
+  if(f.formats.length&&!f.formats.includes(m.format))return false;
   return true;
+}
+/* includeNew=false for the Schedule: browsePasses ignores `new`, so counting it
+   there would blame a filter that had nothing to do with the empty result */
+function activeFilterCount(includeNew){
+  const f=browseFilters;
+  return f.origins.length+f.platforms.length+f.formats.length+(includeNew&&f.new?1:0);
 }
 
 async function buildBrowse(){
@@ -103,7 +135,7 @@ function paintBrowse(){
     let html=heroHTML(star,"Biggest of "+seasonLabel());
     html+=shelfHTML("New this season",_seasonData.all.filter(m=>!star||m.id!==star.id),seasonLabel()+" · "+pool.length+" titles");
     genreOrder().forEach(g=>{html+=shelfHTML(g,_seasonData.genres[g]);});
-    host.innerHTML=html||`<div class="emptylist">No titles match this language filter this season.</div>`;
+    host.innerHTML=html||`<div class="emptylist">No titles this season match your filters.</div>`;
   }else{
     if(!_browseData){host.innerHTML=_loadingHTML("Building your Discover feed…");return;}
     const rec=_browseData.rec.filter(browsePasses);
@@ -118,10 +150,11 @@ function paintBrowse(){
 }
 function _browseItem(id){
   const pools=[];
-  for(const wk in _schedCache){const e=_schedCache[wk].find(x=>x.m.id==id);if(e)return e.m;}
+  // richer pools first — schedule entries carry only the fields the calendar needs
   if(_seasonData)pools.push(_seasonData.all);
   if(_browseData){pools.push(_browseData.rec);if(_browseData.loved)pools.push(_browseData.loved.items);for(const g in _browseData.genres)pools.push(_browseData.genres[g]);}
   for(const p of pools){const f=p.find(m=>m.id==id);if(f)return f;}
+  for(const wk in _schedCache){const e=_schedCache[wk].find(x=>x.m.id==id);if(e)return e.m;}
   return null;
 }
 
@@ -159,11 +192,17 @@ function paintSchedule(){
   if(!data){host.innerHTML=_weekNavHTML()+_loadingHTML("Loading the airing schedule…");return;}
   const entries=data.filter(e=>browsePasses(e.m));
   let body;
-  if(!entries.length){body=`<div class="emptylist">Nothing airing this week matches your filters.</div>`;}
-  else{
+  if(!entries.length){
+    const n=activeFilterCount(false);
+    body=`<div class="emptylist">Nothing airing this week matches ${n?"your "+n+" active filter"+(n>1?"s":""):"this view"}.<br>
+      ${n?`<button class="clearfilters" id="clearFilters">Clear filters</button>`:""}</div>`;
+  }else{
     const order=[],map={};
     entries.forEach(e=>{const k=_dayKey(e.at);if(!map[k]){map[k]={at:e.at,items:[]};order.push(k);}map[k].items.push(e);});
-    body=order.map(k=>`<div class="schday"><div class="schdayhead">${_dayLabel(map[k].at)}<span class="schcount">${map[k].items.length}</span></div><div class="schgrid">${map[k].items.map(schcard).join("")}</div></div>`).join("");
+    const cmp=SCHED_SORT[browseFilters.sort]||SCHED_SORT.time;
+    order.forEach(k=>map[k].items.sort(cmp));      // days stay in date order; titles reorder inside each
+    const tag=browseFilters.sort==="time"?"":`<span class="schsort">${SORT_LABEL[browseFilters.sort]}</span>`;
+    body=order.map(k=>`<div class="schday"><div class="schdayhead">${_dayLabel(map[k].at)}<span class="schcount">${map[k].items.length}</span>${tag}</div><div class="schgrid">${map[k].items.map(schcard).join("")}</div></div>`).join("");
   }
   host.innerHTML=_weekNavHTML()+body;
 }
@@ -192,27 +231,44 @@ async function renderBrowse(){
 
 function _syncSettingsUI(){
   const t=$("#bsNew");if(t)t.classList.toggle("on",browseFilters.new);
-  document.querySelectorAll("#browseSettings [data-lang]").forEach(b=>b.classList.toggle("on",b.dataset.lang===browseFilters.lang));
-  document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.classList.toggle("on",b.dataset.plat===browseFilters.platform));
-  document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.classList.toggle("on",b.dataset.fmt===browseFilters.format));
+  document.querySelectorAll("#bsSort [data-sort]").forEach(b=>b.classList.toggle("on",b.dataset.sort===browseFilters.sort));
+  document.querySelectorAll("#bsOrigins [data-origin]").forEach(b=>b.classList.toggle("on",browseFilters.origins.includes(b.dataset.origin)));
+  document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.classList.toggle("on",browseFilters.platforms.includes(b.dataset.plat)));
+  document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.classList.toggle("on",browseFilters.formats.includes(b.dataset.fmt)));
 }
 function _updateGearDot(){
   const g=$("#browseGear");if(!g)return;
-  const on=browseFilters.new||browseFilters.lang!=="all"||browseFilters.platform!=="all"||browseFilters.format!=="all";
-  g.classList.toggle("active",on);
+  g.classList.toggle("active",activeFilterCount(true)>0);
 }
 
 function initBrowse(){
   $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");};
   $("#bsNew").onclick=()=>{browseFilters.new=!browseFilters.new;_syncSettingsUI();};
-  document.querySelectorAll("#browseSettings [data-lang]").forEach(b=>b.onclick=()=>{browseFilters.lang=b.dataset.lang;_syncSettingsUI();});
-  document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.onclick=()=>{browseFilters.platform=b.dataset.plat;_syncSettingsUI();});
-  document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.onclick=()=>{browseFilters.format=b.dataset.fmt;_syncSettingsUI();});
-  $("#browseSettingsDone").onclick=()=>{
-    $("#browseSettings").classList.remove("on");_updateGearDot();
-    if(browseFilters.lang!==_loadedLang){_browseData=null;_seasonData=null;_loadedLang=browseFilters.lang;} // language changed → re-fetch the right country
-    renderBrowse();
+  document.querySelectorAll("#bsSort [data-sort]").forEach(b=>b.onclick=()=>{browseFilters.sort=b.dataset.sort;buzz(6);_syncSettingsUI();});
+  document.querySelectorAll("#bsOrigins [data-origin]").forEach(b=>b.onclick=()=>{toggleFilter("origins",b.dataset.origin);buzz(6);_syncSettingsUI();});
+  document.querySelectorAll("#bsPlatforms [data-plat]").forEach(b=>b.onclick=()=>{toggleFilter("platforms",b.dataset.plat);buzz(6);_syncSettingsUI();});
+  document.querySelectorAll("#bsFormats [data-fmt]").forEach(b=>b.onclick=()=>{toggleFilter("formats",b.dataset.fmt);buzz(6);_syncSettingsUI();});
+  $("#browseFiltersReset").onclick=()=>{
+    browseFilters=Object.assign({},FILTER_DEFAULTS,{origins:[],platforms:[],formats:[]});
+    _syncSettingsUI();
   };
+  function commitFilters(){
+    $("#browseSettings").classList.remove("on");_updateGearDot();saveFilters();
+    // a single origin narrows at fetch level, so re-pull when that changes
+    const originKey=browseFilters.origins.length===1?browseFilters.origins[0]:"";
+    if(originKey!==_loadedOrigin){_browseData=null;_seasonData=null;_loadedOrigin=originKey;}
+    renderBrowse();
+  }
+  $("#browseSettingsDone").onclick=commitFilters;
+  // dismissing by backdrop must commit too — the toggles already mutated state
+  $("#browseSettings").addEventListener("click",e=>{if(e.target.id==="browseSettings")commitFilters();});
+  _updateGearDot();   // persisted filters must light the gear on boot, not only after Done
+  document.addEventListener("click",e=>{
+    if(e.target.closest&&e.target.closest("#clearFilters")){
+      browseFilters=Object.assign({},FILTER_DEFAULTS,{origins:[],platforms:[],formats:[]});
+      saveFilters();_updateGearDot();_browseData=null;_seasonData=null;_loadedOrigin="";renderBrowse();
+    }
+  });
   // schedule week navigation
   $("#browseShelves").addEventListener("click",e=>{
     const w=e.target.closest?e.target.closest("[data-wk]"):null;

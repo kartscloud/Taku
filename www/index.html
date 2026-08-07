@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=51" />
+<link rel="stylesheet" href="css/app.css?v=53" />
 </head>
 <body>
 
@@ -216,17 +216,25 @@
   <div class="sheet">
     <h3>Discover filters</h3>
     <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew"></button></div>
-    <div class="seth">Language</div>
-    <div class="langopts">
-      <button class="langopt on" data-lang="all">All</button>
-      <button class="langopt" data-lang="english">English</button>
-      <button class="langopt" data-lang="japanese">Japanese</button>
-      <button class="langopt" data-lang="chinese">Chinese</button>
-      <button class="langopt" data-lang="korean">Korean</button>
+
+    <div class="seth">Schedule order <span class="sethnote">within each day</span></div>
+    <div class="langopts" id="bsSort">
+      <button class="langopt on" data-sort="time">Air time</button>
+      <button class="langopt" data-sort="popularity">Most popular</button>
+      <button class="langopt" data-sort="score">Highest rated</button>
+      <button class="langopt" data-sort="title">A–Z</button>
     </div>
-    <div class="seth">Streaming on</div>
-    <div class="langopts" id="bsPlatforms">
-      <button class="langopt on" data-plat="all">Any</button>
+
+    <div class="seth">Original language <span class="sethnote">the audio it was made in</span></div>
+    <div class="langopts multi" id="bsOrigins">
+      <button class="langopt" data-origin="JP">Japanese</button>
+      <button class="langopt" data-origin="CN">Chinese</button>
+      <button class="langopt" data-origin="KR">Korean</button>
+    </div>
+
+    <div class="seth">Streaming on <span class="sethnote">pick any</span></div>
+    <div class="langopts multi" id="bsPlatforms">
+      <button class="langopt" data-plat="__EN__">Any English platform</button>
       <button class="langopt" data-plat="Crunchyroll">Crunchyroll</button>
       <button class="langopt" data-plat="Netflix">Netflix</button>
       <button class="langopt" data-plat="Hulu">Hulu</button>
@@ -235,9 +243,9 @@
       <button class="langopt" data-plat="Disney Plus">Disney+</button>
       <button class="langopt" data-plat="Bilibili TV">Bilibili</button>
     </div>
-    <div class="seth">Type</div>
-    <div class="langopts" id="bsFormats">
-      <button class="langopt on" data-fmt="all">Any</button>
+
+    <div class="seth">Type <span class="sethnote">pick any</span></div>
+    <div class="langopts multi" id="bsFormats">
       <button class="langopt" data-fmt="TV">TV</button>
       <button class="langopt" data-fmt="TV_SHORT">Short</button>
       <button class="langopt" data-fmt="MOVIE">Movie</button>
@@ -245,8 +253,12 @@
       <button class="langopt" data-fmt="OVA">OVA</button>
       <button class="langopt" data-fmt="SPECIAL">Special</button>
     </div>
-    <p class="setnote">Japanese / Chinese / Korean = the anime's country of origin. English = available on a Western platform — AniList has no per-title dub/sub or simulcast data, so platform availability is the closest real signal.</p>
-    <button class="savebtn" id="browseSettingsDone">Done</button>
+
+    <p class="setnote">Nothing selected in a group means <b>any</b>. Picking several inside one group widens it (Japanese <i>or</i> Korean); the groups then narrow each other (Japanese <i>and</i> on Netflix), so no two choices can contradict.<br><b>No dub/sub filter yet.</b> AniList publishes no dub, sub or simulcast field — every streaming link comes back with an empty language. Original language above is the audio it was animated in; the platform list is what's licensed where you are.</p>
+    <div class="ratealt">
+      <button class="altbtn ghost" id="browseFiltersReset">Reset</button>
+      <button class="altbtn" id="browseSettingsDone">Done</button>
+    </div>
   </div>
 </div>
 
@@ -303,17 +315,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=51"></script>
-<script src="js/state.js?v=51"></script>
-<script src="js/api.js?v=51"></script>
-<script src="js/rec.js?v=51"></script>
-<script src="js/deck.js?v=51"></script>
-<script src="js/lists.js?v=51"></script>
-<script src="js/search.js?v=51"></script>
-<script src="js/profile.js?v=51"></script>
-<script src="js/detail.js?v=51"></script>
-<script src="js/browse.js?v=51"></script>
-<script src="js/share.js?v=51"></script>
-<script src="js/main.js?v=51"></script>
+<script src="js/data.js?v=53"></script>
+<script src="js/state.js?v=53"></script>
+<script src="js/api.js?v=53"></script>
+<script src="js/rec.js?v=53"></script>
+<script src="js/deck.js?v=53"></script>
+<script src="js/lists.js?v=53"></script>
+<script src="js/search.js?v=53"></script>
+<script src="js/profile.js?v=53"></script>
+<script src="js/detail.js?v=53"></script>
+<script src="js/browse.js?v=53"></script>
+<script src="js/share.js?v=53"></script>
+<script src="js/main.js?v=53"></script>
 </body>
 </html>

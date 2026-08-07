@@ -176,6 +176,12 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .gearbtn.icononly .icw{width:17px;height:17px}
 .gearbtn.active{border-color:var(--accent);color:var(--accent)}
 .gearbtn.active::after{content:"";position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent2);border:2px solid var(--bg)}
+.sethnote{font-weight:600;font-size:10.5px;color:var(--dim);text-transform:none;letter-spacing:0}
+.langopts.multi .langopt.on::before{content:"✓ ";font-weight:900}
+.schsort{margin-left:auto;font:700 10px ui-monospace,monospace;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.clearfilters{margin-top:14px;background:transparent;border:1px solid var(--accent);color:var(--accent);
+  font-family:inherit;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:999px;cursor:pointer}
+
 /* schedule week navigation */
 .weeknav{display:flex;align-items:center;gap:8px;margin:2px 0 6px}
 .wkbtn{width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--bg2);

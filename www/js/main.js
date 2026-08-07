@@ -57,7 +57,9 @@ function initNav(){
   $("#cfHide").onclick=()=>_doRemove(false);   // never suggest it again
   $("#cfKeep").onclick=()=>_doRemove(true);    // may resurface in the deck
   $("#cfCancel").onclick=()=>{$("#confirmModal").classList.remove("on");_pendingRemove=null;};
-  ["rateModal","detailModal","editModal","friendModal","genreModal","browseSettings","swipeSettings","confirmModal"].forEach(id=>{
+  // browseSettings is NOT here: its filters mutate on tap, so dismissing it must
+  // run the same commit path as Done (see initBrowse) or the picks are lost
+  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
