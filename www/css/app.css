@@ -32,48 +32,112 @@ header{width:100%;max-width:480px;display:flex;align-items:center;justify-conten
 main{width:100%;max-width:480px;flex:1;padding:4px 14px calc(var(--nav-h) + var(--sab) + 18px);display:flex;flex-direction:column}
 
 /* ============ bottom nav ============ */
-/* floating island nav — frees the full width of the screen for content */
+/* floating island nav — frees the full width of the screen for content.
+   All geometry lives in custom props: the sliding selection pill derives its
+   position from them, so the vertical variant only has to restate the numbers. */
 nav.bottom{
+  --nb-w:66px;    /* side tab width   */
+  --nb-h:54px;    /* side tab height  */
+  --nm-w:54px;    /* centre button    */
+  --nm-h:54px;
+  --nb-gap:4px; --nb-px:8px; --nb-py:6px;
+  --nb-ease:cubic-bezier(.22,1,.36,1);
   position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 9px);
-  width:auto;z-index:40;display:flex;align-items:center;gap:4px;
-  background:rgba(24,20,42,.78);backdrop-filter:blur(22px) saturate(150%);
-  border:1px solid rgba(255,255,255,.11);border-radius:999px;padding:6px 8px;
+  width:auto;z-index:40;display:flex;align-items:center;gap:var(--nb-gap);
+  background:rgba(22,18,38,.82);backdrop-filter:blur(22px) saturate(150%);
+  border:1px solid rgba(255,255,255,.11);border-radius:999px;padding:var(--nb-py) var(--nb-px);
   box-shadow:0 12px 36px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.4);
 }
-.navbtn{flex:none;width:66px;border:0;background:transparent;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:color .15s;border-radius:999px;padding:7px 0}
+.navbtn{flex:none;position:relative;z-index:1;width:var(--nb-w);height:var(--nb-h);
+  border:0;background:transparent;color:var(--dim);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;border-radius:999px;padding:0;
+  transition:color .22s ease,background .26s ease,box-shadow .26s ease,transform .12s ease}
+.navbtn:active{transform:scale(.94)}
 .navbtn .icw{width:22px;height:22px}
-.navbtn.active .ic{stroke-width:2.4}
 .navbtn small{font-size:9.5px;font-weight:600;letter-spacing:.4px}
-.navbtn.active{color:var(--accent)}
-.navbtn.active::before{content:"";position:absolute;bottom:2px;width:16px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.navbtn .n{position:absolute;top:7px;right:calc(50% - 22px);background:var(--accent2);color:#fff;font-size:8.5px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
-/* Tinder-style center Swipe. Keeps the round shape so it stays the obvious
-   primary action, but only wears the accent when it IS the current view —
-   a permanently purple button reads as "you are here" on every screen. */
-.navbtn.navmain{flex:0 0 auto;align-self:center;width:54px;height:54px;padding:0;border-radius:50%;
-  background:var(--bg2);border:1px solid rgba(255,255,255,.15);color:var(--dim);
-  box-shadow:none;transform:none;transition:background .18s,color .18s,box-shadow .18s,transform .12s ease}
+/* selected tab: white content + heavier icon stroke, on top of the pill below */
+.navbtn.active{color:#fff}
+.navbtn.active .ic{stroke-width:2.5}
+.navbtn.active small{font-weight:800}
+.navbtn .n{position:absolute;z-index:2;top:8px;right:calc(50% - 22px);background:var(--accent2);color:#fff;font-size:8.5px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
+/* Tinder-style center Swipe. Keeps the round shape and an accent ring so it
+   stays the obvious primary action, but the saturated *fill* only lands on it
+   when it IS the current view — a permanently purple button reads as
+   "you are here" on every screen. */
+.navbtn.navmain{flex:0 0 auto;align-self:center;width:var(--nm-w);height:var(--nm-h);border-radius:50%;
+  background:rgba(139,92,246,.14);color:#c7b6fd;
+  box-shadow:inset 0 0 0 1.5px rgba(139,92,246,.45)}
 .navbtn.navmain .icw{width:25px;height:25px}
-.navbtn.navmain:active{transform:scale(.92)}
-.navbtn.navmain.active{background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(139,92,246,.55)}
-.navbtn.navmain.active::before{display:none}   /* the fill is its own indicator */
+.navbtn.navmain:active{transform:scale(.9)}
+
+/* --- selection treatment -------------------------------------------------
+   Fallback (engines without :has()): the pill is painted by the tab itself. */
+.navbtn.active{background:linear-gradient(135deg,rgba(139,92,246,.34),rgba(236,72,153,.24));
+  box-shadow:inset 0 0 0 1px rgba(139,92,246,.55)}
+.navbtn.navmain.active{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 6px 18px rgba(139,92,246,.55)}
+/* Preferred: ONE shared pill that slides between tabs. Being a single element,
+   it is physically impossible for two tabs to look selected; with no .active
+   tab at all (profile view) it just fades out. */
+@supports selector(:has(*)){
+  .navbtn.active,.navbtn.navmain.active{background:transparent;box-shadow:none}
+  nav.bottom::before{
+    content:"";position:absolute;z-index:0;pointer-events:none;
+    top:var(--nb-py);left:0;width:var(--nb-w);height:var(--nb-h);border-radius:999px;
+    background:linear-gradient(135deg,rgba(139,92,246,.34),rgba(236,72,153,.24));
+    box-shadow:inset 0 0 0 1px rgba(139,92,246,.55);
+    opacity:0;transform:translateX(var(--nb-px)) scale(.7);
+    transition:transform .38s var(--nb-ease),width .38s var(--nb-ease),
+      height .38s var(--nb-ease),top .38s var(--nb-ease),left .38s var(--nb-ease),
+      background .3s ease,box-shadow .3s ease,opacity .22s ease;
+  }
+  nav.bottom:has(.navbtn[data-view="browse"].active)::before{
+    opacity:1;width:var(--nb-w);height:var(--nb-h);top:var(--nb-py);
+    transform:translateX(var(--nb-px)) scale(1)}
+  nav.bottom:has(.navbtn[data-view="deck"].active)::before{
+    opacity:1;width:var(--nm-w);height:var(--nm-h);
+    top:calc(var(--nb-py) + (var(--nb-h) - var(--nm-h))/2);
+    transform:translateX(calc(var(--nb-px) + var(--nb-w) + var(--nb-gap))) scale(1);
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 6px 18px rgba(139,92,246,.55)}
+  nav.bottom:has(.navbtn[data-view="watched"].active)::before{
+    opacity:1;width:var(--nb-w);height:var(--nb-h);top:var(--nb-py);
+    transform:translateX(calc(var(--nb-px) + var(--nb-w) + var(--nb-gap) + var(--nm-w) + var(--nb-gap))) scale(1)}
+}
+@media (prefers-reduced-motion:reduce){
+  nav.bottom::before{transition:opacity .12s ease,background .12s ease}
+}
 .miniav.active{border-color:var(--accent);color:var(--accent)}
 
 /* Discover: shrink the island and stand it up on the right so the feed runs
    the full height of the screen */
 body.nav-side nav.bottom{
+  /* same geometry contract, smaller numbers — the pill maths follows along */
+  --nb-w:46px;--nb-h:44px;--nm-w:42px;--nm-h:42px;--nb-gap:2px;--nb-px:5px;--nb-py:6px;
   left:auto;right:8px;bottom:auto;top:50%;transform:translateY(-50%);
-  flex-direction:column;gap:2px;padding:6px 5px;border-radius:999px;
+  flex-direction:column;border-radius:999px;
 }
-body.nav-side .navbtn{width:46px;padding:6px 0}
 body.nav-side .navbtn small{display:none}
 body.nav-side .navbtn .icw{width:19px;height:19px}
-body.nav-side .navbtn.navmain{width:42px;height:42px}
 body.nav-side .navbtn.navmain .icw{width:20px;height:20px}
-body.nav-side .navbtn.active{color:var(--accent)}
-body.nav-side .navbtn.active::before{bottom:auto;left:2px;width:3px;height:16px;top:50%;transform:translateY(-50%)}
 body.nav-side .navbtn .n{top:2px;right:4px}
+/* the shared pill now travels down the column instead of across the row */
+@supports selector(:has(*)){
+  body.nav-side nav.bottom::before{
+    top:0;left:var(--nb-px);width:var(--nb-w);height:var(--nb-h);
+    transform:translateY(var(--nb-py)) scale(.7)}
+  body.nav-side nav.bottom:has(.navbtn[data-view="browse"].active)::before{
+    top:0;left:var(--nb-px);width:var(--nb-w);height:var(--nb-h);
+    transform:translateY(var(--nb-py)) scale(1)}
+  body.nav-side nav.bottom:has(.navbtn[data-view="deck"].active)::before{
+    top:0;left:calc(var(--nb-px) + (var(--nb-w) - var(--nm-w))/2);
+    width:var(--nm-w);height:var(--nm-h);
+    transform:translateY(calc(var(--nb-py) + var(--nb-h) + var(--nb-gap))) scale(1)}
+  body.nav-side nav.bottom:has(.navbtn[data-view="watched"].active)::before{
+    top:0;left:var(--nb-px);width:var(--nb-w);height:var(--nb-h);
+    transform:translateY(calc(var(--nb-py) + var(--nb-h) + var(--nb-gap) + var(--nm-h) + var(--nb-gap))) scale(1)}
+}
 body.nav-side main{padding-bottom:22px}    /* nav no longer sits at the bottom */
 /* with the island off the bottom, the card takes the space back */
 body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),820px)}
