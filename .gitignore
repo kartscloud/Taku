@@ -15,3 +15,7 @@ docs/
 # scratch
 *.log
 _check.js
+
+# secrets — never commit the animeschedule token
+.env
+server/.env
