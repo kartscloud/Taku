@@ -157,6 +157,30 @@ async function fetchSeason(page,country){
 }
 function seasonLabel(){const {s,y}=curSeason();return s.charAt(0)+s.slice(1).toLowerCase()+" "+y;}
 
+/* Best of a given year.
+   AniList's default POPULARITY_DESC is really "how many people logged it
+   recently", which structurally buries older titles — a 2006 show scoring 81
+   loses to anything current. Sorting by SCORE inside a fixed year removes the
+   recency bias entirely, and the `gems` lens additionally caps popularity so
+   well-loved but low-reach shows surface instead of the usual canon. */
+const YEAR_LENS={
+  popular:{sort:"POPULARITY_DESC",extra:""},
+  rated:  {sort:"SCORE_DESC",     extra:",averageScore_greater:60"},
+  gems:   {sort:"SCORE_DESC",     extra:",averageScore_greater:70,popularity_lesser:30000"}
+};
+async function fetchYear(year,lens,page){
+  const L=YEAR_LENS[lens]||YEAR_LENS.rated;
+  const key="cache_year_"+year+"_"+(lens||"rated")+"_"+(page||1);
+  const hit=store.get(key,null);
+  if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
+  const q=`query($p:Int,$y:Int){Page(page:$p,perPage:30){media(seasonYear:$y,type:ANIME,isAdult:false,
+    sort:${L.sort},genre_not_in:["Ecchi","Hentai"]${L.extra}){${MEDIA_FIELDS}}}}`;
+  const data=await gql(q,{p:page||1,y:year});
+  const list=(data.Page.media||[]).map(trimMedia);
+  store.set(key,{t:Date.now(),d:list});
+  return list;
+}
+
 /* weekly airing calendar — every episode airing in the next 7 days, with exact air time */
 async function fetchSchedule(weekOffset){
   const off=weekOffset||0;                          // 0 = next 7 days, -1 = last week, +1 = week after

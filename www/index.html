@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=63" />
+<link rel="stylesheet" href="css/app.css?v=65" />
 </head>
 <body>
 
@@ -50,6 +50,7 @@
         <button class="seg on" data-btab="browse">Browse</button>
         <button class="seg" data-btab="schedule">Schedule</button>
       </div>
+      <button class="gearbtn icononly" id="yearBtn" title="Best of a year"><span class="icw" data-ic="trophy"></span></button>
       <button class="gearbtn icononly" id="browseGear" title="Filters"><span class="icw" data-ic="gear"></span></button>
     </div>
     <div id="browseShelves"></div>
@@ -126,6 +127,24 @@
   <button class="navbtn navmain active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span></button>
   <button class="navbtn" data-view="watched" title="Tiers" aria-label="Tiers"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
 </nav>
+
+<!-- BEST OF A YEAR -->
+<div class="modal" id="yearSheet">
+  <div class="sheet">
+    <h3>Best of a year</h3>
+    <p class="setnote" style="margin-top:0">Ranking by popularity buries old shows — it mostly measures who logged something recently. Pick a year and rank it properly.</p>
+    <div class="seth">Show me</div>
+    <div class="langopts" id="ysLens">
+      <button class="langopt" data-lens="popular">Most popular</button>
+      <button class="langopt" data-lens="rated">Top rated</button>
+      <button class="langopt on" data-lens="gems">Hidden gems</button>
+    </div>
+    <p class="setnote"><b>Hidden gems</b> = well-scored but rarely logged, so you get the overlooked stuff instead of the same canon.</p>
+    <div class="seth">Year</div>
+    <div id="ysYears" class="yeargrid"></div>
+    <button class="skip" id="yearClose">Cancel</button>
+  </div>
+</div>
 
 <!-- REMOVE CONFIRM -->
 <div class="modal" id="confirmModal">
@@ -326,17 +345,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=63"></script>
-<script src="js/state.js?v=63"></script>
-<script src="js/api.js?v=63"></script>
-<script src="js/rec.js?v=63"></script>
-<script src="js/deck.js?v=63"></script>
-<script src="js/lists.js?v=63"></script>
-<script src="js/search.js?v=63"></script>
-<script src="js/profile.js?v=63"></script>
-<script src="js/detail.js?v=63"></script>
-<script src="js/browse.js?v=63"></script>
-<script src="js/share.js?v=63"></script>
-<script src="js/main.js?v=63"></script>
+<script src="js/data.js?v=65"></script>
+<script src="js/state.js?v=65"></script>
+<script src="js/api.js?v=65"></script>
+<script src="js/rec.js?v=65"></script>
+<script src="js/deck.js?v=65"></script>
+<script src="js/lists.js?v=65"></script>
+<script src="js/search.js?v=65"></script>
+<script src="js/profile.js?v=65"></script>
+<script src="js/detail.js?v=65"></script>
+<script src="js/browse.js?v=65"></script>
+<script src="js/share.js?v=65"></script>
+<script src="js/main.js?v=65"></script>
 </body>
 </html>

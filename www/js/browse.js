@@ -184,6 +184,72 @@ function _browseItem(id){
   return null;
 }
 
+/* ---- Best of a year ----
+   Its own mode rather than a tab or a settings toggle: it takes over the feed
+   while active and exits with one tap, so it never competes with Browse. */
+let yearMode={year:null,lens:"gems"};
+let _yearData=null,_yearToken=0;
+const LENS_LABEL={popular:"Most popular",rated:"Top rated",gems:"Hidden gems"};
+function yearBannerHTML(){
+  return `<div class="yearbar">
+    <div class="ybhead">
+      <div><b>Best of ${yearMode.year}</b><span>${LENS_LABEL[yearMode.lens]}</span></div>
+      <button class="ybx" id="yearExit" title="Back to Browse">${icSvg("x")}</button>
+    </div>
+    <div class="yblens">
+      ${["popular","rated","gems"].map(l=>
+        `<button class="yblbtn${l===yearMode.lens?" on":""}" data-ylens="${l}">${LENS_LABEL[l]}</button>`).join("")}
+    </div>
+  </div>`;
+}
+function ycard(m,i){
+  const img=(m.coverImage&&m.coverImage.large)||"";
+  const flag=m.country&&m.country!=="JP"?`<span class="schflag">${m.country}</span>`:"";
+  return `<div class="schcard" data-bopen="${m.id}">
+    <div class="schart" style="background-image:url('${img}')">
+      <span class="yrank">${i+1}</span>${flag}
+      ${m.averageScore?`<span class="schscore">${(m.averageScore/10).toFixed(1)}</span>`:""}
+      <span class="schep">${m.format||""}${m.episodes?" · "+m.episodes+" ep":""}</span>
+    </div>
+    <div class="schname">${mTitle(m)}</div>
+  </div>`;
+}
+function paintYear(){
+  const host=$("#browseShelves");
+  if(!_yearData){host.innerHTML=yearBannerHTML()+_loadingHTML("Digging through "+yearMode.year+"…");return;}
+  const list=_yearData.filter(browsePasses);
+  const hidden=_yearData.length-list.length;
+  // Old titles often have no streaming links recorded, so a platform filter can
+  // quietly gut a year. Say so instead of pretending the year was thin.
+  const note=hidden?`<div class="yhid">${hidden} more hidden by your filters
+      <button class="clearfilters" id="clearFilters">Clear filters</button></div>`:"";
+  host.innerHTML=yearBannerHTML()+(list.length
+    ? `<div class="schgrid">${list.map(ycard).join("")}</div>`+note
+    : `<div class="emptylist">${hidden?hidden+" titles from "+yearMode.year+" are hidden by your filters."
+         :"Nothing found for "+yearMode.year+"."}<br>
+        ${hidden?`<button class="clearfilters" id="clearFilters">Clear filters</button>`
+         :yearMode.lens==="gems"?"Hidden gems is strict — try Top rated.":""}</div>`);
+}
+async function renderYear(){
+  paintYear();
+  const tok=++_yearToken, y=yearMode.year, l=yearMode.lens;
+  const d=await fetchYear(y,l).catch(()=>[]);
+  if(tok!==_yearToken||yearMode.year!==y||yearMode.lens!==l)return;
+  _yearData=d;
+  if(currentView==="browse"&&browseTab==="year")paintYear();
+}
+function enterYear(y,lens){
+  yearMode={year:y,lens:lens||yearMode.lens};
+  browseTab="year";_yearData=null;
+  $("#browseShelves").scrollTop=0;window.scrollTo(0,0);
+  renderBrowse();
+}
+function exitYear(){
+  yearMode.year=null;browseTab="browse";_yearData=null;
+  document.querySelectorAll("#browseTabs .seg").forEach(s=>s.classList.toggle("on",s.dataset.btab==="browse"));
+  renderBrowse();
+}
+
 /* weekly airing schedule (animeschedule-style poster grid) */
 function schcard(e){
   const m=e.m,img=(m.coverImage&&m.coverImage.large)||"";
@@ -250,6 +316,7 @@ async function renderSchedule(){
 }
 
 async function renderBrowse(){
+  if(browseTab==="year"&&yearMode.year){renderYear();return;}
   if(browseTab==="schedule"){renderSchedule();return;}
   paintBrowse();
   const tok=++_browseToken;   // any newer render (e.g. language changed) invalidates this load
@@ -317,7 +384,41 @@ function initBrowse(){
     buzz(6);$("#browseShelves").scrollTop=0;window.scrollTo(0,0);
     renderSchedule();
   });
+  // --- Best of a year ---
+  const yearsHost=$("#ysYears");
+  if(yearsHost){
+    const now=new Date().getFullYear();
+    let html="";
+    for(let dec=Math.floor(now/10)*10;dec>=1960;dec-=10){
+      const ys=[];
+      for(let y=Math.min(dec+9,now);y>=dec;y--)ys.push(y);
+      html+=`<div class="ydec"><span>${dec}s</span><div class="yrow">`+
+        ys.map(y=>`<button class="ybtn" data-year="${y}">${y}</button>`).join("")+`</div></div>`;
+    }
+    yearsHost.innerHTML=html;
+  }
+  const syncLens=()=>document.querySelectorAll("#ysLens [data-lens]")
+    .forEach(b=>b.classList.toggle("on",b.dataset.lens===yearMode.lens));
+  $("#yearBtn").onclick=()=>{syncLens();$("#yearSheet").classList.add("on");};
+  $("#yearClose").onclick=()=>$("#yearSheet").classList.remove("on");
+  document.querySelectorAll("#ysLens [data-lens]").forEach(b=>b.onclick=()=>{
+    yearMode.lens=b.dataset.lens;syncLens();buzz(6);
+  });
+  $("#ysYears").addEventListener("click",e=>{
+    const b=e.target.closest("[data-year]");if(!b)return;
+    $("#yearSheet").classList.remove("on");
+    buzz(8);enterYear(+b.dataset.year);
+  });
+  // lens chips inside the banner + the exit button
+  $("#browseShelves").addEventListener("click",e=>{
+    if(!e.target.closest)return;
+    if(e.target.closest("#yearExit")){exitYear();return;}
+    const l=e.target.closest("[data-ylens]");
+    if(l){yearMode.lens=l.dataset.ylens;_yearData=null;buzz(6);renderYear();}
+  });
+
   document.querySelectorAll("#browseTabs .seg").forEach(b=>b.onclick=()=>{
+    yearMode.year=null;_yearData=null;      // leaving year mode via the tabs
     browseTab=b.dataset.btab;
     document.querySelectorAll("#browseTabs .seg").forEach(s=>s.classList.toggle("on",s===b));
     buzz(6);$("#browseShelves").scrollTop=0;renderBrowse();
