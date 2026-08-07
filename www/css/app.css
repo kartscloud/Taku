@@ -668,3 +668,75 @@ footer{display:none}
 .rankrow{touch-action:pan-y}
 body.dragging-row{user-select:none;-webkit-user-select:none}
 body.dragging-row .rankrow{cursor:grabbing}
+
+/* ============================================================
+   DESKTOP  (>=900px)
+   The phone layout is a 480px column; on a wide screen that leaves the
+   floating nav stranded at the window edge, far from the content. Here the
+   island becomes a real left sidebar, the column widens, and grids get more
+   columns. The swipe card stays deliberately narrow — a 900px-wide card is
+   a worse card, not a better one.
+   ============================================================ */
+@media (min-width:900px){
+  :root{--rail:216px}
+  body{padding-left:var(--rail)}
+
+  /* island -> fixed left sidebar, always vertical, labels always visible */
+  nav.bottom,
+  body.nav-side nav.bottom{
+    left:0;right:auto;top:0;bottom:auto;transform:none;
+    width:var(--rail);height:100vh;border-radius:0;
+    flex-direction:column;justify-content:center;align-items:stretch;
+    gap:8px;padding:22px 16px;
+    background:rgba(18,15,32,.92);backdrop-filter:blur(18px);
+    border:0;border-right:1px solid var(--line);box-shadow:none;
+  }
+  nav.bottom .navbtn,
+  body.nav-side nav.bottom .navbtn{
+    width:100%;height:52px;flex-direction:row;justify-content:flex-start;
+    gap:14px;padding:0 16px;border-radius:14px;
+  }
+  nav.bottom .navbtn small,
+  body.nav-side nav.bottom .navbtn small{display:block;font-size:14px;letter-spacing:0}
+  nav.bottom .navbtn .icw,
+  body.nav-side nav.bottom .navbtn .icw{width:21px;height:21px}
+  /* the centre button is just another row here — the sidebar already gives it prominence */
+  nav.bottom .navbtn.navmain,
+  body.nav-side nav.bottom .navbtn.navmain{
+    width:100%;height:52px;border-radius:14px;background:transparent;box-shadow:none;color:var(--dim);
+  }
+  nav.bottom .navbtn.navmain::after{content:"Swipe";font-size:14px;font-weight:600;letter-spacing:0}
+  nav.bottom .navbtn.navmain.active{color:#fff}
+  nav.bottom .navbtn .n{position:static;margin-left:auto}
+  /* the sliding pill is horizontal-only; on the rail each item paints its own */
+  nav.bottom::before{display:none !important}
+  /* must out-specify the body.nav-side rules above (which carry an extra
+     element in the selector) or Swipe shows no highlight on its own view */
+  body nav.bottom .navbtn.active,
+  body.nav-side nav.bottom .navbtn.active{
+    background:linear-gradient(135deg,rgba(139,92,246,.34),rgba(236,72,153,.22));
+    box-shadow:inset 0 0 0 1px rgba(139,92,246,.55);color:#fff;
+  }
+  body nav.bottom .navbtn.navmain.active,
+  body.nav-side nav.bottom .navbtn.navmain.active{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 6px 18px rgba(139,92,246,.45);color:#fff;
+  }
+
+  header{max-width:1040px;padding:18px 26px 0}
+  main,body.nav-side main{max-width:1040px;padding:6px 26px 40px}
+
+  /* a swipe card wants to stay thumb-sized, not page-sized */
+  #view-deck{max-width:460px;width:100%;margin:0 auto}
+
+  /* more posters per row now that there's room */
+  .schgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px 14px}
+  .shelf{margin:26px -26px 6px}
+  .shelf h3{margin:0 28px 13px;font-size:19px}
+  .shelfscroll{padding:0 26px 4px;gap:14px}
+  .hero{margin:0 -26px 6px;height:min(46dvh,420px);border-radius:0}
+
+  /* lists breathe at this width */
+  .row{padding:11px}
+  .row img{width:60px;height:84px}
+}
