@@ -203,11 +203,19 @@ function _rankAssign(tier){
   _rankDone++;buzz(tier==="S"?[15,40,15]:10);
   _rankAt++;_rankPaint();
 }
+/* hit something you never actually finished — park it in Watching and move on */
+function _rankToWatching(){
+  const m=_rankQ[_rankAt];if(!m)return;
+  addWatched({...m,tier:null,status:"watching"});
+  buzz(10);toast("Moved to Watching");
+  _rankAt++;_rankPaint();
+}
 
 document.addEventListener("click",e=>{
   if(e.target.closest&&e.target.closest("#rankCta")){openRankMode();return;}
   const rt=e.target.closest?e.target.closest("[data-rtier]"):null;
   if(rt){_rankAssign(rt.dataset.rtier);return;}
+  if(e.target.closest&&e.target.closest("#rankWatching")){_rankToWatching();return;}
   if(e.target.closest&&e.target.closest("#rankSkip")){_rankAt++;_rankPaint();return;}
   if(e.target.closest&&e.target.closest("#rankClose")){closeRankMode();return;}
 
