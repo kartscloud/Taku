@@ -81,11 +81,13 @@ function updateTierCounts(){
   if(cr)cr.textContent=r||"";if(cw)cw.textContent=w||"";
   if(cwant)cwant.textContent=want.length||"";
   if(cl)cl.textContent=watched.length||"";
+  const ct=$("#cTrash");if(ct)ct.textContent=trash.length||"";
 }
 function renderWatched(){
   updateTierCounts();
   const sub=$("#listSub");if(sub)sub.style.display=tierTab==="list"?"":"none";
   if(tierTab==="want")return renderWant();
+  if(listTab==="trash")return renderTrash();
   return listTab==="watching"?renderWatching():renderRanked();
 }
 function renderRanked(){
@@ -107,7 +109,7 @@ function renderRanked(){
         <div class="sub">${[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ")}</div>
       </div>
       <button class="x" data-rewatch="${m.id}" title="Re-rate"><span class="icw">${icSvg("rotate")}</span></button>
-      <button class="x" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
+      <button class="x danger" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
 }
 async function renderWatching(){
@@ -121,8 +123,8 @@ async function renderWatching(){
         <h4>${m.title}</h4>
         <div class="sub airing" data-air="${m.id}">checking schedule…</div>
       </div>
-      <button class="x" data-finish="${m.id}" title="Finished — rate it"><span class="icw">${icSvg("star")}</span></button>
-      <button class="x" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
+      <button class="x ok" data-finish="${m.id}" title="Finished — rate it"><span class="icw">${icSvg("check")}</span></button>
+      <button class="x danger" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
   const map=await fetchNextAiring(list.map(m=>m.id));
   if(currentView!=="watched"||tierTab!=="list"||listTab!=="watching")return;
@@ -133,6 +135,41 @@ async function renderWatching(){
     el.textContent=txt||[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ");
     if(info&&info.next)el.classList.add("live");
   });
+}
+
+/* ---- Trash: removals are reversible, and you choose whether it can resurface ---- */
+const FROM_LABEL={want:"Want to watch",watching:"Watching",watched:"Watched"};
+let _pendingRemove=null;
+function askRemove(rec,from){
+  _pendingRemove={rec,from};
+  $("#cfTitle").textContent="Remove “"+rec.title+"”?";
+  $("#cfBody").textContent="It moves to Trash — restore it any time from Tiers → Trash.";
+  $("#confirmModal").classList.add("on");
+}
+function _doRemove(suggest){
+  if(!_pendingRemove)return;
+  const {rec,from}=_pendingRemove;
+  if(from==="want")removeWant(rec.id);else removeWatched(rec.id);
+  addTrash(rec,from,suggest);
+  if(suggest){seen.delete(rec.id);store.set("seen",[...seen]);}  // let the deck offer it again
+  else markSeen(rec.id);                                          // keep it out of the deck
+  $("#confirmModal").classList.remove("on");_pendingRemove=null;
+  buzz(10);toast(suggest?"Moved to Trash — may resurface":"Moved to Trash — hidden from swipes");
+  refreshCounts();renderWatched();
+}
+function renderTrash(){
+  const c=$("#watchedList");_openRow=null;
+  if(!trash.length){c.innerHTML=`<div class="emptylist">Trash is empty.<br>Anything you remove lands here first — nothing is lost.</div>`;return;}
+  c.innerHTML=trash.map(m=>`
+    <div class="row">
+      <img src="${m.img||""}" loading="lazy" alt="" />
+      <div class="rc">
+        <h4>${m.title}</h4>
+        <div class="sub">was in ${FROM_LABEL[m.from]||"your lists"}${m.suggest?"":" · hidden from swipes"}</div>
+      </div>
+      <button class="x ok" data-restore="${m.id}" title="Put it back"><span class="icw">${icSvg("rotate")}</span></button>
+      <button class="x danger" data-purge="${m.id}" title="Delete forever"><span class="icw">${icSvg("x")}</span></button>
+    </div>`).join("");
 }
 
 /* ---- Rank mode: tier the backlog one tap at a time, no modal round-trip ---- */
@@ -181,11 +218,13 @@ document.addEventListener("click",e=>{
   const sb=e.target.closest?e.target.closest("#listSub .subbtn"):null;
   if(sb){listTab=sb.dataset.listtab;document.querySelectorAll("#listSub .subbtn").forEach(s=>s.classList.toggle("on",s===sb));renderWatched();return;}
 
-  const t=e.target.closest?e.target.closest("[data-sw-watched],[data-sw-unadd],[data-watch-remove],[data-rewatch],[data-open-watched],[data-finish]"):null;
+  const t=e.target.closest?e.target.closest("[data-sw-watched],[data-sw-unadd],[data-watch-remove],[data-rewatch],[data-open-watched],[data-finish],[data-restore],[data-purge]"):null;
   if(!t)return;const d=t.dataset;
-  if(d.swUnadd){removeWant(+d.swUnadd);closeOpenRow();refreshCounts();toast("Removed from Want");}
+  if(d.restore){const from=restoreTrash(+d.restore);refreshCounts();renderWatched();toast("Back in "+(FROM_LABEL[from]||"your list"));return;}
+  if(d.purge){purgeTrash(+d.purge);refreshCounts();renderWatched();toast("Deleted for good");return;}
+  if(d.swUnadd){const m=want.find(x=>x.id==d.swUnadd);closeOpenRow();if(m)askRemove(m,"want");}
   if(d.swWatched){const m=want.find(x=>x.id==d.swWatched);if(m){closeOpenRow();openRateFor(m,"watched");}}
-  if(d.watchRemove){removeWatched(+d.watchRemove);refreshCounts();}
+  if(d.watchRemove){const m=watched.find(x=>x.id==d.watchRemove);if(m)askRemove(m,m.status==="watching"?"watching":"watched");}
   if(d.rewatch){const m=watched.find(x=>x.id==d.rewatch);if(m)openRateFor(m,m.status||"watched");}
   if(d.finish){const m=watched.find(x=>x.id==d.finish);if(m)openRateFor(m,"watched");}
   if(d.openWatched){const m=watched.find(x=>x.id==d.openWatched);if(m)openDetails({id:m.id,title:m.title,img:m.img,genres:m.genres});}

@@ -73,6 +73,26 @@ function addWatched(rec){
   removeWant(rec.id);sortWatched();store.set("watched",watched);
 }
 function removeWatched(id){watched=watched.filter(x=>x.id!==id);store.set("watched",watched);}
+
+/* Trash — nothing leaves the app outright. Removals land here with where they
+   came from, so restoring puts them back exactly where they were.
+   suggest:false also keeps the id in `seen`, so the swipe deck never shows it again. */
+let trash=store.get("trash",[]);
+function addTrash(rec,from,suggest){
+  trash=trash.filter(x=>x.id!==rec.id);
+  trash.unshift({...rec,from,suggest:!!suggest,trashedAt:Date.now()});
+  store.set("trash",trash);
+}
+function purgeTrash(id){trash=trash.filter(x=>x.id!==id);store.set("trash",trash);}
+function restoreTrash(id){
+  const t=trash.find(x=>x.id===id);if(!t)return null;
+  const {from,suggest,trashedAt,...rec}=t;
+  if(from==="want")addWant(rec);
+  else addWatched({...rec,status:from==="watching"?"watching":"watched"});
+  markSeen(id);
+  purgeTrash(id);
+  return from;
+}
 function sortWatched(){watched.sort((a,b)=>(TIER_ORDER[a.tier]??9)-(TIER_ORDER[b.tier]??9)||(b.score||0)-(a.score||0));}
 
 function slim(m){return{id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,score:m.averageScore,year:m.seasonYear,eps:m.episodes||null,dur:m.duration||null,genres:(m.genres||[]).slice(0,3)};}
