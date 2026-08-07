@@ -34,7 +34,17 @@ const SCHED_SORT={
   score:(a,b)=>(b.m.averageScore||0)-(a.m.averageScore||0),
   title:(a,b)=>mTitle(a.m).localeCompare(mTitle(b.m))
 };
-const SORT_LABEL={time:"Air time",popularity:"Most popular",score:"Highest rated",title:"A–Z"};
+SCHED_SORT.newest=(a,b)=>(b.m.seasonYear||0)-(a.m.seasonYear||0);
+const SORT_LABEL={time:"Air time",popularity:"Most popular",score:"Highest rated",title:"A–Z",newest:"Newest"};
+/* Same setting drives the Browse shelves. "Air time" is meaningless off the
+   schedule (shelf titles aren't airing), so it falls back to popularity there. */
+const BROWSE_SORT={
+  popularity:(a,b)=>(b.popularity||0)-(a.popularity||0),
+  score:(a,b)=>(b.averageScore||0)-(a.averageScore||0),
+  title:(a,b)=>mTitle(a).localeCompare(mTitle(b)),
+  newest:(a,b)=>(b.seasonYear||0)-(a.seasonYear||0)
+};
+function browseSorter(){return BROWSE_SORT[browseFilters.sort]||BROWSE_SORT.popularity;}
 const _DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const _MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function _dayKey(at){const d=new Date(at*1000);return d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate();}
@@ -113,9 +123,11 @@ function bcard(m){
   </div>`;
 }
 function shelfHTML(title,items,sub){
-  const list=(items||[]).filter(browsePasses);
+  const list=(items||[]).filter(browsePasses).slice().sort(browseSorter());
   if(!list.length)return "";
-  return `<div class="shelf"><h3>${title}${sub?` <span class="shsub">${sub}</span>`:""}</h3><div class="shelfscroll">${list.map(bcard).join("")}</div></div>`;
+  const tag=browseFilters.sort&&browseFilters.sort!=="popularity"&&browseFilters.sort!=="time"
+    ? ` <span class="shsort">${SORT_LABEL[browseFilters.sort]}</span>`:"";
+  return `<div class="shelf"><h3>${title}${sub?` <span class="shsub">${sub}</span>`:""}${tag}</h3><div class="shelfscroll">${list.map(bcard).join("")}</div></div>`;
 }
 function _loadingHTML(t){return `<div class="browseload"><div class="spin"></div><p>${t||"Loading…"}</p></div>`;}
 

@@ -740,3 +740,4 @@ body.dragging-row .rankrow{cursor:grabbing}
   .row{padding:11px}
   .row img{width:60px;height:84px}
 }
+.shsort{font:700 10px ui-monospace,monospace;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
