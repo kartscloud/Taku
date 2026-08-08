@@ -130,7 +130,7 @@ function openFriendProfile(id){
   const tag=friendTag(f);
   body.innerHTML=`
     <div class="fpav" style="box-shadow:0 0 0 3px ${safeColor(f.color)},0 0 30px ${safeColor(f.color)}55">${escHTML(f.avatar)}</div>
-    <div class="fpname">${escHTML(f.name)}</div>
+    <div class="fpname">${escHTML(f.name)}${f.sample?' <span class="fpsample">SAMPLE</span>':''}</div>
     <div class="fphandle" style="color:${safeColor(f.color)}">@${escHTML(f.handle)}${tag?" · "+escHTML(tag):""}</div>
     <div class="fpstats">
       <div class="fpstat"><b>${(+f.power||0).toLocaleString()}</b><span>NEURAL INDEX</span></div>
@@ -376,7 +376,12 @@ function revealCompat(){
   const r=compatScore(myTaste(),f.taste);
   const tone=compatTone(r.pct), col=COMPAT_COLORS[tone];
   const body=$("#fpBody");
-  const nameOf=id=>{const w=watched.find(m=>m.id===id);return w?w.title:"#"+id;};
+  const nameOf=id=>{
+    const w=watched.find(m=>m.id===id);
+    if(w)return w.title;
+    const p=passed.find(m=>m.id===id)||want.find(m=>m.id===id);
+    return p?p.title:"#"+id;      // only shared shows reach here, so this is rare
+  };
   const row=(x,cls)=>`<div class="duelrow ${cls}">
       <span class="dtier t${x.mine}">${x.mine}</span>
       <span class="dname">${escHTML(nameOf(x.id))}</span>

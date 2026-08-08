@@ -97,6 +97,7 @@ function renderFriends(prof){
    sitting there. Seeded demo friends get a marker instead, since fabricating a
    percentage about a person who does not exist would be a lie either way. */
 function _demoMark(f){
+  if(f.sample)return `<span class="fsample" title="A sample profile, not a real person">SAMPLE</span>`;
   return (!f.taste||!f.taste.shows)?`<span class="fmatch none" title="Older code — no taste data">—</span>`:"";
 }
 document.addEventListener("click",e=>{

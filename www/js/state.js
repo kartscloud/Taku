@@ -67,11 +67,42 @@ let friends=store.get("friends",null);
 let affinity=store.get("affinity",{});         // genre -> learned weight
 let deckGenres=store.get("deckGenres",[]);      // Discover genre filter (empty = all)
 
+/* Three sample profiles so compatibility works the moment the app opens — with
+   nobody in your squad there is nothing to compare against and the feature looks
+   broken. They are flagged sample:true and labelled as such in the UI: a demo
+   profile that says it is a demo is honest, a fabricated person is not.
+
+   The tier lists use real AniList ids for widely-watched shows (verified against
+   the API, not recalled), so a real user is likely to overlap with them. Each
+   one is a deliberately different palate — the scores should not agree. */
+const SAMPLE_TASTE={
+  seed_rei:{   // psychological / cerebral
+    shows:{1535:"S",9253:"S",13601:"A",1:"A",101348:"A",21507:"B",16498:"B",20665:"C",5680:"D"},
+    aff:{Psychological:9,Thriller:8,Mystery:8,"Sci-Fi":6,Drama:4,Supernatural:3,Action:1,Comedy:-1,"Slice of Life":-3}},
+  seed_kenji:{ // shonen action
+    shows:{16498:"S",113415:"S",136:"S",21459:"A",21087:"A",5114:"A",101348:"B",21507:"B",21827:"C",5680:"D"},
+    aff:{Action:9,Adventure:8,Fantasy:7,Supernatural:5,Comedy:3,Drama:2,Psychological:0,Romance:-2,"Slice of Life":-3}},
+  seed_mizu:{  // slice of life / emotional
+    shows:{5680:"S",21827:"S",20954:"S",20665:"A",140960:"A",21507:"B",1:"B",16498:"C",1535:"C",113415:"D"},
+    aff:{"Slice of Life":9,Drama:8,Romance:7,Music:6,Comedy:5,Fantasy:2,Supernatural:1,Action:-2,Horror:-4}}
+};
 if(friends===null){friends=[
-  {id:"seed_rei",name:"Rei",handle:"reibot",avatar:"👁️",title:"MINDFLAYER",tier:"ELITE",power:8200,genre:"Psychological",color:"#a855f7"},
-  {id:"seed_kenji",name:"Kenji",handle:"shonenmax",avatar:"⚡",title:"BERSERKER",tier:"VETERAN",power:4300,genre:"Action",color:"#ef4444"},
-  {id:"seed_mizu",name:"Mizu",handle:"cozygirl",avatar:"🎐",title:"SLICE MONK",tier:"ADEPT",power:900,genre:"Slice of Life",color:"#a3e635"}
+  {id:"seed_rei",name:"Rei",handle:"reibot",avatar:"👁️",title:"MINDFLAYER",tier:"ELITE",power:8200,genre:"Psychological",color:"#a855f7",sample:true},
+  {id:"seed_kenji",name:"Kenji",handle:"shonenmax",avatar:"⚡",title:"BERSERKER",tier:"VETERAN",power:4300,genre:"Action",color:"#ef4444",sample:true},
+  {id:"seed_mizu",name:"Mizu",handle:"cozygirl",avatar:"🎐",title:"SLICE MONK",tier:"ADEPT",power:900,genre:"Slice of Life",color:"#a3e635",sample:true}
 ];store.set("friends",friends);}
+/* Devices that already had the empty seeds get the taste attached, otherwise
+   the feature stays untestable for everyone who used the app before today. */
+(function upgradeSamples(){
+  let changed=false;
+  friends.forEach(f=>{
+    const t=SAMPLE_TASTE[f.id];
+    if(t&&(!f.taste||!f.taste.shows||!Object.keys(f.taste.shows).length)){
+      f.taste={shows:{...t.shows},aff:{...t.aff}};f.sample=true;changed=true;
+    }
+  });
+  if(changed)store.set("friends",friends);
+})();
 
 const $=s=>document.querySelector(s);
 /* Anything that reaches innerHTML from outside the app goes through this.
