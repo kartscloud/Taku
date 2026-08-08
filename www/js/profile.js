@@ -135,11 +135,30 @@ function renderProfile(){
   const bars=prof.genres.slice(0,5),max=bars.length?bars[0][1]:1;
   $("#genreBars").innerHTML=bars.length?bars.map(([g,w])=>`<div class="gbar"><span class="gname">${g}</span><span class="gtrack"><i style="width:${Math.max(8,(w/max)*100)}%;background:${prof.arch.color}"></i></span></div>`).join(""):`<div class="gbar" style="opacity:.5;font-size:12px">No genres tracked yet.</div>`;
   const rev=$("#rankReveal"),an=$("#analyzing");
+  clearTimeout(window._revealT);clearTimeout(window._netStopT);
+
+  /* The reveal used to play in full on every visit — 1.35s of "analyzing" plus
+     a 0.6s card transition, so nearly two seconds before the bottom of the page
+     was readable. Ceremony is right the first time and when a rank actually
+     changes; the hundredth time you open your own profile it just reads as the
+     app being slow.
+
+     So: animate only when there is genuinely something new to announce, and
+     remember that across sessions rather than replaying once per launch. */
+  const sig=prof.title+"|"+prof.tierName+"|"+prof.count;
+  const seen=store.get("rankSeen","");
+  const worthCelebrating=sig!==seen;
+  stopNet();
+
+  if(!worthCelebrating){
+    an.classList.add("hide");rev.classList.add("show");   // straight to the point
+    return;
+  }
   rev.classList.remove("show");an.classList.remove("hide");
-  stopNet();startNet(prof);
-  clearTimeout(window._revealT);
-  window._revealT=setTimeout(()=>{an.classList.add("hide");rev.classList.add("show");},1350);
-  clearTimeout(window._netStopT);window._netStopT=setTimeout(stopNet,5200);
+  startNet(prof);
+  store.set("rankSeen",sig);
+  window._revealT=setTimeout(()=>{an.classList.add("hide");rev.classList.add("show");},520);
+  window._netStopT=setTimeout(stopNet,2600);
 }
 
 function initProfile(){

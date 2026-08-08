@@ -552,11 +552,11 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 #net{width:100%;height:100%;display:block}
 .scanline{position:absolute;left:0;right:0;top:0;height:70px;background:linear-gradient(to bottom,rgba(139,92,246,.16),transparent);animation:scan 2.6s linear infinite;pointer-events:none;z-index:2}
 @keyframes scan{0%{transform:translateY(-70px)}100%{transform:translateY(210px)}}
-.analyzing{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 11.5px ui-monospace,Menlo,monospace;letter-spacing:2px;color:#c9bfff;text-transform:uppercase;background:rgba(8,6,14,.4);transition:opacity .5s;z-index:3}
+.analyzing{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 11.5px ui-monospace,Menlo,monospace;letter-spacing:2px;color:#c9bfff;text-transform:uppercase;background:rgba(8,6,14,.4);transition:opacity .28s;z-index:3}
 .analyzing:after{content:"";width:7px;height:7px;margin-left:9px;border-radius:50%;background:var(--accent);animation:blink .8s steps(2,end) infinite}
 @keyframes blink{50%{opacity:.15}}
 .analyzing.hide{opacity:0;pointer-events:none}
-.rankcard{position:relative;z-index:4;background:linear-gradient(180deg,rgba(28,24,48,.94),rgba(19,16,33,.97));border:1px solid var(--line);border-radius:18px;padding:34px 20px 22px;text-align:center;opacity:0;transform:translateY(16px) scale(.98);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.9,.3,1.2)}
+.rankcard{position:relative;z-index:4;background:linear-gradient(180deg,rgba(28,24,48,.94),rgba(19,16,33,.97));border:1px solid var(--line);border-radius:18px;padding:34px 20px 22px;text-align:center;opacity:0;transform:translateY(16px) scale(.98);transition:opacity .34s ease,transform .34s cubic-bezier(.2,.9,.3,1.2)}
 .rankcard.show{opacity:1;transform:none}
 .rank-eyebrow{font:700 10px ui-monospace,monospace;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
 .rank-eyebrow.legend{color:#ffd23f;text-shadow:0 0 14px rgba(255,210,63,.5)}
