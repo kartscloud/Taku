@@ -51,9 +51,46 @@ function emailProblem(e){return EMAIL_RE.test((e||"").trim())?null:"That doesn't
 /* Usernames are a public handle, so keep the character set boring: it avoids
    homograph impersonation and URL-encoding surprises later. */
 const USER_RE=/^[a-z0-9_]{3,18}$/;
+
+/* Usernames are public, so they need moderation before they need anything else.
+   App Store guideline 1.2 requires a content filter on user-generated content;
+   an unfiltered handle field is a submission blocker on its own.
+
+   The list is base64 so this source file is not itself a slur dump. It is
+   checked against a NORMALISED form of the name, because "n1gg3r" and "n_i_g_g"
+   are the same word to a human and a plain substring match catches neither. */
+const _BAN_SUB_B64="bmlnZXI=,ZmFnb3Q=,d2V0YmFjaw==,Y2hpbGRwb3Ju,bW9sZXN0,cmFwaXN0,dHJhbnk=,aGl0bGVy,d2hvcmU=";   // matched anywhere in the handle
+const _BAN_EXACT_B64="aw==,Y29u,c3BpYw==,Y2hpbms=,a2lrZQ==,cGFraQ==,Z29r,ZHlrZQ==,cGVkbw==,bmF6aQ==,Y3A=,bmlnYQ==,bmlnZXI=,ZmFn,ZmFnb3Q=,cmV0YXJk,Y3VudA==,cmFwZQ==,c2x1dA=="; // matched only as the WHOLE handle
+const _RESERVED=["admin","administrator","taku","support","help","staff","mod","moderator",
+  "official","root","system","security","billing","null","undefined","me","you"];
+let _banCache=null;
+function _banLists(){
+  if(!_banCache){
+    const dec=b=>b.split(",").map(x=>{try{return atob(x);}catch(e){return "";}}).filter(Boolean);
+    _banCache={sub:dec(_BAN_SUB_B64),exact:dec(_BAN_EXACT_B64)};
+  }
+  return _banCache;
+}
+/* Collapse the usual evasions: digit-for-letter swaps, separators, and repeated
+   characters, so "n1gg3r" and "n_i_g_g_e_r" reduce to the same string.
+   The stored terms are collapsed the same way at build time, which is why the
+   two lists are split: collapsing "kkk" yields "k", and a substring rule on
+   that would reject every handle containing the letter k. */
+function _normalizeHandle(u){
+  return (u||"").toLowerCase()
+    .replace(/[^a-z0-9]/g,"")
+    .replace(/0/g,"o").replace(/1/g,"i").replace(/3/g,"e").replace(/4/g,"a")
+    .replace(/5/g,"s").replace(/7/g,"t").replace(/8/g,"b").replace(/9/g,"g")
+    .replace(/(.)\1+/g,"$1");
+}
 function usernameProblem(u){
   if(!u)return "Pick a username.";
   if(!USER_RE.test(u))return "3–18 characters: lowercase letters, numbers and _ only.";
+  const n=_normalizeHandle(u);
+  if(_RESERVED.includes(u)||_RESERVED.includes(n))return "That username is reserved.";
+  const B=_banLists();
+  if(B.exact.includes(n))return "Pick a different username.";
+  if(B.sub.some(w=>n.includes(w)))return "Pick a different username.";
   return null;
 }
 
