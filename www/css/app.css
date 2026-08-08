@@ -1392,3 +1392,17 @@ select:focus-visible,textarea:focus-visible{
 [data-theme="light"] .navbtn:not(.active){color:#5f564a}
 [data-theme="light"] nav.bottom{background:rgba(255,255,255,.94);
   box-shadow:0 8px 30px rgba(var(--bgRGB),.16), inset 0 0 0 1px rgba(var(--bgRGB),.08)}
+.impfile{font-size:11.5px;color:var(--dim);text-align:center;margin:8px 0 4px;
+  font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.impstatus{font-size:12px;color:var(--dim);line-height:1.5;margin-top:10px;text-align:center;min-height:16px}
+.impstatus.warn{color:#ff9b9b}
+.impstatus b{color:var(--txt)}
+.impsummary{background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;margin:12px 0 4px;font-size:13px;line-height:1.55}
+.impsummary b{font-weight:800}
+.impbreak{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.impbreak span{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.04em;
+  color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:3px 9px}
+.impnote{margin-top:10px;font-size:12px;color:var(--dim);line-height:1.5;
+  border-top:1px solid var(--line);padding-top:9px}
+.impnote b{color:var(--accent)}

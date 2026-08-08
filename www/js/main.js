@@ -68,7 +68,7 @@ function initNav(){
   $("#cfCancel").onclick=()=>{$("#confirmModal").classList.remove("on");_pendingRemove=null;};
   // browseSettings is NOT here: its filters mutate on tap, so dismissing it must
   // run the same commit path as Done (see initBrowse) or the picks are lost
-  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet","duelSheet","inviteSheet","shareSheet","fpSheet","lookSheet","settingsSheet"].forEach(id=>{
+  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet","duelSheet","inviteSheet","shareSheet","fpSheet","lookSheet","settingsSheet","importSheet"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");stopDemos(id);if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
@@ -154,7 +154,7 @@ hydrateIcons();mountDemos(document);
 /* Accounts are off by default; authBoot() returns true only when it has taken
    over the screen, in which case normal onboarding must stay out of the way. */
 const _authTook=(typeof authBoot==="function")&&authBoot();
-initNav();initSearch();initProfile();if(typeof initCompatUI==="function")initCompatUI();if(typeof initLook==="function")initLook();if(typeof initSettings==="function")initSettings();if(!_authTook)initOnboard();initCoach();initBrowse();
+initNav();initSearch();initProfile();if(typeof initCompatUI==="function")initCompatUI();if(typeof initLook==="function")initLook();if(typeof initSettings==="function")initSettings();if(typeof initImport==="function")initImport();if(!_authTook)initOnboard();initCoach();initBrowse();
 refreshCounts();updateFilterBadge();
 if(typeof initInboundFriend==="function")initInboundFriend();  // opened from a shared link
 document.body.classList.toggle("nav-side",currentView==="deck"); // boot lands on the deck without calling setView

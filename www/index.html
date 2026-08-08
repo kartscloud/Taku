@@ -18,7 +18,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=127" />
+<link rel="stylesheet" href="css/app.css?v=128" />
 </head>
 <body>
 
@@ -350,6 +350,43 @@
 </div>
 
 <!-- ADD FRIEND SHEET -->
+<!-- IMPORT -->
+<div class="modal" id="importSheet">
+  <div class="sheet">
+    <h3>Import your list</h3>
+    <div class="segmented" id="impTabs">
+      <button class="seg on" data-imp="anilist">AniList</button>
+      <button class="seg" data-imp="mal">MyAnimeList</button>
+    </div>
+
+    <div id="impAniList">
+      <p class="setnote" style="margin-top:0">Type your username. Your list has to be public in AniList's privacy settings — nothing else is needed.</p>
+      <input class="inp" id="impUser" placeholder="AniList username" autocapitalize="none" spellcheck="false" />
+    </div>
+
+    <div id="impMal" hidden>
+      <p class="setnote" style="margin-top:0">MyAnimeList has no public API for lists any more, so taku reads your export file instead. On MAL: <b>Profile → Settings → Export</b>, pick Anime, and download. Drop that file here — <b>.xml.gz works as-is</b>, no unzipping.</p>
+      <button class="savebtn ghostbtn" id="impPick"><span class="icw" data-ic="upload"></span>Choose export file</button>
+      <input type="file" id="impFile" accept=".xml,.gz,application/xml,application/gzip" hidden />
+      <div class="impfile" id="impFileName">No file chosen</div>
+    </div>
+
+    <button class="savebtn" id="impRun">Import</button>
+    <div class="impstatus" id="impStatus"></div>
+
+    <div id="impConfirm" hidden>
+      <div class="impsummary" id="impSummary"></div>
+      <p class="setnote">Nothing you already have is touched — your own ratings always win.</p>
+      <div class="ratealt">
+        <button class="altbtn ghost" id="impCancel">Cancel</button>
+        <button class="altbtn" id="impApply">Add to my lists</button>
+      </div>
+    </div>
+
+    <button class="skip" id="impClose">Close</button>
+  </div>
+</div>
+
 <!-- SETTINGS HUB -->
 <div class="modal" id="settingsSheet">
   <div class="sheet">
@@ -391,6 +428,11 @@
     <div class="setrow" id="setAdultRow"><div class="setlabel"><b>Adult titles in search</b>
       <span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div>
       <button class="toggle" id="setAdult" role="switch" aria-checked="false" aria-label="Allow adult titles in search"></button></div>
+
+    <div class="seth">Your list</div>
+    <button class="setnav" id="impOpen"><span class="icw" data-ic="download"></span>
+      <span class="snt"><b>Import from MAL or AniList</b><span>Bring your history in, ready to rank</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
 
     <div class="seth">Your data <span class="sethnote">stays on this device</span></div>
     <div class="storagebar"><i id="storageFill"></i></div>
@@ -573,23 +615,24 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=127"></script>
-<script src="js/data.js?v=127"></script>
-<script src="js/state.js?v=127"></script>
-<script src="js/api.js?v=127"></script>
-<script src="js/rec.js?v=127"></script>
-<script src="js/deck.js?v=127"></script>
-<script src="js/lists.js?v=127"></script>
-<script src="js/search.js?v=127"></script>
-<script src="js/art.js?v=127"></script>
-<script src="js/settings.js?v=127"></script>
-<script src="js/compat.js?v=127"></script>
-<script src="js/profile.js?v=127"></script>
-<script src="js/detail.js?v=127"></script>
-<script src="js/browse.js?v=127"></script>
-<script src="js/demo.js?v=127"></script>
-<script src="js/auth.js?v=127"></script>
-<script src="js/share.js?v=127"></script>
-<script src="js/main.js?v=127"></script>
+<script src="auth-config.js?v=128"></script>
+<script src="js/data.js?v=128"></script>
+<script src="js/state.js?v=128"></script>
+<script src="js/api.js?v=128"></script>
+<script src="js/rec.js?v=128"></script>
+<script src="js/deck.js?v=128"></script>
+<script src="js/lists.js?v=128"></script>
+<script src="js/search.js?v=128"></script>
+<script src="js/art.js?v=128"></script>
+<script src="js/settings.js?v=128"></script>
+<script src="js/import.js?v=128"></script>
+<script src="js/compat.js?v=128"></script>
+<script src="js/profile.js?v=128"></script>
+<script src="js/detail.js?v=128"></script>
+<script src="js/browse.js?v=128"></script>
+<script src="js/demo.js?v=128"></script>
+<script src="js/auth.js?v=128"></script>
+<script src="js/share.js?v=128"></script>
+<script src="js/main.js?v=128"></script>
 </body>
 </html>
