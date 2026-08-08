@@ -24,7 +24,7 @@ async function runSearch(q){
   if(q===_lastQ)return;_lastQ=q;
   $("#searchList").innerHTML=`<div class="searchmsg"><div class="spin" style="margin:0 auto 12px"></div>Searching…</div>`;
   try{
-    const res=await searchAnime(q);
+    const res=await searchAnime(q,adultOn());
     if(q!==_lastQ)return;
     _searchResults=res;
     if(!res.length){$("#searchList").innerHTML=`<div class="searchmsg">Nothing found for “${q}”.</div>`;return;}
@@ -34,7 +34,7 @@ async function runSearch(q){
         <img src="${(m.coverImage&&m.coverImage.large)||""}" loading="lazy" alt="" />
         <div class="rc">
           <h4>${mTitle(m)}</h4>
-          <div class="sub">${[m.seasonYear,m.format,(m.genres||[]).slice(0,2).join(" · ")].filter(Boolean).join("  ·  ")}${m.averageScore?"  ·  "+(m.averageScore/10).toFixed(1):""}</div>
+          <div class="sub">${m.isAdult?'<span class="adultbadge">18+</span>':""}${[m.seasonYear,m.format,(m.genres||[]).slice(0,2).join(" · ")].filter(Boolean).join("  ·  ")}${m.averageScore?"  ·  "+(m.averageScore/10).toFixed(1):""}</div>
         </div>
         <div class="srow-actions">
           <button class="sact want ${inWant?'done':''}" data-s-want="${m.id}" title="Want to watch"><span class="icw">${icSvg("heart")}</span></button>

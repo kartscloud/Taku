@@ -1,8 +1,10 @@
 /* taku · Want (swipe-to-reveal) + Tiers views */
 function refreshCounts(){
   const nt=$("#nWatched");
-  const total=want.length+watched.length;             // Tiers now holds Want + Watched + Watching
-  if(nt){nt.textContent=total;nt.style.display=total?"grid":"none";}
+  /* the badge is a to-do, not a library size: only shows that still need a tier.
+     A permanent count of everything you've ever added is noise you can't clear. */
+  const pending=watched.filter(m=>m.status!=="watching"&&!m.tier).length;
+  if(nt){nt.textContent=pending;nt.style.display=pending?"grid":"none";}
   updateTierCounts();
   if(currentView==="watched")renderWatched();
 }
@@ -74,7 +76,15 @@ function renderWant(){
 }
 
 let tierTab="list";      // list | want
-let listTab="watching";  // within List: watching | ranked
+let listTab="ranked";    // within List: watching | ranked | trash — opens on Watched
+
+/* Tiers always opens on List › Watched: that is where ranking happens, and
+   landing on Watching meant an extra tap every single time. */
+function resetTierTabs(){
+  tierTab="list";listTab="ranked";
+  document.querySelectorAll("#tierTabs .seg").forEach(s=>s.classList.toggle("on",s.dataset.tiertab===tierTab));
+  document.querySelectorAll("#listSub .subbtn").forEach(s=>s.classList.toggle("on",s.dataset.listtab===listTab));
+}
 function updateTierCounts(){
   const w=watched.filter(m=>m.status==="watching").length, r=watched.length-w;
   const cr=$("#cRanked"),cw=$("#cWatching"),cwant=$("#cWant"),cl=$("#cList");
@@ -95,15 +105,16 @@ function renderRanked(){
   const list=watched.filter(m=>m.status!=="watching");
   if(!list.length){c.innerHTML=`<div class="emptylist">No ratings yet.<br>Swipe up on something you've finished and give it a tier.</div>`;return;}
   const untiered=list.filter(m=>!m.tier).length;
+  const demo=`<div class="demo" data-demo="rank" data-demo-max="2"></div>`;
   const banner=untiered?`<button class="rankcta" id="rankCta">
       <span class="rcicon icw">${icSvg("trophy")}</span>
       <span class="rctext"><b>${untiered} show${untiered>1?"s":""} need${untiered>1?"":"s"} a tier</b><span>Rank them in one pass</span></span>
       <span class="rcgo icw">${icSvg("arrowR")}</span>
     </button>`:"";
-  c.innerHTML=banner+list.map((m,i)=>`
+  c.innerHTML=demo+banner+list.map((m,i)=>`
     <div class="row rankrow" data-rid="${m.id}">
       <span class="rank grip" data-grip title="Drag to reorder">${i+1}</span>
-      <div class="tier" style="background:${TIER_COLOR[m.tier]||"var(--line)"}">${m.tier||"–"}</div>
+      <div class="tier${m.tier?"":" none"}"${m.tier?` style="background:${TIER_COLOR[m.tier]}"`:""}>${m.tier||"–"}</div>
       <div class="rc rc-open" data-open-watched="${m.id}">
         <h4>${m.title}</h4>
         <div class="sub">${[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ")}</div>
@@ -111,6 +122,7 @@ function renderRanked(){
       <button class="x" data-rewatch="${m.id}" title="Re-rate"><span class="icw">${icSvg("rotate")}</span></button>
       <button class="x danger" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
+  mountDemos(c);startDemos("view-watched");
   enableTierDrag(c);
 }
 
@@ -122,14 +134,18 @@ function renderRanked(){
 function enableTierDrag(container){
   if(container._dragBound)return;      // one binding per container, survives re-render
   container._dragBound=true;
-  let row=null,dragging=false,startY=0,pid=null;
+  let row=null,dragging=false,startY=0,pid=null,startOrder=null,startIdx=-1;
 
+  const idsNow=()=>[...container.querySelectorAll(".rankrow")].map(r=>+r.dataset.rid);
   const onDown=e=>{
     if(e.button!==undefined&&e.button!==0)return;          // left button only
     if(e.target.closest("button"))return;                  // let re-rate / remove work
     const r=e.target.closest(".rankrow");
     if(!r||r.parentNode!==container)return;
     row=r;startY=e.clientY;pid=e.pointerId;dragging=false;
+    // snapshot so an aborted gesture can be put back exactly, and so commit can
+    // tell a real move from a row that never actually changed position
+    startOrder=idsNow();startIdx=startOrder.indexOf(+r.dataset.rid);
   };
   const onMove=e=>{
     if(!row||(pid!=null&&e.pointerId!==pid))return;
@@ -148,13 +164,32 @@ function enableTierDrag(container){
       container.insertBefore(row,e.clientY>b.top+b.height/2?over.nextSibling:over);
     }
   };
+  const clear=()=>{
+    if(row)row.classList.remove("dragging");
+    document.body.classList.remove("dragging-row");
+    row=null;dragging=false;pid=null;
+  };
   const onUp=()=>{
     if(!row)return;
     const wasDragging=dragging,id=+row.dataset.rid;
-    row.classList.remove("dragging");
-    document.body.classList.remove("dragging-row");
-    row=null;dragging=false;pid=null;
-    if(wasDragging)commitTierOrder(container,id);
+    const moved=wasDragging&&idsNow().indexOf(id)!==startIdx;
+    clear();
+    // Only a gesture that actually relocated the row may rewrite anything.
+    // Committing on any drag re-tiered rows that never moved, because the list
+    // is tier-grouped: the first row of every tier has a differently-tiered
+    // neighbour, so commitTierOrder would "correct" it to the tier above.
+    if(moved)commitTierOrder(container,id);
+  };
+  /* iOS fires pointercancel when it decides a touch belongs to the scroller.
+     Treating that as a drop committed reorders the user never made — and with
+     them, tier changes — from an ordinary scroll. Put the list back instead. */
+  const onCancel=()=>{
+    if(!row)return;
+    if(dragging&&startOrder){
+      const byId=new Map([...container.querySelectorAll(".rankrow")].map(r=>[+r.dataset.rid,r]));
+      startOrder.forEach(id=>{const el=byId.get(id);if(el)container.appendChild(el);});
+    }
+    clear();
   };
 
   // Bound to the DOCUMENT, not the row: pointer capture on a small child proved
@@ -163,7 +198,7 @@ function enableTierDrag(container){
   container.addEventListener("pointerdown",onDown);
   document.addEventListener("pointermove",onMove,{passive:false});
   document.addEventListener("pointerup",onUp);
-  document.addEventListener("pointercancel",onUp);
+  document.addEventListener("pointercancel",onCancel);
 }
 function commitTierOrder(container,movedId){
   const ids=[...container.querySelectorAll(".rankrow")].map(r=>+r.dataset.rid);

@@ -4,12 +4,11 @@ function setView(v){
   currentView=v;
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   $("#miniAv").classList.toggle("active",v==="profile");
-  $("#filterBtn").style.display=v==="deck"?"":"none";   // deck-only controls
   $("#swipeGear").style.display=v==="deck"?"":"none";
   document.body.classList.toggle("nav-side",v==="deck");  // Swipe: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
-  if(v==="watched")renderWatched();
+  if(v==="watched"){resetTierTabs();renderWatched();if(typeof maybeShowImportTip==="function")setTimeout(maybeShowImportTip,420);}
   if(v==="deck")renderDeck();
   if(v==="browse")renderBrowse();
   if(v==="profile")renderProfile();
@@ -33,8 +32,11 @@ function initNav(){
   $("#bWatch").onclick=()=>doAction("watch");
   $("#bUndo").onclick=()=>undoLast();
 
-  // genre filter
-  $("#filterBtn").onclick=()=>{
+  // genre filter — lives inside swipe settings now, not the header
+  /* The genre modal stacks ABOVE the settings sheet (later in the DOM, same
+     z-index), so settings stays open underneath: apply or dismiss genres and
+     you are back in settings, which only closes on its own Done. */
+  $("#swGenres").onclick=()=>{
     $("#filterGenres").innerHTML=OB_GENRES.map(g=>`<button class="ob-g${deckGenres.includes(g)?" sel":""}" data-fg="${g}">${g}</button>`).join("");
     $("#genreModal").classList.add("on");
   };
@@ -43,19 +45,21 @@ function initNav(){
   $("#clearGenres").onclick=()=>{deckGenres.length=0;store.set("deckGenres",deckGenres);$("#genreModal").classList.remove("on");updateFilterBadge();applyGenreFilter();toast("Filter cleared");};
   // swipe preferences
   const syncSwipeUI=()=>document.querySelectorAll("#swRate .langopt").forEach(b=>b.classList.toggle("on",b.dataset.sw===swipePrefs.rate));
-  $("#swipeGear").onclick=()=>{syncSwipeUI();$("#swipeSettings").classList.add("on");};
-  document.querySelectorAll("#swRate .langopt").forEach(b=>b.onclick=()=>{swipePrefs.rate=b.dataset.sw;syncSwipeUI();buzz(6);});
+  $("#swipeGear").onclick=()=>{syncSwipeUI();syncPassedRow();$("#swipeSettings").classList.add("on");startDemos("swipeSettings");};
+  document.querySelectorAll("#swRate .langopt").forEach(b=>b.onclick=()=>{
+    swipePrefs.rate=b.dataset.sw;store.set("swipePrefs",swipePrefs);   // save on change, not on Done
+    syncSwipeUI();buzz(6);$("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");});
   $("#swipeSettingsDone").onclick=()=>{
     store.set("swipePrefs",swipePrefs);
-    $("#swipeSettings").classList.remove("on");
+    $("#swipeSettings").classList.remove("on");stopDemos("swipeSettings");
     $("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");
     toast(swipePrefs.rate==="quick"?"Swiping right just marks watched":"You'll rate after each swipe");
   };
   $("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");
+  $("#duelClose").onclick=()=>$("#duelSheet").classList.remove("on");
+  $("#fpClose").onclick=()=>$("#fpSheet").classList.remove("on");
   $("#shareCard").onclick=()=>shareRankCard();
-  $("#backupBtn").onclick=()=>exportData();
-  $("#restoreBtn").onclick=()=>$("#restoreFile").click();
-  $("#restoreFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f);e.target.value="";});
+  // backup/restore moved into the settings hub (js/settings.js)
   document.querySelectorAll("#rateModal .tierbtn").forEach(b=>b.onclick=()=>commitRate(b.dataset.tier));
   $("#rateSkip").onclick=()=>commitRate(null);
   $("#rateWatchingGo").onclick=()=>commitWatching();
@@ -64,8 +68,8 @@ function initNav(){
   $("#cfCancel").onclick=()=>{$("#confirmModal").classList.remove("on");_pendingRemove=null;};
   // browseSettings is NOT here: its filters mutate on tap, so dismissing it must
   // run the same commit path as Done (see initBrowse) or the picks are lost
-  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet"].forEach(id=>{
-    $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});
+  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet","duelSheet","inviteSheet","shareSheet","fpSheet","lookSheet","settingsSheet","importSheet"].forEach(id=>{
+    $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");stopDemos(id);if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
     if(currentView!=="deck")return;
@@ -94,6 +98,9 @@ function initOnboard(){
     profile.avatar=av;
     profile.name=$("#obName").value.trim().slice(0,20);
     profile.handle=profile.name?profile.name.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,18):"";
+    const age=parseInt($("#obAge").value,10);
+    profile.age=Number.isFinite(age)&&age>0&&age<=120?age:null;
+    if(!canAdult())store.set("searchAdult",false);   // under 18 (or blank) can't leave it on
     if(!profile.created)profile.created=Date.now();
     store.set("profile",profile);
     picked.forEach(g=>{affinity[g]=(affinity[g]||0)+2;});
@@ -117,17 +124,39 @@ function initCoach(){
 }
 
 /* hydrate every [data-ic] slot from the single icon source */
+/* Cards are divs with click handlers, which keyboards cannot reach. Rather than
+   rewrite every card template, one delegated handler turns Enter and Space on
+   anything role="button" into the click it already listens for. */
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  const t=e.target;
+  if(!t||!t.getAttribute||t.getAttribute("role")!=="button")return;
+  if(t.tagName==="BUTTON"||t.tagName==="A")return;   // already native
+  e.preventDefault();
+  t.click();
+});
 function hydrateIcons(){
   document.querySelectorAll("[data-ic]").forEach(el=>{el.innerHTML=icSvg(el.dataset.ic);});
 }
 
-function updateFilterBadge(){const b=$("#filterCount");if(!b)return;b.textContent=deckGenres.length||"";$("#filterBtn").classList.toggle("active",deckGenres.length>0);}
+function updateFilterBadge(){
+  const n=$("#swGenresNote");
+  if(n)n.textContent=deckGenres.length
+    ? deckGenres.length+" selected — "+deckGenres.slice(0,3).join(", ")+(deckGenres.length>3?"…":"")
+    : "All genres";
+}
 
 /* boot */
+if(typeof applyTheme==="function")applyTheme();   // before first paint
+sweepCaches();   // reclaim expired + superseded API caches before anything writes
 sortWatched();
-hydrateIcons();
-initNav();initSearch();initProfile();initOnboard();initCoach();initBrowse();
+hydrateIcons();mountDemos(document);
+/* Accounts are off by default; authBoot() returns true only when it has taken
+   over the screen, in which case normal onboarding must stay out of the way. */
+const _authTook=(typeof authBoot==="function")&&authBoot();
+initNav();initSearch();initProfile();if(typeof initCompatUI==="function")initCompatUI();if(typeof initLook==="function")initLook();if(typeof initSettings==="function")initSettings();if(typeof initImport==="function")initImport();if(!_authTook)initOnboard();initCoach();initBrowse();
 refreshCounts();updateFilterBadge();
+if(typeof initInboundFriend==="function")initInboundFriend();  // opened from a shared link
 document.body.classList.toggle("nav-side",currentView==="deck"); // boot lands on the deck without calling setView
 $("#miniAv").textContent=profile.avatar||"🍥";
 if(store.get("onboarded",false))renderDeck();

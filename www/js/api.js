@@ -116,6 +116,19 @@ function parseRelations(rel){
 }
 
 /* next-airing episode for a set of ids (for the Watching list) — always fresh, never cached */
+/* Batch-fetch full media by id, 50 per page (AniList's cap).
+   Used to rebuild the passed pile from ids that were recorded in `seen` before
+   the pile existed — those swipes stored an id and nothing else. */
+async function fetchByIds(ids){
+  const out=[];
+  for(let i=0;i<ids.length;i+=50){
+    const chunk=ids.slice(i,i+50);
+    const q=`query($ids:[Int]){Page(perPage:50){media(id_in:$ids,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
+    try{const d=await gql(q,{ids:chunk});out.push(...(d.Page.media||[]));}
+    catch(e){console.warn("taku: id batch failed",e);}
+  }
+  return out;
+}
 async function fetchNextAiring(ids){
   if(!ids||!ids.length)return {};
   const q=`query($ids:[Int]){Page(perPage:50){media(id_in:$ids,type:ANIME){id status episodes nextAiringEpisode{airingAt episode}}}}`;
@@ -183,10 +196,14 @@ async function fetchYear(year,lens,page){
 
 /* weekly airing calendar — every episode airing in the next 7 days, with exact air time */
 async function fetchSchedule(weekOffset){
-  const off=weekOffset||0;                          // 0 = next 7 days, -1 = last week, +1 = week after
-  const base=Math.floor(Date.now()/1000);
-  const now=base+off*7*86400, end=now+7*86400;
-  const key="cache_sched3_"+off+"_"+Math.floor(base/3600);   // refresh hourly so countdowns stay honest
+  const off=weekOffset||0;                          // 0 = this week, -1 = last week, +1 = next week
+  /* Anchor to the START OF TODAY in the user's zone, not to the current instant.
+     Anchoring to `now` silently dropped every episode that had already aired
+     earlier today — the day header said "Today" while showing only what was
+     still to come. */
+  const dayStart=tzStartOfDay(Math.floor(Date.now()/1000));
+  const now=dayStart+off*7*86400, end=now+7*86400;
+  const key="cache_sched4_"+off+"_"+now;         // window moves once a day, so cache on the anchor
   const hit=store.get(key,null);
   if(hit&&Date.now()-hit.t<CACHE_TTL)return hit.d;
   const out=[];
@@ -332,8 +349,15 @@ function tmdbUpgrade(el,m,stillCurrent,matchRatio){
   tmdbPosterFor(m).then(url=>{if(url)applyBestImage(el,url,stillCurrent,matchRatio);}).catch(()=>{});
 }
 
-async function searchAnime(qs){
-  const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME,isAdult:false){${MEDIA_FIELDS}}}}`;
+/* Search can reach the whole catalogue; the FEEDS never do.
+   Naming a title yourself is a different act from the app volunteering one, so
+   the deck, shelves and schedule stay filtered while an explicit search can
+   opt in to adult-flagged entries (Redo of Healer, etc). Off by default: the
+   App Store rates an app by what it can display, and an unsolicited explicit
+   cover in a feed is what gets builds rejected. */
+async function searchAnime(qs,includeAdult){
+  const adultArg=includeAdult?"":",isAdult:false";
+  const q=`query($q:String){Page(page:1,perPage:12){media(search:$q,type:ANIME${adultArg}){${MEDIA_FIELDS} isAdult}}}`;
   const data=await gql(q,{q:qs});
-  return (data.Page.media||[]).map(trimMedia);
+  return (data.Page.media||[]).map(m=>{const t=trimMedia(m);t.isAdult=!!m.isAdult;return t;});
 }

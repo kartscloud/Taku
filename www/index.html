@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="theme-color" content="#0d0b14" />
+<!-- user-scalable=no blocks pinch-zoom for everyone, including people who need
+     it to read. iOS ignores it in Safari 10+ anyway; all it did here was break
+     accessibility on Android and in webviews. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a1611" />
+<!-- Tells the engine the page handles both schemes. Without it WKWebView renders
+     native controls, scrollbars and form widgets in light regardless, and some
+     webviews will not report prefers-color-scheme at all. -->
+<meta name="color-scheme" content="light dark" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="description" content="taku — swipe to find your next anime. Personalized discovery, tier ratings, and a neural rank." />
@@ -11,22 +18,26 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=77" />
+<link rel="stylesheet" href="css/app.css?v=131" />
 </head>
 <body>
 
 <header>
   <div class="logo" id="homeBtn" role="button" tabindex="0" title="Go to Swipe" aria-label="Go to Swipe">taku<i class="dot"></i></div>
   <div class="hactions">
-    <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     <button class="gearbtn icononly" id="swipeGear" title="Swipe settings"><span class="icw" data-ic="gear"></span></button>
-    <button class="miniav" id="miniAv" title="Profile">🍥</button>
+    <button class="miniav" id="miniAv" title="Profile" aria-label="Your profile">🍥</button>
   </div>
 </header>
 
 <main>
   <!-- DISCOVER -->
   <section id="view-deck">
+    <div class="replaybar" id="replayBar" hidden>
+      <span class="icw" data-ic="rotate"></span>
+      <span class="rbtext">Shows you passed &middot; <b id="replayLeft">0</b> left</span>
+      <button class="rbdone" id="replayExit">Done</button>
+    </div>
     <div class="deckwrap">
       <div id="deck"></div>
     </div>
@@ -59,13 +70,26 @@
 
   <!-- TIERS (List: Watching/Watched · Want) -->
   <section id="view-watched" style="display:none">
-    <div class="segmented" id="tierTabs">
+    <div class="tiershead">
+      <div class="segmented" id="tierTabs" style="flex:1">
       <button class="seg on" data-tiertab="list">List<span class="segn" id="cList"></span></button>
       <button class="seg" data-tiertab="want">Want<span class="segn" id="cWant"></span></button>
+      </div>
+      <button class="gearbtn icononly" id="tiersImport" title="Import your list from MyAnimeList or AniList" aria-label="Import your list"><span class="icw" data-ic="download"></span></button>
+      <div class="tip" id="importTip" role="status" hidden>
+        <div class="tipbody">
+          <b>Already have a list?</b>
+          <span>Bring your history in from MyAnimeList or AniList — everything unrated lands here ready to rank.</span>
+        </div>
+        <div class="tipacts">
+          <button class="tipgo" id="tipImport">Import</button>
+          <button class="tipx" id="tipDismiss">Not now</button>
+        </div>
+      </div>
     </div>
     <div class="listsub" id="listSub">
-      <button class="subbtn on" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
-      <button class="subbtn" data-listtab="ranked">Watched<span class="subn" id="cRanked"></span></button>
+      <button class="subbtn" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
+      <button class="subbtn on" data-listtab="ranked">Watched<span class="subn" id="cRanked"></span></button>
       <!-- Label says "Dropped"; the internal name stays "trash" (data-listtab, id="cTrash",
            the localStorage key). Renaming those would orphan existing users' saved data. -->
       <button class="subbtn" data-listtab="trash">Dropped<span class="subn" id="cTrash"></span></button>
@@ -75,14 +99,17 @@
 
   <!-- PROFILE -->
   <section id="view-profile" style="display:none">
-    <div class="idcard">
-      <button class="avatar" id="pfAvatar" title="Edit avatar">🍥</button>
+    <div class="idcard" id="idCard">
+      <canvas class="idbanner" id="idBanner" aria-hidden="true"></canvas>
+      <button class="avatar" id="pfAvatar" title="Edit avatar" aria-label="Change your picture">🍥</button>
       <div class="idmeta">
         <div class="uname" id="pfName">Nameless Otaku</div>
         <div class="handle" id="pfHandle">@you</div>
+        <button class="pftag" id="pfTag" title="Your taku tag"></button>
         <div class="bio" id="pfBio">No bio yet — tap edit.</div>
       </div>
-      <button class="editbtn" id="pfEdit">Edit</button>
+      <button class="gearbtn icononly pfgear" id="pfSettings" title="Settings" aria-label="Settings and your data"><span class="icw" data-ic="gear"></span></button>
+      <button class="editbtn" id="pfEdit" hidden>Edit</button>
     </div>
     <div class="netwrap">
       <canvas id="net"></canvas>
@@ -107,16 +134,8 @@
       <div id="friendList" class="flist"></div>
       <div class="frow-actions">
         <button class="fbtn" id="addFriend">+ Add friend</button>
-        <button class="fbtn ghost" id="shareCode">Share my code</button>
+        <button class="fbtn ghost" id="shareCode">Share my link</button>
       </div>
-    </div>
-    <div class="datazone">
-      <div class="fhead"><span class="ft">Your data</span><span class="fc">stays on this device</span></div>
-      <div class="frow-actions">
-        <button class="fbtn ghost" id="backupBtn"><span class="icw" data-ic="download"></span> Back up</button>
-        <button class="fbtn ghost" id="restoreBtn"><span class="icw" data-ic="upload"></span> Restore</button>
-      </div>
-      <input type="file" id="restoreFile" accept="application/json,.json" hidden />
     </div>
     <!-- TMDB's API terms require attribution wherever their artwork is used -->
     <div class="credits">
@@ -130,23 +149,22 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom">
+  <button class="navbtn active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span><small>Swipe</small></button>
   <button class="navbtn" data-view="browse" title="Discover" aria-label="Discover"><span class="icw" data-ic="compass"></span><small>Discover</small></button>
-  <button class="navbtn navmain active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span></button>
-  <button class="navbtn" data-view="watched" title="Tiers" aria-label="Tiers"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
+  <button class="navbtn" data-view="watched" title="Tiers" aria-label="Tiers"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" title="Shows waiting for a tier" style="display:none">0</span></button>
 </nav>
 
 <!-- BEST OF A YEAR -->
 <div class="modal" id="yearSheet">
   <div class="sheet">
     <h3>Best of a year</h3>
-    <p class="setnote" style="margin-top:0">Ranking by popularity buries old shows — it mostly measures who logged something recently. Pick a year and rank it properly.</p>
+    <div class="demo" data-demo="year"></div>
     <div class="seth">Show me</div>
     <div class="langopts" id="ysLens">
       <button class="langopt" data-lens="popular">Most popular</button>
       <button class="langopt" data-lens="rated">Top rated</button>
       <button class="langopt on" data-lens="gems">Hidden gems</button>
     </div>
-    <p class="setnote"><b>Hidden gems</b> = well-scored but rarely logged, so you get the overlooked stuff instead of the same canon.</p>
     <div class="seth">Year</div>
     <div id="ysYears" class="yeargrid"></div>
     <button class="skip" id="yearClose">Cancel</button>
@@ -193,12 +211,23 @@
 <div class="modal" id="swipeSettings">
   <div class="sheet">
     <h3>Swipe settings</h3>
+    <div class="demo" data-demo="swipe"></div>
+    <div class="seth">Genres</div>
+    <button class="setnav" id="swGenres"><span class="icw" data-ic="filter"></span>
+      <span class="snt"><b>Filter the deck by genre</b><span id="swGenresNote">All genres</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
+    <div class="seth">Shows you passed</div>
+    <div class="setrow">
+      <div class="setlabel"><b>Go back through them</b><span id="passedNote">Nothing passed yet</span></div>
+      <button class="minibtn ghost" id="passedRecover" hidden>Recover</button>
+      <button class="minibtn" id="replayStart">Replay</button>
+    </div>
     <div class="seth">When you swipe right</div>
     <div class="langopts" id="swRate">
       <button class="langopt on" data-sw="ask">Rate it now</button>
       <button class="langopt" data-sw="quick">Just mark watched</button>
     </div>
-    <p class="setnote"><b>Rate it now</b> opens the tier sheet after every right-swipe — best when you're ranking properly.<br><b>Just mark watched</b> logs it and moves straight to the next card — best for sorting through what you have and haven't seen. Nothing is lost: unranked shows sit in Tiers → List → Watched and you can tier them whenever.</p>
     <button class="savebtn" id="swipeSettingsDone">Done</button>
   </div>
 </div>
@@ -219,7 +248,7 @@
 <div class="modal" id="rateModal">
   <div class="sheet">
     <h3 id="rateTitle">Rate it</h3>
-    <p>Drop it in a tier — this trains your feed and builds your rank.</p>
+    <div class="demo" data-demo="rate" data-demo-max="3" data-demo-after="hide"></div>
     <div class="tiers">
       <button class="tierbtn" style="background:var(--s)" data-tier="S">S<small>peak</small></button>
       <button class="tierbtn" style="background:var(--a)" data-tier="A">A<small>great</small></button>
@@ -243,7 +272,9 @@
 <div class="modal" id="browseSettings">
   <div class="sheet">
     <h3>Discover filters</h3>
-    <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew"></button></div>
+    <div class="demo" data-demo="filters"></div>
+    <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew" role="switch" aria-checked="false" aria-label="New releases only"></button></div>
+    <div class="setrow" id="bsAdultRow"><div class="setlabel"><b>Adult titles in search</b><span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div><button class="toggle" id="bsAdult" role="switch" aria-checked="false" aria-label="Allow adult titles in search"></button></div>
 
     <div class="seth">Order by <span class="sethnote">browse &amp; schedule</span></div>
     <div class="langopts" id="bsSort">
@@ -291,6 +322,10 @@
       <button class="langopt" data-fmt="SPECIAL">Special</button>
     </div>
 
+    <div class="seth">Release times <span class="sethnote">schedule days &amp; clock</span></div>
+    <select class="inp tzsel" id="bsTz"></select>
+    <div class="setnote" id="bsTzNote" style="margin-top:6px"></div>
+
     <p class="setnote">Nothing selected in a group means <b>any</b>. Picking several inside one group widens it (Japanese <i>or</i> Korean); the groups then narrow each other (Japanese <i>and</i> on Netflix), so no two choices can contradict.<br><b>No dub/sub filter yet.</b> AniList publishes no dub, sub or simulcast field — every streaming link comes back with an empty language. Original language above is the audio it was animated in; the platform list is what's licensed where you are.</p>
     <div class="ratealt">
       <button class="altbtn ghost" id="browseFiltersReset">Reset</button>
@@ -315,27 +350,265 @@
   <div class="sheet">
     <h3>Edit profile</h3>
     <p>This is you. Pick a face, a name, a vibe.</p>
+    <button class="lookbtn" id="openLook"><span class="icw" data-ic="star"></span>Picture &amp; banner<span class="lookgo icw" data-ic="arrowR"></span></button>
     <div class="avpick" id="avPick"></div>
     <input class="inp" id="inName" maxlength="20" placeholder="Display name" />
     <input class="inp" id="inHandle" maxlength="18" placeholder="handle (no spaces)" />
     <textarea class="inp" id="inBio" maxlength="120" placeholder="Your bio — who are you as a watcher?"></textarea>
+    <input class="inp" id="inAge" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+    <div class="setnote" style="margin:0 0 4px">Under 18 hides the 18+ search switch entirely.</div>
     <button class="savebtn" id="saveProfile">Save profile</button>
     <button class="skip" id="editCancel">Cancel</button>
   </div>
 </div>
 
 <!-- ADD FRIEND SHEET -->
+<!-- IMPORT -->
+<div class="modal" id="importSheet">
+  <div class="sheet">
+    <h3>Import your list</h3>
+    <div class="segmented" id="impTabs">
+      <button class="seg on" data-imp="anilist">AniList</button>
+      <button class="seg" data-imp="mal">MyAnimeList</button>
+    </div>
+
+    <div id="impAniList">
+      <p class="setnote" style="margin-top:0">Type your username. Your list has to be public in AniList's privacy settings — nothing else is needed.</p>
+      <input class="inp" id="impUser" placeholder="AniList username" autocapitalize="none" spellcheck="false" />
+    </div>
+
+    <div id="impMal" hidden>
+      <p class="setnote" style="margin-top:0">MyAnimeList has no public API for lists any more, so taku reads your export file instead. On MAL: <b>Profile → Settings → Export</b>, pick Anime, and download. Drop that file here — <b>.xml.gz works as-is</b>, no unzipping.</p>
+      <button class="savebtn ghostbtn" id="impPick"><span class="icw" data-ic="upload"></span>Choose export file</button>
+      <input type="file" id="impFile" accept=".xml,.gz,application/xml,application/gzip" hidden />
+      <div class="impfile" id="impFileName">No file chosen</div>
+    </div>
+
+    <button class="savebtn" id="impRun">Import</button>
+    <div class="impstatus" id="impStatus"></div>
+
+    <div id="impConfirm" hidden>
+      <div class="impsummary" id="impSummary"></div>
+      <p class="setnote">Nothing you already have is touched — your own ratings always win.</p>
+      <div class="ratealt">
+        <button class="altbtn ghost" id="impCancel">Cancel</button>
+        <button class="altbtn" id="impApply">Add to my lists</button>
+      </div>
+    </div>
+
+    <button class="skip" id="impClose">Close</button>
+  </div>
+</div>
+
+<!-- SETTINGS HUB -->
+<div class="modal" id="settingsSheet">
+  <div class="sheet">
+    <h3>Settings</h3>
+
+    <div class="seth">You</div>
+    <button class="setnav" data-go="edit"><span class="icw" data-ic="star"></span>
+      <span class="snt"><b>Name, handle &amp; bio</b><span id="snName">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+    <button class="setnav" data-go="look"><span class="icw" data-ic="cards"></span>
+      <span class="snt"><b>Picture &amp; banner</b><span>Faces, crests, your own photo</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
+    <div class="seth">Your list</div>
+    <button class="setnav" id="impOpen"><span class="icw" data-ic="download"></span>
+      <span class="snt"><b>Import from MAL or AniList</b><span>Bring your history in, ready to rank</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
+    <div class="seth">Swiping</div>
+    <button class="setnav" data-go="swipe"><span class="icw" data-ic="cards"></span>
+      <span class="snt"><b>Swipe preferences</b><span id="snSwipe">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+    <button class="setnav" data-go="passed"><span class="icw" data-ic="rotate"></span>
+      <span class="snt"><b>Shows you passed</b><span id="snPassed">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
+    <div class="seth">Discovery</div>
+    <button class="setnav" data-go="filters"><span class="icw" data-ic="filter"></span>
+      <span class="snt"><b>Filters &amp; sorting</b><span id="snFilters">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+    <div class="setrow"><div class="setlabel"><b>Release times</b>
+      <span id="snTz">—</span></div>
+      <select class="inp tzsel" id="setTz" style="max-width:170px"></select></div>
+
+    <div class="seth">Look</div>
+    <div class="themerow" id="themeRow"></div>
+    <div class="palgrid" id="palGrid"></div>
+    <p class="setnote" style="margin:0 0 6px">Auto follows your phone's light/dark setting.</p>
+
+    <div class="seth">App</div>
+    <div class="setrow"><div class="setlabel"><b>Show how-it-works demos</b>
+      <span>The little animated walkthroughs inside settings sheets</span></div>
+      <button class="toggle" id="setDemos" role="switch" aria-checked="true" aria-label="Show how-it-works demos"></button></div>
+    <div class="setrow" id="setAdultRow"><div class="setlabel"><b>Adult titles in search</b>
+      <span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div>
+      <button class="toggle" id="setAdult" role="switch" aria-checked="false" aria-label="Allow adult titles in search"></button></div>
+
+    <div class="seth">Your data <span class="sethnote">stays on this device</span></div>
+    <div class="storagebar"><i id="storageFill"></i></div>
+    <div class="storagenote" id="storageNote">—</div>
+    <div class="ratealt">
+      <button class="altbtn ghost" id="setBackup"><span class="icw" data-ic="download"></span>Back up</button>
+      <button class="altbtn ghost" id="setRestore"><span class="icw" data-ic="upload"></span>Restore</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden />
+    <button class="savebtn ghostbtn" id="setClearCache">Clear cached anime data</button>
+    <button class="savebtn ghostbtn" id="setResetTaste">Reset what the feed has learned</button>
+    <button class="savebtn danger" id="setWipe">Delete everything</button>
+
+    <div class="seth">Accounts</div>
+    <div class="setrow" id="setAuthRow"><div class="setlabel"><b>Accounts</b>
+      <span id="setAuthHint">—</span></div>
+      <button class="minibtn ghost" id="setAuthToggle">Turn on</button></div>
+    <div class="ratealt" id="setAuthActions"></div>
+
+    <div class="seth">About</div>
+    <div class="credits" id="setAbout"></div>
+
+    <button class="savebtn" id="settingsDone">Done</button>
+  </div>
+</div>
+
+<!-- LOOK: picture + banner -->
+<div class="modal" id="lookSheet">
+  <div class="sheet">
+    <h3>Picture &amp; banner</h3>
+    <div class="seth">Your picture</div>
+    <div class="segmented lookTabs" id="avTabs">
+      <button class="seg on" data-av="emoji">Faces</button>
+      <button class="seg" data-av="crest">Crests</button>
+      <button class="seg" data-av="photo">Photo</button>
+    </div>
+    <div id="avPanel"></div>
+
+    <div class="seth">Banner</div>
+    <div class="bannergrid" id="bannerGrid"></div>
+    <button class="savebtn ghostbtn" id="bannerUpload"><span class="icw" data-ic="upload"></span>Use my own image</button>
+    <input type="file" id="bannerFile" accept="image/*" hidden />
+    <input type="file" id="avatarFile" accept="image/*" hidden />
+
+    <p class="setnote">Banners and crests are generated in the app — they aren't images of any anime, so there's nothing to license. Photos you add stay on this device.</p>
+    <button class="savebtn" id="lookDone">Done</button>
+  </div>
+</div>
+
+<!-- FRIEND PROFILE -->
+<div class="modal" id="fpSheet">
+  <div class="sheet">
+    <div id="fpBody"></div>
+    <button class="savebtn ghostbtn" id="fpClose">Close</button>
+  </div>
+</div>
+
+<!-- INBOUND INVITE (opened from a shared link) -->
+<div class="modal" id="inviteSheet">
+  <div class="sheet">
+    <h3>Someone shared their taste</h3>
+    <div id="inviteBody"></div>
+    <button class="savebtn" id="inviteAdd">Add to my squad</button>
+    <button class="skip" id="inviteSkip">Not now</button>
+  </div>
+</div>
+
+<!-- SHARE MY CODE -->
+<div class="modal" id="shareSheet">
+  <div class="sheet">
+    <h3>Share your taste</h3>
+    <p>Send this to a friend. Opening it shows them how closely your taste matches — nothing is uploaded, the whole profile travels inside the link.</p>
+    <div class="linkbox"><code id="shareLink"></code></div>
+    <button class="savebtn" id="shareCopy">Copy link</button>
+    <button class="savebtn ghostbtn" id="shareNative" hidden><span class="icw" data-ic="share"></span>Share…</button>
+    <button class="skip" id="shareClose">Close</button>
+  </div>
+</div>
+
+<!-- TASTE DUEL -->
+<div class="modal" id="duelSheet">
+  <div class="sheet">
+    <h3>Taste duel</h3>
+    <div id="duelBody"></div>
+    <button class="savebtn" id="duelClose">Close</button>
+  </div>
+</div>
+
 <div class="modal" id="friendModal">
   <div class="sheet">
     <h3>Add a friend</h3>
     <p>Paste a taku code a friend shared with you. Their rank lands on your leaderboard.</p>
-    <textarea class="inp" id="inCode" placeholder="Paste code…"></textarea>
+    <div class="seth">By username or tag</div>
+    <input class="inp" id="inLookup" placeholder="ronit or RONIT#7K2Q" autocapitalize="none" spellcheck="false" />
+    <button class="savebtn ghostbtn" id="doLookup">Search</button>
+    <div class="setnote" id="lookupNote" style="margin:8px 0 16px"></div>
+    <div class="seth">Or paste a link they sent you</div>
+    <textarea class="inp" id="inCode" placeholder="Paste their taku link…"></textarea>
     <button class="savebtn" id="doAddFriend">Add to squad</button>
     <button class="skip" id="friendCancel">Cancel</button>
   </div>
 </div>
 
 <!-- ONBOARDING -->
+<!-- ACCOUNT GATE — hidden unless store "authEnabled" is true. See js/auth.js. -->
+<div class="onboard authgate" id="authGate" role="dialog" aria-modal="true" aria-label="Sign in to taku" hidden>
+  <div class="ob-inner">
+    <div class="ob-logo">taku</div>
+    <div class="ob-tag" id="agTag">Make an account to keep your tiers safe.</div>
+
+    <div class="segmented agtabs" id="agTabs">
+      <button class="seg on" data-ag="signup">Sign up</button>
+      <button class="seg" data-ag="login">Log in</button>
+    </div>
+
+    <form id="agForm" autocomplete="on" novalidate>
+      <div class="agrow" data-only="signup">
+        <input class="inp" id="agName" aria-label="Your name" aria-describedby="agNameErr" maxlength="20" placeholder="Your name" autocomplete="name" />
+        <div class="agerr" id="agNameErr" role="alert" aria-live="polite"></div>
+      </div>
+      <div class="agrow" data-only="signup">
+        <input class="inp" id="agUser" aria-label="Username" aria-describedby="agUserErr" maxlength="18" placeholder="Username" autocomplete="username" autocapitalize="none" spellcheck="false" />
+        <div class="agerr" id="agUserErr" role="alert" aria-live="polite"></div>
+      </div>
+      <div class="agrow" data-only="signup">
+        <input class="inp" id="agAge" aria-label="Age" aria-describedby="agAgeErr" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+        <div class="agerr" id="agAgeErr" role="alert" aria-live="polite"></div>
+      </div>
+      <div class="agrow">
+        <input class="inp" id="agEmail" aria-label="Email" aria-describedby="agEmailErr" type="email" placeholder="Email" autocomplete="email" autocapitalize="none" spellcheck="false" />
+        <div class="agerr" id="agEmailErr" role="alert" aria-live="polite"></div>
+      </div>
+      <div class="agrow">
+        <div class="pwwrap">
+          <input class="inp" id="agPass" aria-label="Password" aria-describedby="agPassErr" type="password" placeholder="Password" autocomplete="new-password" />
+          <button type="button" class="pweye" id="agPassEye" aria-label="Show password"></button>
+        </div>
+        <div class="pwbar" data-only="signup"><i></i><i></i><i></i><i></i></div>
+        <div class="agerr" id="agPassErr" role="alert" aria-live="polite"></div>
+      </div>
+      <button class="ob-start" id="agGo" type="submit">Create account<span class="icw" data-ic="arrowR"></span></button>
+    </form>
+
+    <button class="aglink" id="agForgot" data-only="login" hidden>Forgot your password?</button>
+    <button class="aglink" id="agSkip">Look around first</button>
+    <div class="ob-note" id="agNote">Your password goes straight to the login provider — taku never stores it.</div>
+  </div>
+</div>
+
+<!-- CONFIRM YOUR EMAIL -->
+<div class="onboard authgate" id="authVerify" role="dialog" aria-modal="true" aria-label="Confirm your email" hidden>
+  <div class="ob-inner">
+    <div class="ob-logo">taku</div>
+    <div class="vmark icw" data-ic="check"></div>
+    <div class="ob-h" style="text-align:center">Check your inbox</div>
+    <div class="ob-tag">We sent a confirmation link to <b id="avEmail">you</b>. Tap it, then come back.</div>
+    <button class="ob-start" id="avCheck">I've confirmed it</button>
+    <button class="aglink" id="avResend">Send it again</button>
+    <button class="aglink" id="avOut">Use a different account</button>
+    <div class="ob-note" id="avNote">Not there? Check spam — confirmation mail lands there often.</div>
+  </div>
+</div>
+
 <div class="onboard" id="onboard" hidden>
   <div class="ob-inner">
     <div class="ob-logo">taku</div>
@@ -343,26 +616,37 @@
     <div class="ob-h">Pick a face + name</div>
     <div class="avpick" id="obAvPick"></div>
     <input class="inp" id="obName" maxlength="20" placeholder="What do we call you?" />
+    <div class="ob-h">How old are you?</div>
+    <input class="inp" id="obAge" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+    <div class="ob-note" style="margin:6px 0 0">Sets whether 18+ titles can ever show up in search. You can change it later in your profile.</div>
     <div class="ob-h">What do you vibe with? <span style="color:var(--dim);font-weight:400">(pick any — trains your feed)</span></div>
     <div class="ob-genres" id="obGenres"></div>
     <button class="ob-start" id="obStart">Start swiping<span class="icw" data-ic="arrowR"></span></button>
+    <button class="aglink" id="obImport">Already track anime? Import your list</button>
     <div class="ob-note">Everything stays on your device. No account, no tracking.</div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=77"></script>
-<script src="js/state.js?v=77"></script>
-<script src="js/api.js?v=77"></script>
-<script src="js/rec.js?v=77"></script>
-<script src="js/deck.js?v=77"></script>
-<script src="js/lists.js?v=77"></script>
-<script src="js/search.js?v=77"></script>
-<script src="js/profile.js?v=77"></script>
-<script src="js/detail.js?v=77"></script>
-<script src="js/browse.js?v=77"></script>
-<script src="js/share.js?v=77"></script>
-<script src="js/main.js?v=77"></script>
+<script src="auth-config.js?v=131"></script>
+<script src="js/data.js?v=131"></script>
+<script src="js/state.js?v=131"></script>
+<script src="js/api.js?v=131"></script>
+<script src="js/rec.js?v=131"></script>
+<script src="js/deck.js?v=131"></script>
+<script src="js/lists.js?v=131"></script>
+<script src="js/search.js?v=131"></script>
+<script src="js/art.js?v=131"></script>
+<script src="js/settings.js?v=131"></script>
+<script src="js/import.js?v=131"></script>
+<script src="js/compat.js?v=131"></script>
+<script src="js/profile.js?v=131"></script>
+<script src="js/detail.js?v=131"></script>
+<script src="js/browse.js?v=131"></script>
+<script src="js/demo.js?v=131"></script>
+<script src="js/auth.js?v=131"></script>
+<script src="js/share.js?v=131"></script>
+<script src="js/main.js?v=131"></script>
 </body>
 </html>

@@ -4,7 +4,10 @@ function computeProfile(){
   let minutes=0;
   list.forEach(m=>{
     minutes+=(m.eps||12)*(m.dur||23);
-    (m.genres||[]).forEach((g,i)=>{gcount[g]=(gcount[g]||0)+1/(i+1);});
+    // count each genre once — position in this array is alphabetical, not
+    // importance, so the old 1/(i+1) made the genre bars and the archetype
+    // that derives from them alphabetically biased
+    (m.genres||[]).forEach(g=>{gcount[g]=(gcount[g]||0)+1;});
   });
   const hours=minutes/60;
   const genres=Object.entries(gcount).sort((a,b)=>b[1]-a[1]);
@@ -44,18 +47,42 @@ function startNet(prof){
 }
 
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
-function myCode(prof){const d={u:profile.name||"Nameless Otaku",h:profile.handle||"you",a:profile.avatar||"🍥",t:prof.title,tr:prof.tierName,p:prof.power,g:prof.topGenre||"—",c:prof.arch.color};return btoa(encodeURIComponent(JSON.stringify(d)));}
-function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;return{id:"f"+Math.abs(hashStr(s.trim())),name:d.u,handle:d.h||"friend",avatar:d.a||"🙂",title:d.t||"UNTRACED",tier:d.tr||"",power:+d.p||0,genre:d.g||"",color:d.c||"#8b5cf6"};}catch(e){return null;}}
+/* v2 adds the taste payload. v1 codes stay readable — decodeCode simply finds
+   no taste on them and the duel screen says so rather than inventing a score. */
+function myCode(prof){
+  const t=packTaste(myTaste());
+  const d={v:2,u:profile.name||"Nameless Otaku",h:profile.handle||"you",a:profile.avatar||"🍥",
+    t:prof.title,tr:prof.tierName,p:prof.power,g:prof.topGenre||"—",c:prof.arch.color,
+    cd:profile.code||"",sh:t.sh,af:t.af};
+  return btoa(encodeURIComponent(JSON.stringify(d)));
+}
+function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;const cap=(v,n)=>String(v==null?"":v).slice(0,n);return{id:"f"+Math.abs(hashStr(s.trim())),name:cap(d.u,24)||"Friend",handle:cap(d.h,18)||"friend",avatar:cap(d.a,4)||"🙂",title:cap(d.t,28)||"UNTRACED",tier:cap(d.tr,18),power:Math.max(0,Math.min(9999999,+d.p||0)),genre:cap(d.g,24),color:safeColor(d.c),code:cap(d.cd,6).toUpperCase().replace(/[^0-9A-Z]/g,""),taste:(+d.v>=2?unpackTaste(d):null)};}catch(e){return null;}}
 
 function renderIdentity(prof){
   const av=$("#pfAvatar");
-  av.textContent=profile.avatar||"🍥";
+  /* An uploaded photo or a generated crest replaces the emoji, so the avatar
+     has to switch between a text glyph and a background image. */
+  if(profile.avatarImg){
+    av.textContent="";
+    av.style.backgroundImage=`url('${profile.avatarImg}')`;
+    av.style.backgroundSize="cover";av.style.backgroundPosition="center";
+  }else{
+    av.style.backgroundImage="";
+    av.textContent=profile.avatar||"🍥";
+  }
+  if(typeof paintIdBanner==="function")paintIdBanner();
   av.style.boxShadow=`0 0 0 3px ${prof.arch.color}, 0 0 26px ${prof.arch.color}66`;
-  $("#miniAv").textContent=profile.avatar||"🍥";
+  const mini=$("#miniAv");
+  if(profile.avatarImg){mini.textContent="";
+    mini.style.backgroundImage=`url('${profile.avatarImg}')`;
+    mini.style.backgroundSize="cover";mini.style.backgroundPosition="center";}
+  else{mini.style.backgroundImage="";mini.textContent=profile.avatar||"🍥";}
   $("#pfName").textContent=profile.name||"Nameless Otaku";
   const since=profile.created?new Date(profile.created).getFullYear():new Date().getFullYear();
   const h=$("#pfHandle");
   h.textContent="@"+(profile.handle||"you")+"  ·  "+(prof.count?prof.title:"unranked")+"  ·  since "+since;
+  const tg=$("#pfTag");
+  if(tg){tg.textContent=myTag();tg.title="Your taku tag — tap to copy";}
   h.style.color=prof.arch.color;
   $("#pfBio").textContent=profile.bio||"No bio yet — tap edit to say who you are as a watcher.";
 }
@@ -64,19 +91,44 @@ function renderFriends(prof){
   const board=[me,...friends].sort((a,b)=>b.power-a.power);
   $("#squadCount").textContent=friends.length+" friend"+(friends.length!==1?"s":"");
   $("#friendList").innerHTML=board.map((f,i)=>`
-    <div class="frow${f.me?' me':''}">
+    <div class="frow${f.me?' me':''}${f.me?"":' tappable'}"${f.me?"":` data-duel="${escHTML(f.id)}"`}>
       <span class="frank">${i+1}</span>
-      <span class="fav" style="box-shadow:0 0 0 2px ${f.color}">${f.avatar}</span>
+      <span class="fav" style="box-shadow:0 0 0 2px ${safeColor(f.color)}">${escHTML(f.avatar)}</span>
       <div class="fmeta">
-        <div class="fn">${f.name}${f.me?' <em>YOU</em>':''}</div>
-        <div class="fsub" style="color:${f.color}">${f.title} · ${f.tier}</div>
+        <div class="fn">${escHTML(f.name)}${f.me?' <em>YOU</em>':''}</div>
+        <div class="fsub" style="color:${safeColor(f.color)}">${escHTML(f.title)} · ${escHTML(f.tier)}</div>
+        ${f.me?"":(friendTag(f)?`<div class="ftag">${escHTML(friendTag(f))}</div>`:"")}
       </div>
-      <div class="fpow">${(f.power||0).toLocaleString()}<span>INDEX</span></div>
-      ${f.me?'':`<button class="fx" data-friend-remove="${f.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>`}
+      <div class="fpow">${(+f.power||0).toLocaleString()}<span>INDEX</span></div>
+      ${f.me?"":_demoMark(f)}
+      ${f.me?'':`<button class="fx" data-friend-remove="${escHTML(f.id)}" title="Remove"><span class="icw">${icSvg("x")}</span></button>`}
     </div>`).join("");
 }
 
+/* No score on the squad list. The number only exists once you open someone's
+   profile and ask for it — printing it in a row alongside four others turns a
+   verdict into a spreadsheet, and there is nothing to reveal if it is already
+   sitting there. Seeded demo friends get a marker instead, since fabricating a
+   percentage about a person who does not exist would be a lie either way. */
+function _demoMark(f){
+  if(f.sample)return `<span class="fsample" title="A sample profile, not a real person">SAMPLE</span>`;
+  return (!f.taste||!f.taste.shows)?`<span class="fmatch none" title="Older code — no taste data">—</span>`:"";
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest?e.target.closest("[data-duel]"):null;
+  if(t&&!e.target.closest("[data-friend-remove]"))openDuel(t.dataset.duel);
+});
+
+let _sigResizeBound=false;
 function renderProfile(){
+  if(!_sigResizeBound){
+    _sigResizeBound=true;
+    window.addEventListener("resize",()=>{
+      if(currentView==="profile"&&typeof paintSignature==="function")
+        paintSignature($("#net"),window._lastProf||computeProfile());
+    });
+  }
+  if(typeof renderAuthZone==="function")renderAuthZone();
   const prof=computeProfile();
   window._lastProf=prof;
   renderIdentity(prof);renderFriends(prof);
@@ -91,16 +143,38 @@ function renderProfile(){
   const bars=prof.genres.slice(0,5),max=bars.length?bars[0][1]:1;
   $("#genreBars").innerHTML=bars.length?bars.map(([g,w])=>`<div class="gbar"><span class="gname">${g}</span><span class="gtrack"><i style="width:${Math.max(8,(w/max)*100)}%;background:${prof.arch.color}"></i></span></div>`).join(""):`<div class="gbar" style="opacity:.5;font-size:12px">No genres tracked yet.</div>`;
   const rev=$("#rankReveal"),an=$("#analyzing");
+  clearTimeout(window._revealT);clearTimeout(window._netStopT);
+
+  /* The reveal used to play in full on every visit — 1.35s of "analyzing" plus
+     a 0.6s card transition, so nearly two seconds before the bottom of the page
+     was readable. Ceremony is right the first time and when a rank actually
+     changes; the hundredth time you open your own profile it just reads as the
+     app being slow.
+
+     So: animate only when there is genuinely something new to announce, and
+     remember that across sessions rather than replaying once per launch. */
+  const sig=prof.title+"|"+prof.tierName+"|"+prof.count;
+  const seen=store.get("rankSeen","");
+  const worthCelebrating=sig!==seen;
+
+  /* The signature is painted every time and costs one draw. The previous code
+     returned early on repeat visits, which skipped the canvas entirely and left
+     an empty box above the rank card. */
+  stopNet();
+  if(typeof paintSignature==="function")paintSignature($("#net"),prof);
+
+  if(!worthCelebrating){
+    an.classList.add("hide");rev.classList.add("show");
+    return;
+  }
   rev.classList.remove("show");an.classList.remove("hide");
-  stopNet();startNet(prof);
-  clearTimeout(window._revealT);
-  window._revealT=setTimeout(()=>{an.classList.add("hide");rev.classList.add("show");},1350);
-  clearTimeout(window._netStopT);window._netStopT=setTimeout(stopNet,5200);
+  store.set("rankSeen",sig);
+  window._revealT=setTimeout(()=>{an.classList.add("hide");rev.classList.add("show");},520);
 }
 
 function initProfile(){
   function openEdit(){
-    $("#inName").value=profile.name;$("#inHandle").value=profile.handle;$("#inBio").value=profile.bio;
+    $("#inName").value=profile.name;$("#inHandle").value=profile.handle;$("#inBio").value=profile.bio;$("#inAge").value=userAge()||"";
     $("#avPick").innerHTML=AVATARS.map(a=>`<button class="avopt${a===(profile.avatar||"🍥")?' sel':''}" data-av="${a}">${a}</button>`).join("");
     $("#editModal").classList.add("on");
   }
@@ -110,6 +184,9 @@ function initProfile(){
     profile.name=$("#inName").value.trim().slice(0,20);
     profile.handle=$("#inHandle").value.trim().replace(/\s+/g,"").slice(0,18);
     profile.bio=$("#inBio").value.trim().slice(0,120);
+    const age=parseInt($("#inAge").value,10);
+    profile.age=Number.isFinite(age)&&age>0&&age<=120?age:null;
+    if(!canAdult())store.set("searchAdult",false);   // dropping below 18 revokes it
     if(!profile.created)profile.created=Date.now();
     store.set("profile",profile);$("#editModal").classList.remove("on");
     const p=window._lastProf||computeProfile();renderIdentity(p);renderFriends(p);
@@ -125,10 +202,28 @@ function initProfile(){
     friends.push(f);store.set("friends",friends);$("#friendModal").classList.remove("on");
     renderFriends(window._lastProf||computeProfile());toast(f.name+" joined your squad");
   };
-  $("#shareCode").onclick=async()=>{
-    const code=myCode(window._lastProf||computeProfile());
-    try{await navigator.clipboard.writeText(code);toast("Your code is copied — send it to a friend");}
-    catch(e){window.prompt("Copy your taku code and send it to a friend:",code);}
+  $("#shareCode").onclick=()=>{
+    const url=myShareURL();
+    $("#shareLink").textContent=url;
+    const nat=$("#shareNative");
+    if(nat)nat.hidden=typeof navigator.share!=="function";
+    $("#shareSheet").classList.add("on");
   };
+  $("#shareCopy").onclick=async()=>{
+    const url=myShareURL();
+    try{await navigator.clipboard.writeText(url);toast("Link copied — send it to a friend");}
+    catch(e){
+      // clipboard is blocked on file:// and in some webviews; select it instead
+      const el=$("#shareLink"),r=document.createRange();
+      r.selectNodeContents(el);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);
+      toast("Copy the highlighted link");
+    }
+  };
+  $("#shareNative").onclick=async()=>{
+    try{await navigator.share({title:"my taku taste",text:"See how close our anime taste is",url:myShareURL()});}
+    catch(e){}
+  };
+  $("#shareClose").onclick=()=>$("#shareSheet").classList.remove("on");
+  $("#inviteSkip").onclick=()=>$("#inviteSheet").classList.remove("on");
   document.addEventListener("click",e=>{const t=e.target.closest?e.target.closest("[data-friend-remove]"):null;if(t){friends=friends.filter(x=>x.id!==t.dataset.friendRemove);store.set("friends",friends);renderFriends(window._lastProf||computeProfile());}});
 }

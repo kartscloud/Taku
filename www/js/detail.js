@@ -2,11 +2,12 @@
 let _detailStack=[];
 
 function detailAction(m,action){
-  const inDeck=queues[deckMode].some(x=>x.id===m.id);
+  const inDeck=activeQueue().some(x=>x.id===m.id);   // replay cards live in replayQueue
   if(inDeck){const top=topCard();if(top&&+top.dataset.id===m.id){doAction(action);return;}decide(m.id,action);renderDeck();return;}
   markSeen(m.id);
   if(action==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);toast("Added to Want");}
-  if(action==="nope"){bumpAffinity(m.genres,-1);}
+  // same semantics as a deck left-swipe: it goes to the passed pile, replayable
+  if(action==="nope"){bumpAffinity(m.genres,-1);addPassed(m);}
   if(action==="watch")openRate(m);
   refreshCounts();
 }
@@ -155,7 +156,7 @@ function renderDetail(m,full){
   $("#detailSheet").querySelectorAll(".dact").forEach(btn=>btn.onclick=()=>{
     const a=btn.dataset.da;
     if(a==="nope"||a==="want"||a==="watch"){closeDetail();detailAction(m,a);return;}
-    if(a==="rerank"){const w=watched.find(x=>x.id===m.id);if(w){closeDetail();pendingWatch={rec:w,genres:w.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");}return;}
+    if(a==="rerank"){const w=watched.find(x=>x.id===m.id);if(w){closeDetail();pendingWatch={rec:w,genres:w.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");mountDemos($("#rateModal"));startDemos("rateModal");}return;}
     if(a==="rmwatched"){removeWatched(m.id);refreshCounts();closeDetail();toast("Removed from your tiers");return;}
     if(a==="rmwant"){removeWant(m.id);refreshCounts();closeDetail();toast("Removed from Want");return;}
   });

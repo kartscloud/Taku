@@ -42,6 +42,9 @@ async function buildQueue(mode,pages){
   const byId=new Map();
   lists.flat().forEach(m=>{if(!byId.has(m.id))byId.set(m.id,m);});
   const cands=[...byId.values()].filter(m=>!seen.has(m.id));
+  buildQueue.lastRaw=byId.size;   // how much the pools RETURNED, before the seen filter —
+                                  // zero means the pools are genuinely exhausted, which is
+                                  // a different situation from "everything here is seen"
   if(mode==="new"){
     cands.sort((a,b)=>(b.aired||0)-(a.aired||0)); // just-dropped first, newest premieres on top
   }else{
