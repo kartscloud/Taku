@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<!-- user-scalable=no blocks pinch-zoom for everyone, including people who need
+     it to read. iOS ignores it in Safari 10+ anyway; all it did here was break
+     accessibility on Android and in webviews. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0d0b14" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,7 +14,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=99" />
+<link rel="stylesheet" href="css/app.css?v=101" />
 </head>
 <body>
 
@@ -20,7 +23,7 @@
   <div class="hactions">
     <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     <button class="gearbtn icononly" id="swipeGear" title="Swipe settings"><span class="icw" data-ic="gear"></span></button>
-    <button class="miniav" id="miniAv" title="Profile">🍥</button>
+    <button class="miniav" id="miniAv" title="Profile" aria-label="Your profile">🍥</button>
   </div>
 </header>
 
@@ -80,8 +83,9 @@
 
   <!-- PROFILE -->
   <section id="view-profile" style="display:none">
-    <div class="idcard">
-      <button class="avatar" id="pfAvatar" title="Edit avatar">🍥</button>
+    <div class="idcard" id="idCard">
+      <canvas class="idbanner" id="idBanner" aria-hidden="true"></canvas>
+      <button class="avatar" id="pfAvatar" title="Edit avatar" aria-label="Change your picture">🍥</button>
       <div class="idmeta">
         <div class="uname" id="pfName">Nameless Otaku</div>
         <div class="handle" id="pfHandle">@you</div>
@@ -264,8 +268,8 @@
   <div class="sheet">
     <h3>Discover filters</h3>
     <div class="demo" data-demo="filters"></div>
-    <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew"></button></div>
-    <div class="setrow" id="bsAdultRow"><div class="setlabel"><b>Adult titles in search</b><span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div><button class="toggle" id="bsAdult"></button></div>
+    <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew" role="switch" aria-checked="false" aria-label="New releases only"></button></div>
+    <div class="setrow" id="bsAdultRow"><div class="setlabel"><b>Adult titles in search</b><span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div><button class="toggle" id="bsAdult" role="switch" aria-checked="false" aria-label="Allow adult titles in search"></button></div>
 
     <div class="seth">Order by <span class="sethnote">browse &amp; schedule</span></div>
     <div class="langopts" id="bsSort">
@@ -341,6 +345,7 @@
   <div class="sheet">
     <h3>Edit profile</h3>
     <p>This is you. Pick a face, a name, a vibe.</p>
+    <button class="lookbtn" id="openLook"><span class="icw" data-ic="star"></span>Picture &amp; banner<span class="lookgo icw" data-ic="arrowR"></span></button>
     <div class="avpick" id="avPick"></div>
     <input class="inp" id="inName" maxlength="20" placeholder="Display name" />
     <input class="inp" id="inHandle" maxlength="18" placeholder="handle (no spaces)" />
@@ -353,6 +358,29 @@
 </div>
 
 <!-- ADD FRIEND SHEET -->
+<!-- LOOK: picture + banner -->
+<div class="modal" id="lookSheet">
+  <div class="sheet">
+    <h3>Picture &amp; banner</h3>
+    <div class="seth">Your picture</div>
+    <div class="segmented lookTabs" id="avTabs">
+      <button class="seg on" data-av="emoji">Faces</button>
+      <button class="seg" data-av="crest">Crests</button>
+      <button class="seg" data-av="photo">Photo</button>
+    </div>
+    <div id="avPanel"></div>
+
+    <div class="seth">Banner</div>
+    <div class="bannergrid" id="bannerGrid"></div>
+    <button class="savebtn ghostbtn" id="bannerUpload"><span class="icw" data-ic="upload"></span>Use my own image</button>
+    <input type="file" id="bannerFile" accept="image/*" hidden />
+    <input type="file" id="avatarFile" accept="image/*" hidden />
+
+    <p class="setnote">Banners and crests are generated in the app — they aren't images of any anime, so there's nothing to license. Photos you add stay on this device.</p>
+    <button class="savebtn" id="lookDone">Done</button>
+  </div>
+</div>
+
 <!-- FRIEND PROFILE -->
 <div class="modal" id="fpSheet">
   <div class="sheet">
@@ -409,7 +437,7 @@
 
 <!-- ONBOARDING -->
 <!-- ACCOUNT GATE — hidden unless store "authEnabled" is true. See js/auth.js. -->
-<div class="onboard authgate" id="authGate" hidden>
+<div class="onboard authgate" id="authGate" role="dialog" aria-modal="true" aria-label="Sign in to taku" hidden>
   <div class="ob-inner">
     <div class="ob-logo">taku</div>
     <div class="ob-tag" id="agTag">Make an account to keep your tiers safe.</div>
@@ -421,28 +449,28 @@
 
     <form id="agForm" autocomplete="on" novalidate>
       <div class="agrow" data-only="signup">
-        <input class="inp" id="agName" maxlength="20" placeholder="Your name" autocomplete="name" />
-        <div class="agerr" id="agNameErr"></div>
+        <input class="inp" id="agName" aria-label="Your name" aria-describedby="agNameErr" maxlength="20" placeholder="Your name" autocomplete="name" />
+        <div class="agerr" id="agNameErr" role="alert" aria-live="polite"></div>
       </div>
       <div class="agrow" data-only="signup">
-        <input class="inp" id="agUser" maxlength="18" placeholder="Username" autocomplete="username" autocapitalize="none" spellcheck="false" />
-        <div class="agerr" id="agUserErr"></div>
+        <input class="inp" id="agUser" aria-label="Username" aria-describedby="agUserErr" maxlength="18" placeholder="Username" autocomplete="username" autocapitalize="none" spellcheck="false" />
+        <div class="agerr" id="agUserErr" role="alert" aria-live="polite"></div>
       </div>
       <div class="agrow" data-only="signup">
-        <input class="inp" id="agAge" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
-        <div class="agerr" id="agAgeErr"></div>
+        <input class="inp" id="agAge" aria-label="Age" aria-describedby="agAgeErr" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+        <div class="agerr" id="agAgeErr" role="alert" aria-live="polite"></div>
       </div>
       <div class="agrow">
-        <input class="inp" id="agEmail" type="email" placeholder="Email" autocomplete="email" autocapitalize="none" spellcheck="false" />
-        <div class="agerr" id="agEmailErr"></div>
+        <input class="inp" id="agEmail" aria-label="Email" aria-describedby="agEmailErr" type="email" placeholder="Email" autocomplete="email" autocapitalize="none" spellcheck="false" />
+        <div class="agerr" id="agEmailErr" role="alert" aria-live="polite"></div>
       </div>
       <div class="agrow">
         <div class="pwwrap">
-          <input class="inp" id="agPass" type="password" placeholder="Password" autocomplete="new-password" />
+          <input class="inp" id="agPass" aria-label="Password" aria-describedby="agPassErr" type="password" placeholder="Password" autocomplete="new-password" />
           <button type="button" class="pweye" id="agPassEye" aria-label="Show password"></button>
         </div>
         <div class="pwbar" data-only="signup"><i></i><i></i><i></i><i></i></div>
-        <div class="agerr" id="agPassErr"></div>
+        <div class="agerr" id="agPassErr" role="alert" aria-live="polite"></div>
       </div>
       <button class="ob-start" id="agGo" type="submit">Create account<span class="icw" data-ic="arrowR"></span></button>
     </form>
@@ -454,7 +482,7 @@
 </div>
 
 <!-- CONFIRM YOUR EMAIL -->
-<div class="onboard authgate" id="authVerify" hidden>
+<div class="onboard authgate" id="authVerify" role="dialog" aria-modal="true" aria-label="Confirm your email" hidden>
   <div class="ob-inner">
     <div class="ob-logo">taku</div>
     <div class="vmark icw" data-ic="check"></div>
@@ -486,21 +514,22 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=99"></script>
-<script src="js/data.js?v=99"></script>
-<script src="js/state.js?v=99"></script>
-<script src="js/api.js?v=99"></script>
-<script src="js/rec.js?v=99"></script>
-<script src="js/deck.js?v=99"></script>
-<script src="js/lists.js?v=99"></script>
-<script src="js/search.js?v=99"></script>
-<script src="js/compat.js?v=99"></script>
-<script src="js/profile.js?v=99"></script>
-<script src="js/detail.js?v=99"></script>
-<script src="js/browse.js?v=99"></script>
-<script src="js/demo.js?v=99"></script>
-<script src="js/auth.js?v=99"></script>
-<script src="js/share.js?v=99"></script>
-<script src="js/main.js?v=99"></script>
+<script src="auth-config.js?v=101"></script>
+<script src="js/data.js?v=101"></script>
+<script src="js/state.js?v=101"></script>
+<script src="js/api.js?v=101"></script>
+<script src="js/rec.js?v=101"></script>
+<script src="js/deck.js?v=101"></script>
+<script src="js/lists.js?v=101"></script>
+<script src="js/search.js?v=101"></script>
+<script src="js/art.js?v=101"></script>
+<script src="js/compat.js?v=101"></script>
+<script src="js/profile.js?v=101"></script>
+<script src="js/detail.js?v=101"></script>
+<script src="js/browse.js?v=101"></script>
+<script src="js/demo.js?v=101"></script>
+<script src="js/auth.js?v=101"></script>
+<script src="js/share.js?v=101"></script>
+<script src="js/main.js?v=101"></script>
 </body>
 </html>

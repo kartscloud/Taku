@@ -60,9 +60,23 @@ function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").tr
 
 function renderIdentity(prof){
   const av=$("#pfAvatar");
-  av.textContent=profile.avatar||"🍥";
+  /* An uploaded photo or a generated crest replaces the emoji, so the avatar
+     has to switch between a text glyph and a background image. */
+  if(profile.avatarImg){
+    av.textContent="";
+    av.style.backgroundImage=`url('${profile.avatarImg}')`;
+    av.style.backgroundSize="cover";av.style.backgroundPosition="center";
+  }else{
+    av.style.backgroundImage="";
+    av.textContent=profile.avatar||"🍥";
+  }
+  if(typeof paintIdBanner==="function")paintIdBanner();
   av.style.boxShadow=`0 0 0 3px ${prof.arch.color}, 0 0 26px ${prof.arch.color}66`;
-  $("#miniAv").textContent=profile.avatar||"🍥";
+  const mini=$("#miniAv");
+  if(profile.avatarImg){mini.textContent="";
+    mini.style.backgroundImage=`url('${profile.avatarImg}')`;
+    mini.style.backgroundSize="cover";mini.style.backgroundPosition="center";}
+  else{mini.style.backgroundImage="";mini.textContent=profile.avatar||"🍥";}
   $("#pfName").textContent=profile.name||"Nameless Otaku";
   const since=profile.created?new Date(profile.created).getFullYear():new Date().getFullYear();
   const h=$("#pfHandle");

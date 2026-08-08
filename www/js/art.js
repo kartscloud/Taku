@@ -354,3 +354,115 @@ function importBannerPhoto(file,cb){
   };
   fr.readAsDataURL(file);
 }
+
+/* ============================================================ look sheet ==== */
+/* Picture and banner live in their own sheet rather than the edit form: an
+   emoji grid, twelve generated crests, a photo import, and ten banners. */
+let _avTab="emoji";
+
+function currentBanner(){return store.get("banner",null);}   // {id} | {img:dataURI} | null
+function paintIdBanner(){
+  const cv=$("#idBanner"),card=$("#idCard");
+  if(!cv||!card)return;
+  const b=currentBanner();
+  const W=card.clientWidth||360,H=card.clientHeight||96;
+  if(!b){cv.style.display="none";card.classList.remove("hasbanner");return;}
+  cv.style.display="block";card.classList.add("hasbanner");
+  if(b.img){
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+"px";cv.style.height=H+"px";
+    const c=cv.getContext("2d");c.setTransform(dpr,0,0,dpr,0,0);
+    const im=new Image();
+    im.onload=()=>{
+      const sc=Math.max(W/im.width,H/im.height);
+      c.drawImage(im,(W-im.width*sc)/2,(H-im.height*sc)/2,im.width*sc,im.height*sc);
+    };
+    im.src=b.img;
+    return;
+  }
+  paintBannerTo(cv,b.id,W,H);
+}
+function _avPanel(){
+  const host=$("#avPanel");if(!host)return;
+  if(_avTab==="emoji"){
+    host.innerHTML=`<div class="avpick">${AVATARS.map(a=>
+      `<button class="avopt${(!profile.avatarImg&&a===(profile.avatar||"🍥"))?' sel':''}" data-lav="${a}">${a}</button>`).join("")}</div>`;
+  }else if(_avTab==="crest"){
+    host.innerHTML=`<div class="crestgrid">${Array.from({length:CREST_COUNT},(_,i)=>
+      `<button class="crestopt${profile.crest===i?' sel':''}" data-crest="${i}"><canvas data-ci="${i}"></canvas></button>`).join("")}</div>`;
+    host.querySelectorAll("canvas[data-ci]").forEach(cv=>paintCrestTo(cv,+cv.dataset.ci,52));
+  }else{
+    host.innerHTML=`<div class="photopick">
+      ${profile.avatarImg?`<img class="photoprev" src="${profile.avatarImg}" alt="Your picture" />`
+        :`<div class="photoempty">No photo yet</div>`}
+      <button class="savebtn ghostbtn" id="pickPhoto"><span class="icw">${icSvg("upload")}</span>${profile.avatarImg?"Change photo":"Choose a photo"}</button>
+      ${profile.avatarImg?`<button class="skip" id="dropPhoto">Remove photo</button>`:""}
+      <p class="setnote">Cropped square and shrunk to 256px before it is saved — a full-size photo would use more storage than your entire library. Location data in the file is dropped in the process.</p>
+    </div>`;
+  }
+  document.querySelectorAll("#avTabs .seg").forEach(b=>b.classList.toggle("on",b.dataset.av===_avTab));
+}
+function _bannerGrid(){
+  const g=$("#bannerGrid");if(!g)return;
+  const cur=currentBanner();
+  g.innerHTML=`<button class="bopt${!cur?' sel':''}" data-banner="">
+      <span class="bnone">None</span></button>`+
+    BANNER_IDS.map(id=>`<button class="bopt${cur&&cur.id===id?' sel':''}" data-banner="${id}">
+      <canvas data-bi="${id}"></canvas><span class="blabel">${BANNER_ART[id].name}</span></button>`).join("")+
+    (cur&&cur.img?`<button class="bopt sel" data-banner="__own"><img src="${cur.img}" alt="" /><span class="blabel">Yours</span></button>`:"");
+  g.querySelectorAll("canvas[data-bi]").forEach(cv=>paintBannerTo(cv,cv.dataset.bi,132,44));
+}
+function openLook(){
+  const sh=$("#lookSheet");if(!sh)return;
+  _avPanel();_bannerGrid();
+  sh.classList.add("on");
+}
+function initLook(){
+  if(!$("#lookSheet"))return;
+  $("#openLook").onclick=()=>openLook();
+  $("#lookDone").onclick=()=>{$("#lookSheet").classList.remove("on");renderProfile();};
+  document.querySelectorAll("#avTabs .seg").forEach(b=>b.onclick=()=>{_avTab=b.dataset.av;_avPanel();buzz(6);});
+
+  document.addEventListener("click",e=>{
+    if(!e.target.closest)return;
+    const em=e.target.closest("[data-lav]");
+    if(em){profile.avatar=em.dataset.lav;profile.avatarImg=null;profile.crest=null;
+      store.set("profile",profile);_avPanel();renderProfile();buzz(6);return;}
+    const cr=e.target.closest("[data-crest]");
+    if(cr){const i=+cr.dataset.crest;
+      profile.crest=i;profile.avatarImg=crestDataURL(i,96);
+      store.set("profile",profile);_avPanel();renderProfile();buzz(6);return;}
+    if(e.target.closest("#pickPhoto")){$("#avatarFile").click();return;}
+    if(e.target.closest("#dropPhoto")){
+      profile.avatarImg=null;profile.crest=null;store.set("profile",profile);
+      _avPanel();renderProfile();return;}
+    if(e.target.closest("#bannerUpload")){$("#bannerFile").click();return;}
+    const bo=e.target.closest("[data-banner]");
+    if(bo){
+      const v=bo.dataset.banner;
+      if(v==="__own"){return;}                       // already selected
+      store.set("banner",v?{id:v}:null);
+      _bannerGrid();paintIdBanner();buzz(6);return;}
+  });
+
+  $("#avatarFile").addEventListener("change",e=>{
+    const f=e.target.files&&e.target.files[0];e.target.value="";
+    if(!f)return;
+    importPhoto(f,256,(uri,err)=>{
+      if(err){toast(err);return;}
+      profile.avatarImg=uri;profile.crest=null;
+      if(!store.set("profile",profile)){toast("Not enough space to save that picture");return;}
+      _avPanel();renderProfile();toast("Picture updated");
+    });
+  });
+  $("#bannerFile").addEventListener("change",e=>{
+    const f=e.target.files&&e.target.files[0];e.target.value="";
+    if(!f)return;
+    importBannerPhoto(f,(uri,err)=>{
+      if(err){toast(err);return;}
+      if(!store.set("banner",{img:uri})){toast("Not enough space to save that banner");return;}
+      _bannerGrid();paintIdBanner();toast("Banner updated");
+    });
+  });
+  window.addEventListener("resize",()=>{if(currentView==="profile")paintIdBanner();});
+}

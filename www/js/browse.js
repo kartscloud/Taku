@@ -118,7 +118,7 @@ async function buildSeason(){
 function bcard(m){
   const img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
   const flag=m.country&&m.country!=="JP"?`<span class="btag cn">${m.country}</span>`:"";
-  return `<div class="bcard" data-bopen="${m.id}">
+  return `<div class="bcard" data-bopen="${m.id}" role="button" tabindex="0">
     <div class="bposter" style="background-image:url('${img}')">
       ${m.averageScore?`<span class="bscore">${(m.averageScore/10).toFixed(1)}</span>`:""}
       ${m.status==="RELEASING"?`<span class="btag new">AIRING</span>`:m.status==="NOT_YET_RELEASED"?`<span class="btag soon">SOON</span>`:""}
@@ -144,7 +144,7 @@ function heroHTML(m,kicker){
   const inWant=want.some(x=>x.id===m.id);
   const meta=[m.format,m.seasonYear,(m.genres||[]).slice(0,2).join(" · ")].filter(Boolean).join("  ·  ");
   const score=m.averageScore?`<b>★ ${(m.averageScore/10).toFixed(1)}</b> · `:"";
-  return `<div class="hero" data-bopen="${m.id}" style="background-image:url('${img}')">
+  return `<div class="hero" data-bopen="${m.id}" role="button" tabindex="0" style="background-image:url('${img}')">
     <div class="heroin">
       <span class="herokick">${score}${kicker||"Top pick for you"}</span>
       <h2>${mTitle(m)}</h2>
@@ -210,7 +210,7 @@ function yearBannerHTML(){
 function ycard(m,i){
   const img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
   const flag=m.country&&m.country!=="JP"?`<span class="schflag">${m.country}</span>`:"";
-  return `<div class="schcard" data-bopen="${m.id}">
+  return `<div class="schcard" data-bopen="${m.id}" role="button" tabindex="0">
     <div class="schart" style="background-image:url('${img}')">
       <span class="yrank">${i+1}</span>${flag}
       ${m.averageScore?`<span class="schscore">${(m.averageScore/10).toFixed(1)}</span>`:""}
