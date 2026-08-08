@@ -47,8 +47,16 @@ function startNet(prof){
 }
 
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
-function myCode(prof){const d={u:profile.name||"Nameless Otaku",h:profile.handle||"you",a:profile.avatar||"🍥",t:prof.title,tr:prof.tierName,p:prof.power,g:prof.topGenre||"—",c:prof.arch.color};return btoa(encodeURIComponent(JSON.stringify(d)));}
-function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;const cap=(v,n)=>String(v==null?"":v).slice(0,n);return{id:"f"+Math.abs(hashStr(s.trim())),name:cap(d.u,24)||"Friend",handle:cap(d.h,18)||"friend",avatar:cap(d.a,4)||"🙂",title:cap(d.t,28)||"UNTRACED",tier:cap(d.tr,18),power:Math.max(0,Math.min(9999999,+d.p||0)),genre:cap(d.g,24),color:safeColor(d.c)};}catch(e){return null;}}
+/* v2 adds the taste payload. v1 codes stay readable — decodeCode simply finds
+   no taste on them and the duel screen says so rather than inventing a score. */
+function myCode(prof){
+  const t=packTaste(myTaste());
+  const d={v:2,u:profile.name||"Nameless Otaku",h:profile.handle||"you",a:profile.avatar||"🍥",
+    t:prof.title,tr:prof.tierName,p:prof.power,g:prof.topGenre||"—",c:prof.arch.color,
+    sh:t.sh,af:t.af};
+  return btoa(encodeURIComponent(JSON.stringify(d)));
+}
+function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;const cap=(v,n)=>String(v==null?"":v).slice(0,n);return{id:"f"+Math.abs(hashStr(s.trim())),name:cap(d.u,24)||"Friend",handle:cap(d.h,18)||"friend",avatar:cap(d.a,4)||"🙂",title:cap(d.t,28)||"UNTRACED",tier:cap(d.tr,18),power:Math.max(0,Math.min(9999999,+d.p||0)),genre:cap(d.g,24),color:safeColor(d.c),taste:(+d.v>=2?unpackTaste(d):null)};}catch(e){return null;}}
 
 function renderIdentity(prof){
   const av=$("#pfAvatar");
@@ -67,7 +75,7 @@ function renderFriends(prof){
   const board=[me,...friends].sort((a,b)=>b.power-a.power);
   $("#squadCount").textContent=friends.length+" friend"+(friends.length!==1?"s":"");
   $("#friendList").innerHTML=board.map((f,i)=>`
-    <div class="frow${f.me?' me':''}">
+    <div class="frow${f.me?' me':''}${f.me?"":' tappable'}"${f.me?"":` data-duel="${escHTML(f.id)}"`}>
       <span class="frank">${i+1}</span>
       <span class="fav" style="box-shadow:0 0 0 2px ${safeColor(f.color)}">${escHTML(f.avatar)}</span>
       <div class="fmeta">
@@ -75,9 +83,25 @@ function renderFriends(prof){
         <div class="fsub" style="color:${safeColor(f.color)}">${escHTML(f.title)} · ${escHTML(f.tier)}</div>
       </div>
       <div class="fpow">${(+f.power||0).toLocaleString()}<span>INDEX</span></div>
+      ${f.me?"":_matchChip(f)}
       ${f.me?'':`<button class="fx" data-friend-remove="${escHTML(f.id)}" title="Remove"><span class="icw">${icSvg("x")}</span></button>`}
     </div>`).join("");
 }
+
+/* Seeded demo friends carry no taste payload, so there is no score to show —
+   and inventing one would mean publishing a fabricated number about a person
+   who does not exist. They are labelled instead. */
+function _matchChip(f){
+  if(!f.taste||!f.taste.shows){
+    return `<span class="fmatch none" title="No taste data in their code">—</span>`;
+  }
+  const r=compatScore(myTaste(),f.taste);
+  return `<span class="fmatch ${compatTone(r.pct)}">${r.pct}<i>%</i></span>`;
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest?e.target.closest("[data-duel]"):null;
+  if(t&&!e.target.closest("[data-friend-remove]"))openDuel(t.dataset.duel);
+});
 
 function renderProfile(){
   if(typeof renderAuthZone==="function")renderAuthZone();

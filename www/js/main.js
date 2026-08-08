@@ -52,6 +52,7 @@ function initNav(){
     toast(swipePrefs.rate==="quick"?"Swiping right just marks watched":"You'll rate after each swipe");
   };
   $("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");
+  $("#duelClose").onclick=()=>$("#duelSheet").classList.remove("on");
   $("#shareCard").onclick=()=>shareRankCard();
   $("#backupBtn").onclick=()=>exportData();
   $("#restoreBtn").onclick=()=>$("#restoreFile").click();
@@ -64,7 +65,7 @@ function initNav(){
   $("#cfCancel").onclick=()=>{$("#confirmModal").classList.remove("on");_pendingRemove=null;};
   // browseSettings is NOT here: its filters mutate on tap, so dismissing it must
   // run the same commit path as Done (see initBrowse) or the picks are lost
-  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet"].forEach(id=>{
+  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet","duelSheet"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");stopDemos(id);if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
