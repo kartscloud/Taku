@@ -100,10 +100,20 @@ function airingText(next,status){
 
 /* affinity learning: every action teaches the feed */
 function bumpAffinity(genres,delta){
-  (genres||[]).forEach((g,i)=>{
-    const w=delta/(i+1);                       // primary genre learns hardest
-    affinity[g]=Math.max(-6,Math.min(10,(affinity[g]||0)+w));
-  });
+  const g=genres||[];
+  if(!g.length)return;
+  /* Every genre on a show learns at the same rate. The old code used
+     delta/(i+1) on the assumption that position meant importance — but AniList
+     returns genres ALPHABETICALLY (verified: 34 of 34 sampled shows). So the
+     "primary genre" was just whichever sorted first: the feed learned Action at
+     full rate on half of all shows, while Thriller or Supernatural could never
+     earn more than a third of it no matter what the user actually liked.
+
+     Divided by sqrt(count) rather than count, so a show carrying six genres
+     teaches somewhat more than one carrying two — more tags is more
+     information — without letting tag count multiply the signal outright. */
+  const w=delta/Math.sqrt(g.length);
+  g.forEach(name=>{affinity[name]=Math.max(-6,Math.min(10,(affinity[name]||0)+w));});
   store.set("affinity",affinity);
 }
 const TIER_AFFINITY={S:3,A:2,B:1,C:-0.5,D:-1.5};
@@ -223,5 +233,5 @@ function sortWatched(){
    max). Saved records made before ximg existed only kept the small URL — same
    filename one folder up IS its 2x version, so old libraries upgrade for free. */
 function hiRes(u){return u&&u.indexOf("/cover/medium/")>=0?u.replace("/cover/medium/","/cover/large/"):u;}
-function slim(m){return{id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,ximg:m.coverImage&&m.coverImage.extraLarge,score:m.averageScore,year:m.seasonYear,eps:m.episodes||null,dur:m.duration||null,genres:(m.genres||[]).slice(0,3)};}
+function slim(m){return{id:m.id,title:mTitle(m),img:m.coverImage&&m.coverImage.large,ximg:m.coverImage&&m.coverImage.extraLarge,score:m.averageScore,year:m.seasonYear,eps:m.episodes||null,dur:m.duration||null,genres:(m.genres||[]).slice(0,6)};}   // was 3 — alphabetical order meant the same late-alphabet genres were dropped every time
 function mTitle(m){return (m.title&&(m.title.english||m.title.romaji))||m.title||"Untitled";}

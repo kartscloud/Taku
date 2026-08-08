@@ -4,7 +4,10 @@ function computeProfile(){
   let minutes=0;
   list.forEach(m=>{
     minutes+=(m.eps||12)*(m.dur||23);
-    (m.genres||[]).forEach((g,i)=>{gcount[g]=(gcount[g]||0)+1/(i+1);});
+    // count each genre once — position in this array is alphabetical, not
+    // importance, so the old 1/(i+1) made the genre bars and the archetype
+    // that derives from them alphabetically biased
+    (m.genres||[]).forEach(g=>{gcount[g]=(gcount[g]||0)+1;});
   });
   const hours=minutes/60;
   const genres=Object.entries(gcount).sort((a,b)=>b[1]-a[1]);
