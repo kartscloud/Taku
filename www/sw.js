@@ -1,7 +1,7 @@
 /* taku service worker · versioned shell + runtime image cache
    RULE: bump VER and the ?v= asset query (also in index.html) together on every shell change. */
-const VER="taku-v72";
-const AV="72";
+const VER="taku-v76";
+const AV="76";
 const SHELL=["./","./index.html","./manifest.webmanifest","./icons/icon.svg","./icons/maskable.svg",
 "./css/app.css?v="+AV,
 "./js/data.js?v="+AV,"./js/state.js?v="+AV,"./js/api.js?v="+AV,"./js/rec.js?v="+AV,

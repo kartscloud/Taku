@@ -400,6 +400,7 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 
 /* full-screen rank flow */
 .rankmode{position:fixed;inset:0;z-index:95;background:var(--bg);display:flex;flex-direction:column;
+  justify-content:center;                       /* leftover height splits above/below the poster */
   padding:calc(var(--sat) + 10px) 16px calc(var(--sab) + 14px);opacity:0;transition:opacity .2s;
   pointer-events:none}   /* dead during the fade-out so late taps can't re-tier the last card */
 .rankmode.on{opacity:1;pointer-events:auto}
@@ -412,11 +413,24 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .rankbar{height:4px;border-radius:3px;background:var(--bg2);overflow:hidden}
 .rankbar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));
   width:0;transition:width .25s ease}
-.rankart{flex:1;min-height:0;border-radius:18px;background:var(--bg2) center/cover;border:1px solid var(--line);
-  position:relative;display:flex;align-items:flex-end;overflow:hidden;box-shadow:0 12px 34px rgba(0,0,0,.5)}
+/* Posters are 2:3. The panel was taller than that, so background-size:cover
+   overflowed sideways and cut ~15% off the edges — exactly where anime covers
+   put characters. Matching the frame to the artwork means nothing is cropped;
+   any leftover height becomes even margin above and below. */
+/* `contain` instead of `cover`: the whole poster is always visible, whatever its
+   ratio (TMDB 0.667, AniList ~0.708), so nothing gets cropped. The frame keeps a
+   constant size from flex, so the art never jumps between cards — the earlier
+   aspect-ratio approach sized the frame from its content and collapsed once the
+   title overlay went absolute. */
+.rankart{flex:1;min-height:0;border-radius:18px;
+  background:var(--bg2) center/contain no-repeat;border:1px solid var(--line);
+  position:relative;overflow:hidden;box-shadow:0 12px 34px rgba(0,0,0,.5)}
 .rankart::after{content:"";position:absolute;inset:0;
   background:linear-gradient(to top,rgba(8,6,14,.95) 4%,rgba(8,6,14,.55) 30%,transparent 62%)}
-.rankmeta{position:relative;z-index:2;padding:16px 16px 14px;width:100%}
+/* absolute, not in flow: in flow its height became the frame's minimum content
+   height, so a long title made the poster a different size than a short one and
+   the art visibly jumped card to card. Overlaying keeps the frame constant. */
+.rankmeta{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px 16px 14px}
 .rankmeta h2{font-size:23px;font-weight:800;letter-spacing:-.6px;line-height:1.1;margin-bottom:6px;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .ranksub{font-size:12px;color:#cfc9e6;font-weight:600}

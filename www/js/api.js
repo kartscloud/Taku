@@ -314,7 +314,7 @@ async function tmdbPosterFor(m){
    ever goes up. Call resetImgLevel() when the element starts showing a
    different title, or the old width would block the new one. */
 function resetImgLevel(el){if(el)el.dataset.imgw=0;}
-function applyBestImage(el,url,guard){
+function applyBestImage(el,url,guard,matchRatio){
   if(!el||!url)return;
   const pre=new Image();
   pre.onload=()=>{
@@ -327,9 +327,9 @@ function applyBestImage(el,url,guard){
 }
 /* swap a background-image element up to the TMDB poster once it loads.
    `stillCurrent` guards against a late response landing on the wrong card. */
-function tmdbUpgrade(el,m,stillCurrent){
+function tmdbUpgrade(el,m,stillCurrent,matchRatio){
   if(!el||!m)return;
-  tmdbPosterFor(m).then(url=>{if(url)applyBestImage(el,url,stillCurrent);}).catch(()=>{});
+  tmdbPosterFor(m).then(url=>{if(url)applyBestImage(el,url,stillCurrent,matchRatio);}).catch(()=>{});
 }
 
 async function searchAnime(qs){
