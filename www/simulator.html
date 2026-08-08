@@ -131,8 +131,10 @@ const DEVICES=[
   {id:"mini",  name:"iPhone 13 mini",      w:375, h:812, sat:50, sab:34, r:44, top:"notch", nw:162,nh:32},
   {id:"14",    name:"iPhone 14",           w:390, h:844, sat:47, sab:34, r:47, top:"notch", nw:162,nh:32},
   {id:"15pro", name:"iPhone 15 Pro",       w:393, h:852, sat:59, sab:34, r:55, top:"island",nw:125,nh:37},
-  {id:"16pro", name:"iPhone 16 Pro",       w:402, h:874, sat:59, sab:34, r:55, top:"island",nw:125,nh:37},
-  {id:"16pm",  name:"iPhone 16 Pro Max",   w:440, h:956, sat:59, sab:34, r:55, top:"island",nw:125,nh:37},
+  // 16 Pro onward the Dynamic Island sits slightly lower: 62pt top inset, not 59
+  {id:"16pro", name:"iPhone 16 Pro",       w:402, h:874, sat:62, sab:34, r:55, top:"island",nw:125,nh:37},
+  {id:"16pm",  name:"iPhone 16 Pro Max",   w:440, h:956, sat:62, sab:34, r:55, top:"island",nw:125,nh:37},
+  {id:"17pm",  name:"iPhone 17 Pro Max",   w:440, h:956, sat:62, sab:34, r:55, top:"island",nw:125,nh:37},
 ];
 
 const $=s=>document.querySelector(s);
@@ -223,8 +225,22 @@ sel.onchange=()=>{cur=DEVICES.find(d=>d.id===sel.value);applyDevice();};
 scl.onchange=fit;
 $("#reload").onclick=()=>{frame.contentWindow.location.reload();};
 $("#safe").onclick=e=>{showSafe=!showSafe;e.target.classList.toggle("on",showSafe);injectSafeArea();};
-frame.addEventListener("load",injectSafeArea);
+frame.addEventListener("load",()=>{injectSafeArea();fit();});
 window.addEventListener("resize",()=>{if(scl.value==="auto")fit();});
+/* fit() ran once at load, so if the window settled or was resized afterwards
+   the phone kept a stale scale and rendered tiny / off-centre. A `resize` event
+   isn't guaranteed for every case (embedded panes, late layout), so watch the
+   stage box directly and re-fit whenever it actually changes. */
+if(window.ResizeObserver){
+  let last="";
+  new ResizeObserver(()=>{
+    const s=$(".stage").getBoundingClientRect();
+    const k=Math.round(s.width)+"x"+Math.round(s.height);
+    if(k!==last){last=k;if(scl.value==="auto")fit();}
+  }).observe($(".stage"));
+}
+// belt and braces: one late re-fit after first paint settles
+requestAnimationFrame(()=>setTimeout(fit,120));
 
 applyDevice();tick();setInterval(tick,10000);
 </script>
