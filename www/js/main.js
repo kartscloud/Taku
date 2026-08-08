@@ -4,7 +4,6 @@ function setView(v){
   currentView=v;
   document.querySelectorAll(".navbtn").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   $("#miniAv").classList.toggle("active",v==="profile");
-  $("#filterBtn").style.display=v==="deck"?"":"none";   // deck-only controls
   $("#swipeGear").style.display=v==="deck"?"":"none";
   document.body.classList.toggle("nav-side",v==="deck");  // Swipe: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
@@ -33,8 +32,9 @@ function initNav(){
   $("#bWatch").onclick=()=>doAction("watch");
   $("#bUndo").onclick=()=>undoLast();
 
-  // genre filter
-  $("#filterBtn").onclick=()=>{
+  // genre filter — lives inside swipe settings now, not the header
+  $("#swGenres").onclick=()=>{
+    $("#swipeSettings").classList.remove("on");stopDemos("swipeSettings");
     $("#filterGenres").innerHTML=OB_GENRES.map(g=>`<button class="ob-g${deckGenres.includes(g)?" sel":""}" data-fg="${g}">${g}</button>`).join("");
     $("#genreModal").classList.add("on");
   };
@@ -137,7 +137,12 @@ function hydrateIcons(){
   document.querySelectorAll("[data-ic]").forEach(el=>{el.innerHTML=icSvg(el.dataset.ic);});
 }
 
-function updateFilterBadge(){const b=$("#filterCount");if(!b)return;b.textContent=deckGenres.length||"";$("#filterBtn").classList.toggle("active",deckGenres.length>0);}
+function updateFilterBadge(){
+  const n=$("#swGenresNote");
+  if(n)n.textContent=deckGenres.length
+    ? deckGenres.length+" selected — "+deckGenres.slice(0,3).join(", ")+(deckGenres.length>3?"…":"")
+    : "All genres";
+}
 
 /* boot */
 if(typeof applyTheme==="function")applyTheme();   // before first paint

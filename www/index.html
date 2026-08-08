@@ -18,14 +18,13 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=125" />
+<link rel="stylesheet" href="css/app.css?v=126" />
 </head>
 <body>
 
 <header>
   <div class="logo" id="homeBtn" role="button" tabindex="0" title="Go to Swipe" aria-label="Go to Swipe">taku<i class="dot"></i></div>
   <div class="hactions">
-    <button class="pill filterpill" id="filterBtn"><span class="icw" data-ic="filter"></span>Genres<span class="fcount" id="filterCount"></span></button>
     <button class="gearbtn icononly" id="swipeGear" title="Swipe settings"><span class="icw" data-ic="gear"></span></button>
     <button class="miniav" id="miniAv" title="Profile" aria-label="Your profile">🍥</button>
   </div>
@@ -200,6 +199,11 @@
   <div class="sheet">
     <h3>Swipe settings</h3>
     <div class="demo" data-demo="swipe"></div>
+    <div class="seth">Genres</div>
+    <button class="setnav" id="swGenres"><span class="icw" data-ic="filter"></span>
+      <span class="snt"><b>Filter the deck by genre</b><span id="swGenresNote">All genres</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
     <div class="seth">Shows you passed</div>
     <div class="setrow">
       <div class="setlabel"><b>Go back through them</b><span id="passedNote">Nothing passed yet</span></div>
@@ -569,23 +573,23 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=125"></script>
-<script src="js/data.js?v=125"></script>
-<script src="js/state.js?v=125"></script>
-<script src="js/api.js?v=125"></script>
-<script src="js/rec.js?v=125"></script>
-<script src="js/deck.js?v=125"></script>
-<script src="js/lists.js?v=125"></script>
-<script src="js/search.js?v=125"></script>
-<script src="js/art.js?v=125"></script>
-<script src="js/settings.js?v=125"></script>
-<script src="js/compat.js?v=125"></script>
-<script src="js/profile.js?v=125"></script>
-<script src="js/detail.js?v=125"></script>
-<script src="js/browse.js?v=125"></script>
-<script src="js/demo.js?v=125"></script>
-<script src="js/auth.js?v=125"></script>
-<script src="js/share.js?v=125"></script>
-<script src="js/main.js?v=125"></script>
+<script src="auth-config.js?v=126"></script>
+<script src="js/data.js?v=126"></script>
+<script src="js/state.js?v=126"></script>
+<script src="js/api.js?v=126"></script>
+<script src="js/rec.js?v=126"></script>
+<script src="js/deck.js?v=126"></script>
+<script src="js/lists.js?v=126"></script>
+<script src="js/search.js?v=126"></script>
+<script src="js/art.js?v=126"></script>
+<script src="js/settings.js?v=126"></script>
+<script src="js/compat.js?v=126"></script>
+<script src="js/profile.js?v=126"></script>
+<script src="js/detail.js?v=126"></script>
+<script src="js/browse.js?v=126"></script>
+<script src="js/demo.js?v=126"></script>
+<script src="js/auth.js?v=126"></script>
+<script src="js/share.js?v=126"></script>
+<script src="js/main.js?v=126"></script>
 </body>
 </html>
