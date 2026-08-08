@@ -455,29 +455,30 @@ function authBoot(){
 
 /* ============================================ preview switch + account admin */
 function renderAuthZone(){
-  const st=$("#authState"),act=$("#authActions"),hint=$("#authHint");
-  if(!st)return;
+  const hint=$("#setAuthHint"),act=$("#setAuthActions");
+  if(!hint||!act)return;
   const on=authEnabled(), u=on?authBackend().current():null;
-  st.textContent = !on ? "preview · off" : (u?(u.verified?"signed in":"unconfirmed"):"signed out");
-  hint.innerHTML = !on
-    ? "Email + password accounts with a confirmation email. Built and testable, not launched — turning this on only affects this device."
+  const state = !on ? "Off" : (u?(u.verified?"Signed in as "+escHTML(u.email):"Waiting for email confirmation"):"Signed out");
+  const why = !on
+    ? "Email and password accounts with a confirmation email. Built and testable, not launched — turning this on only affects this device."
     : (authIsMock()
-       ? "<b>Test mode.</b> No account server is connected: nothing leaves this device and no real email is sent. Paste a Firebase config into <b>auth-config.js</b> to go live."
+       ? "<b>Test mode.</b> No account server is connected, so nothing leaves this device and no real email is sent. Paste a Firebase config into <b>auth-config.js</b> to go live."
        : "Live. Your password is handled by Firebase and never stored by taku.");
-  let html=`<button class="fbtn ghost" id="authToggle">${on?"Turn off":"Turn on"}</button>`;
-  if(on&&u)html+=`<button class="fbtn ghost" id="authOut">Sign out</button>`;
-  if(on&&!u)html+=`<button class="fbtn" id="authIn">Sign in</button>`;
+  hint.innerHTML="<b>"+state+"</b> — "+why;
+  const tgl=$("#setAuthToggle");
+  if(tgl)tgl.textContent=on?"Turn off":"Turn on";
+  let html="";
+  if(on&&u)html+=`<button class="altbtn ghost" id="authOut">Sign out</button>`;
+  if(on&&!u)html+=`<button class="altbtn" id="authIn">Sign in</button>`;
+  if(on&&u)html+=`<button class="altbtn ghost danger" id="authDelete">Delete my account</button>`;
   act.innerHTML=html;
   /* Apple 5.1.1(v): an app that creates accounts MUST let you delete one from
      inside the app. Not a support email, not a deactivation. */
-  if(on&&u){
-    act.insertAdjacentHTML("afterend",
-      `<div class="frow-actions" id="authDangerRow"><button class="fbtn danger" id="authDelete">Delete my account</button></div>`);
-  }else{const d=$("#authDangerRow");if(d)d.remove();}
+
 }
 document.addEventListener("click",async e=>{
   if(!e.target.closest)return;
-  if(e.target.closest("#authToggle")){
+  if(e.target.closest("#authToggle")||e.target.closest("#setAuthToggle")){
     const on=!authEnabled();store.set(AUTH_FLAG,on);
     if(!on)store.set("authSkipped",false);
     buzz(8);renderAuthZone();

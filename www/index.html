@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=102" />
+<link rel="stylesheet" href="css/app.css?v=103" />
 </head>
 <body>
 
@@ -120,23 +120,11 @@
         <button class="fbtn ghost" id="shareCode">Share my link</button>
       </div>
     </div>
-    <div class="datazone">
-      <div class="fhead"><span class="ft">Your data</span><span class="fc">stays on this device</span></div>
-      <div class="frow-actions">
-        <button class="fbtn ghost" id="backupBtn"><span class="icw" data-ic="download"></span> Back up</button>
-        <button class="fbtn ghost" id="restoreBtn"><span class="icw" data-ic="upload"></span> Restore</button>
-      </div>
-      <input type="file" id="restoreFile" accept="application/json,.json" hidden />
-    </div>
-    <!-- Accounts are built but not shipped. This row is the only way in until
-         someone decides to launch them; see js/auth.js. -->
-    <div class="datazone" id="authZone">
-      <div class="fhead"><span class="ft">Accounts</span><span class="fc" id="authState">preview · off</span></div>
-      <div class="frow-actions" id="authActions">
-        <button class="fbtn ghost" id="authToggle">Turn on</button>
-      </div>
-      <div class="credits" id="authHint" style="margin-top:8px"></div>
-    </div>
+    <button class="settingsrow" id="openSettings">
+      <span class="icw" data-ic="gear"></span>
+      <span class="srtext"><b>Settings &amp; your data</b><span id="srSub">Everything in one place</span></span>
+      <span class="srgo icw" data-ic="arrowR"></span>
+    </button>
     <!-- TMDB's API terms require attribution wherever their artwork is used -->
     <div class="credits">
       Anime data from <a href="https://anilist.co" target="_blank" rel="noopener">AniList</a>.
@@ -358,6 +346,68 @@
 </div>
 
 <!-- ADD FRIEND SHEET -->
+<!-- SETTINGS HUB -->
+<div class="modal" id="settingsSheet">
+  <div class="sheet">
+    <h3>Settings</h3>
+
+    <div class="seth">You</div>
+    <button class="setnav" data-go="edit"><span class="icw" data-ic="star"></span>
+      <span class="snt"><b>Name, handle &amp; bio</b><span id="snName">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+    <button class="setnav" data-go="look"><span class="icw" data-ic="cards"></span>
+      <span class="snt"><b>Picture &amp; banner</b><span>Faces, crests, your own photo</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
+    <div class="seth">Swiping</div>
+    <button class="setnav" data-go="swipe"><span class="icw" data-ic="cards"></span>
+      <span class="snt"><b>Swipe preferences</b><span id="snSwipe">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+    <button class="setnav" data-go="passed"><span class="icw" data-ic="rotate"></span>
+      <span class="snt"><b>Shows you passed</b><span id="snPassed">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
+    <div class="seth">Discovery</div>
+    <button class="setnav" data-go="filters"><span class="icw" data-ic="filter"></span>
+      <span class="snt"><b>Filters &amp; sorting</b><span id="snFilters">—</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+    <div class="setrow"><div class="setlabel"><b>Release times</b>
+      <span id="snTz">—</span></div>
+      <select class="inp tzsel" id="setTz" style="max-width:170px"></select></div>
+
+    <div class="seth">App</div>
+    <div class="setrow"><div class="setlabel"><b>Show how-it-works demos</b>
+      <span>The little animated walkthroughs inside settings sheets</span></div>
+      <button class="toggle" id="setDemos" role="switch" aria-checked="true" aria-label="Show how-it-works demos"></button></div>
+    <div class="setrow" id="setAdultRow"><div class="setlabel"><b>Adult titles in search</b>
+      <span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div>
+      <button class="toggle" id="setAdult" role="switch" aria-checked="false" aria-label="Allow adult titles in search"></button></div>
+
+    <div class="seth">Your data <span class="sethnote">stays on this device</span></div>
+    <div class="storagebar"><i id="storageFill"></i></div>
+    <div class="storagenote" id="storageNote">—</div>
+    <div class="ratealt">
+      <button class="altbtn ghost" id="setBackup"><span class="icw" data-ic="download"></span>Back up</button>
+      <button class="altbtn ghost" id="setRestore"><span class="icw" data-ic="upload"></span>Restore</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden />
+    <button class="savebtn ghostbtn" id="setClearCache">Clear cached anime data</button>
+    <button class="savebtn ghostbtn" id="setResetTaste">Reset what the feed has learned</button>
+    <button class="savebtn danger" id="setWipe">Delete everything</button>
+
+    <div class="seth">Accounts</div>
+    <div class="setrow" id="setAuthRow"><div class="setlabel"><b>Accounts</b>
+      <span id="setAuthHint">—</span></div>
+      <button class="minibtn ghost" id="setAuthToggle">Turn on</button></div>
+    <div class="ratealt" id="setAuthActions"></div>
+
+    <div class="seth">About</div>
+    <div class="credits" id="setAbout"></div>
+
+    <button class="savebtn" id="settingsDone">Done</button>
+  </div>
+</div>
+
 <!-- LOOK: picture + banner -->
 <div class="modal" id="lookSheet">
   <div class="sheet">
@@ -514,22 +564,23 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=102"></script>
-<script src="js/data.js?v=102"></script>
-<script src="js/state.js?v=102"></script>
-<script src="js/api.js?v=102"></script>
-<script src="js/rec.js?v=102"></script>
-<script src="js/deck.js?v=102"></script>
-<script src="js/lists.js?v=102"></script>
-<script src="js/search.js?v=102"></script>
-<script src="js/art.js?v=102"></script>
-<script src="js/compat.js?v=102"></script>
-<script src="js/profile.js?v=102"></script>
-<script src="js/detail.js?v=102"></script>
-<script src="js/browse.js?v=102"></script>
-<script src="js/demo.js?v=102"></script>
-<script src="js/auth.js?v=102"></script>
-<script src="js/share.js?v=102"></script>
-<script src="js/main.js?v=102"></script>
+<script src="auth-config.js?v=103"></script>
+<script src="js/data.js?v=103"></script>
+<script src="js/state.js?v=103"></script>
+<script src="js/api.js?v=103"></script>
+<script src="js/rec.js?v=103"></script>
+<script src="js/deck.js?v=103"></script>
+<script src="js/lists.js?v=103"></script>
+<script src="js/search.js?v=103"></script>
+<script src="js/art.js?v=103"></script>
+<script src="js/settings.js?v=103"></script>
+<script src="js/compat.js?v=103"></script>
+<script src="js/profile.js?v=103"></script>
+<script src="js/detail.js?v=103"></script>
+<script src="js/browse.js?v=103"></script>
+<script src="js/demo.js?v=103"></script>
+<script src="js/auth.js?v=103"></script>
+<script src="js/share.js?v=103"></script>
+<script src="js/main.js?v=103"></script>
 </body>
 </html>
