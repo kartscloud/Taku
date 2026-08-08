@@ -86,20 +86,18 @@ function renderFriends(prof){
         ${f.me?"":(friendTag(f)?`<div class="ftag">${escHTML(friendTag(f))}</div>`:"")}
       </div>
       <div class="fpow">${(+f.power||0).toLocaleString()}<span>INDEX</span></div>
-      ${f.me?"":_matchChip(f)}
+      ${f.me?"":_demoMark(f)}
       ${f.me?'':`<button class="fx" data-friend-remove="${escHTML(f.id)}" title="Remove"><span class="icw">${icSvg("x")}</span></button>`}
     </div>`).join("");
 }
 
-/* Seeded demo friends carry no taste payload, so there is no score to show —
-   and inventing one would mean publishing a fabricated number about a person
-   who does not exist. They are labelled instead. */
-function _matchChip(f){
-  if(!f.taste||!f.taste.shows){
-    return `<span class="fmatch none" title="No taste data in their code">—</span>`;
-  }
-  const r=compatScore(myTaste(),f.taste);
-  return `<span class="fmatch ${compatTone(r.pct)}">${r.pct}<i>%</i></span>`;
+/* No score on the squad list. The number only exists once you open someone's
+   profile and ask for it — printing it in a row alongside four others turns a
+   verdict into a spreadsheet, and there is nothing to reveal if it is already
+   sitting there. Seeded demo friends get a marker instead, since fabricating a
+   percentage about a person who does not exist would be a lie either way. */
+function _demoMark(f){
+  return (!f.taste||!f.taste.shows)?`<span class="fmatch none" title="Older code — no taste data">—</span>`:"";
 }
 document.addEventListener("click",e=>{
   const t=e.target.closest?e.target.closest("[data-duel]"):null;

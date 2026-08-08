@@ -1028,3 +1028,44 @@ body.dragging-row .rankrow{cursor:grabbing}
 .duelpick{display:flex;align-items:center;gap:9px;margin:0 0 16px}
 .duelpick .inp{margin:0;flex:1;font-size:13px;padding:9px 10px;appearance:none;-webkit-appearance:none;cursor:pointer}
 .vsmark{flex:none;font-size:11px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+
+/* ---- friend profile + compatibility reveal ---- */
+.fpav{width:82px;height:82px;margin:4px auto 14px;border-radius:50%;display:grid;place-items:center;
+  font-size:38px;background:var(--bg2)}
+.fpname{text-align:center;font-size:24px;font-weight:900;letter-spacing:-.025em}
+.fphandle{text-align:center;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
+  letter-spacing:.04em;margin-top:4px}
+.fpstats{display:flex;gap:9px;margin:20px 0 14px}
+.fpstat{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  padding:12px 8px;text-align:center;min-width:0}
+.fpstat b{display:block;font-size:16px;font-weight:800;letter-spacing:-.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fpstat span{display:block;font-family:ui-monospace,Menlo,monospace;font-size:8.5px;
+  letter-spacing:.09em;color:var(--dim);margin-top:4px}
+.fptitle{text-align:center;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;margin-bottom:4px}
+.compatbtn{width:100%;margin-top:18px;border:0;border-radius:13px;padding:15px;cursor:pointer;
+  font-size:14.5px;font-weight:800;color:#fff;letter-spacing:-.01em;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 8px 26px rgba(139,92,246,.4);transition:.15s}
+.compatbtn:hover{filter:brightness(1.08)}
+.compatbtn:active{transform:scale(.98)}
+.compatbtn .icw{width:17px;height:17px}
+
+.reveal{display:flex;flex-direction:column;align-items:center}
+.ringwrap{position:relative;width:190px;height:190px;margin:6px 0 4px}
+.ringwrap canvas{display:block}
+.ringnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.ringnum b{font-size:48px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.ringnum i{font-style:normal;font-size:19px;font-weight:800;opacity:.65;margin-left:2px}
+.ringnum.hi b,.ringnum.hi i{color:#34d399}
+.ringnum.mid b,.ringnum.mid i{color:#fbbf24}
+.ringnum.lo b,.ringnum.lo i{color:#fb7185}
+.revealwho{font-size:14px;font-weight:700;margin:6px 0 2px}
+.revealwho span{color:var(--dim);font-weight:600;margin:0 4px}
+.revealrest{width:100%;transition:opacity .45s ease}
+.reveal .duelbasis{transition:opacity .35s ease}
+@media (prefers-reduced-motion:reduce){
+  .revealrest,.reveal .duelbasis{transition:none}
+}

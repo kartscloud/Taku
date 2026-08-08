@@ -119,11 +119,32 @@ function unpackTaste(d){
 
 /* ---- duel sheet ---- */
 let _duelFriend=null;
-function openDuel(friendId){
-  const sheet=$("#duelSheet");if(!sheet)return;
-  renderDuel("me",friendId);
-  sheet.classList.add("on");
+/* Tapping a squad member opens THEIR profile. The score is deliberately not on
+   it — you ask for it, and the asking is what makes the number feel earned. */
+function openDuel(friendId){openFriendProfile(friendId);}
+function openFriendProfile(id){
+  const f=friends.find(x=>x.id===id);
+  if(!f)return;
+  _fpFriend=f;
+  const body=$("#fpBody");if(!body)return;
+  const tag=friendTag(f);
+  body.innerHTML=`
+    <div class="fpav" style="box-shadow:0 0 0 3px ${safeColor(f.color)},0 0 30px ${safeColor(f.color)}55">${escHTML(f.avatar)}</div>
+    <div class="fpname">${escHTML(f.name)}</div>
+    <div class="fphandle" style="color:${safeColor(f.color)}">@${escHTML(f.handle)}${tag?" · "+escHTML(tag):""}</div>
+    <div class="fpstats">
+      <div class="fpstat"><b>${(+f.power||0).toLocaleString()}</b><span>NEURAL INDEX</span></div>
+      <div class="fpstat"><b>${escHTML(f.tier||"—")}</b><span>TIER</span></div>
+      <div class="fpstat"><b>${escHTML(f.genre||"—")}</b><span>TOP GENRE</span></div>
+    </div>
+    <div class="fptitle" style="color:${safeColor(f.color)}">${escHTML(f.title||"UNTRACED")}</div>
+    ${f.taste&&f.taste.shows
+      ? `<button class="compatbtn" id="fpCompat"><span class="icw">${icSvg("share")}</span>Check compatibility</button>`
+      : `<div class="duelempty" style="margin-top:20px"><b>Older code — no taste data.</b>
+           <span>Ask ${escHTML(f.name)} for a fresh link and you can compare properly.</span></div>`}`;
+  $("#fpSheet").classList.add("on");
 }
+let _fpFriend=null;
 
 /* ---- sharing a code as a link ----
    A v2 code runs ~640 characters. Nobody pastes that into a chat, and a code
@@ -302,12 +323,6 @@ function initCompatUI(){
     try{await navigator.clipboard.writeText(myTag());toast("Tag copied");}
     catch(e){toast(myTag());}
   };
-  const cmp=$("#compareBtn");
-  if(cmp)cmp.onclick=()=>{
-    if(!friends.length){toast("Add a friend first");return;}
-    renderDuel("me",friends[0].id);
-    $("#duelSheet").classList.add("on");
-  };
   const lk=$("#doLookup");
   if(lk)lk.onclick=async()=>{
     const note=$("#lookupNote");
@@ -320,3 +335,95 @@ function initCompatUI(){
   if(note&&(typeof authEnabled!=="function"||!authEnabled()))
     note.textContent="Needs accounts switched on — there has to be a directory to search. For now, use their link.";
 }
+
+/* ---- the compatibility reveal ----
+   The number lands after a beat rather than simply appearing. A ring sweeps to
+   the score while the digits count up, then the breakdown fades in beneath.
+   Purely presentational, but a percentage that arrives instantly reads as a
+   lookup; one that resolves reads as a verdict. */
+function drawCompatRing(canvas,pct,color,t){
+  const dpr=Math.min(2,window.devicePixelRatio||1), S=190;
+  canvas.width=S*dpr;canvas.height=S*dpr;
+  canvas.style.width=canvas.style.height=S+"px";
+  const c=canvas.getContext("2d");
+  c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,S,S);
+  const cx=S/2, cy=S/2, r=S/2-16, start=-Math.PI/2;
+  c.lineWidth=11;c.lineCap="round";
+  c.strokeStyle="rgba(255,255,255,.07)";
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();
+  const sweep=Math.PI*2*(pct/100)*t;
+  if(sweep>0.001){
+    const g=c.createLinearGradient(0,0,S,S);
+    g.addColorStop(0,color[0]);g.addColorStop(1,color[1]);
+    c.strokeStyle=g;c.shadowColor=color[0];c.shadowBlur=18;
+    c.beginPath();c.arc(cx,cy,r,start,start+sweep);c.stroke();
+    c.shadowBlur=0;
+  }
+  // tick marks, so the ring reads as a gauge rather than a loading spinner
+  c.strokeStyle="rgba(255,255,255,.13)";c.lineWidth=1.5;
+  for(let i=0;i<20;i++){
+    const a=start+(Math.PI*2*i/20);
+    c.beginPath();
+    c.moveTo(cx+Math.cos(a)*(r-19),cy+Math.sin(a)*(r-19));
+    c.lineTo(cx+Math.cos(a)*(r-15),cy+Math.sin(a)*(r-15));
+    c.stroke();
+  }
+}
+const COMPAT_COLORS={hi:["#34d399","#22c55e"],mid:["#fbbf24","#f59e0b"],lo:["#fb7185","#ef4444"]};
+function revealCompat(){
+  const f=_fpFriend;if(!f||!f.taste)return;
+  const r=compatScore(myTaste(),f.taste);
+  const tone=compatTone(r.pct), col=COMPAT_COLORS[tone];
+  const body=$("#fpBody");
+  const nameOf=id=>{const w=watched.find(m=>m.id===id);return w?w.title:"#"+id;};
+  const row=(x,cls)=>`<div class="duelrow ${cls}">
+      <span class="dtier t${x.mine}">${x.mine}</span>
+      <span class="dname">${escHTML(nameOf(x.id))}</span>
+      <span class="dtier t${x.theirs}">${x.theirs}</span>
+    </div>`;
+  body.innerHTML=`
+    <div class="reveal">
+      <div class="ringwrap">
+        <canvas id="compatRing"></canvas>
+        <div class="ringnum ${tone}"><b id="compatNum">0</b><i>%</i></div>
+      </div>
+      <div class="revealwho">You <span>vs</span> ${escHTML(f.name)}</div>
+      <div class="duelbasis" id="compatBasis" style="opacity:0">${escHTML(compatLabel(r))}</div>
+      <div class="revealrest" id="compatRest" style="opacity:0">
+        <div class="duelheads"><span>You</span><span>${escHTML(f.name)}</span></div>
+        ${r.agreed.length?`<div class="duelsec">Where you agree</div>
+          ${r.agreed.slice(0,4).map(x=>row(x,"ok")).join("")}`:""}
+        ${r.split.length?`<div class="duelsec">Where you'd argue</div>
+          ${r.split.slice(0,4).map(x=>row(x,"vs")).join("")}`:""}
+        ${!r.agreed.length&&!r.split.length?`<div class="duelempty">
+          <b>No shows in common yet.</b>
+          <span>This is from genre taste alone — rate a few of the same shows and it sharpens.</span></div>`:""}
+      </div>
+    </div>`;
+  const canvas=$("#compatRing"), num=$("#compatNum");
+  const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if(reduce){
+    drawCompatRing(canvas,r.pct,col,1);num.textContent=r.pct;
+    $("#compatBasis").style.opacity="1";$("#compatRest").style.opacity="1";
+    return;
+  }
+  const DUR=1100, t0=performance.now();
+  buzz(12);
+  (function step(now){
+    const p=Math.min(1,(now-t0)/DUR);
+    const e=1-Math.pow(1-p,3);                 // ease-out: fast, then settles
+    drawCompatRing(canvas,r.pct,col,e);
+    num.textContent=Math.round(r.pct*e);
+    if(p<1)requestAnimationFrame(step);
+    else{
+      num.textContent=r.pct;
+      buzz([8,40,8]);
+      $("#compatBasis").style.opacity="1";
+      setTimeout(()=>{$("#compatRest").style.opacity="1";},180);
+    }
+  })(t0);
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest&&e.target.closest("#fpCompat"))revealCompat();
+});
