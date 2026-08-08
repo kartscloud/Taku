@@ -33,8 +33,10 @@ function initNav(){
   $("#bUndo").onclick=()=>undoLast();
 
   // genre filter — lives inside swipe settings now, not the header
+  /* The genre modal stacks ABOVE the settings sheet (later in the DOM, same
+     z-index), so settings stays open underneath: apply or dismiss genres and
+     you are back in settings, which only closes on its own Done. */
   $("#swGenres").onclick=()=>{
-    $("#swipeSettings").classList.remove("on");stopDemos("swipeSettings");
     $("#filterGenres").innerHTML=OB_GENRES.map(g=>`<button class="ob-g${deckGenres.includes(g)?" sel":""}" data-fg="${g}">${g}</button>`).join("");
     $("#genreModal").classList.add("on");
   };
