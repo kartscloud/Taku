@@ -1409,3 +1409,25 @@ select:focus-visible,textarea:focus-visible{
 .tiershead{display:flex;align-items:center;gap:9px;margin-bottom:2px}
 .tiershead .segmented{margin-bottom:0}
 .tiershead .gearbtn{flex:none;align-self:stretch;height:auto}
+
+/* ---- one-time pointer at the import button ----
+   Anchored under the Tiers header button it describes, with an arrow, so it
+   points AT the thing rather than floating over the screen describing it. */
+.tiershead{position:relative}
+.tip{position:absolute;top:calc(100% + 11px);right:0;z-index:30;width:min(290px,86vw);
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:13px 14px 11px;box-shadow:0 14px 40px rgba(var(--bgRGB),.5);
+  animation:tipin .28s cubic-bezier(.2,.9,.3,1.1)}
+.tip::before{content:"";position:absolute;top:-7px;right:15px;width:12px;height:12px;
+  background:var(--card);border-left:1px solid var(--line);border-top:1px solid var(--line);
+  transform:rotate(45deg)}
+@keyframes tipin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.tipbody b{display:block;font-size:14px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px}
+.tipbody span{display:block;font-size:12px;color:var(--dim);line-height:1.5}
+.tipacts{display:flex;gap:8px;margin-top:11px}
+.tipgo{flex:1;background:var(--accent);color:var(--onAccent,#fff);border:0;border-radius:9px;
+  padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
+.tipx{flex:none;background:transparent;border:1px solid var(--line);color:var(--dim);
+  border-radius:9px;padding:9px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.tipx:hover{color:var(--txt)}
+@media (prefers-reduced-motion:reduce){.tip{animation:none}}

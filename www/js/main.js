@@ -8,7 +8,7 @@ function setView(v){
   document.body.classList.toggle("nav-side",v==="deck");  // Swipe: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
-  if(v==="watched"){resetTierTabs();renderWatched();}
+  if(v==="watched"){resetTierTabs();renderWatched();if(typeof maybeShowImportTip==="function")setTimeout(maybeShowImportTip,420);}
   if(v==="deck")renderDeck();
   if(v==="browse")renderBrowse();
   if(v==="profile")renderProfile();

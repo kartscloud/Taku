@@ -236,3 +236,27 @@ function initImport(){
   };
   $("#impCancel").onclick=()=>{_importStaged=null;$("#impConfirm").hidden=true;};
 }
+
+/* ---- the one-time pointer ----
+   Shown once, on the view where importing makes sense, and only to someone who
+   plausibly has a list elsewhere. Dismissing it — by either button, by opening
+   import, or by tapping away — retires it permanently. A hint that reappears is
+   an annoyance, not a hint. */
+function importTipDone(){store.set("importTipSeen",true);const t=$("#importTip");if(t)t.hidden=true;}
+function maybeShowImportTip(){
+  const t=$("#importTip");
+  if(!t||store.get("importTipSeen",false))return;
+  if(currentView!=="watched")return;
+  t.hidden=false;
+  if(!t._bound){
+    t._bound=true;
+    $("#tipDismiss").onclick=()=>{importTipDone();buzz(6);};
+    $("#tipImport").onclick=()=>{importTipDone();openImport();};
+    /* tapping anywhere outside also counts as "seen" */
+    setTimeout(()=>document.addEventListener("click",function away(e){
+      if(!t.hidden&&!e.target.closest("#importTip")&&!e.target.closest("#tiersImport")){
+        importTipDone();document.removeEventListener("click",away);
+      }
+    }),0);
+  }
+}

@@ -18,7 +18,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=129" />
+<link rel="stylesheet" href="css/app.css?v=131" />
 </head>
 <body>
 
@@ -76,6 +76,16 @@
       <button class="seg" data-tiertab="want">Want<span class="segn" id="cWant"></span></button>
       </div>
       <button class="gearbtn icononly" id="tiersImport" title="Import your list from MyAnimeList or AniList" aria-label="Import your list"><span class="icw" data-ic="download"></span></button>
+      <div class="tip" id="importTip" role="status" hidden>
+        <div class="tipbody">
+          <b>Already have a list?</b>
+          <span>Bring your history in from MyAnimeList or AniList — everything unrated lands here ready to rank.</span>
+        </div>
+        <div class="tipacts">
+          <button class="tipgo" id="tipImport">Import</button>
+          <button class="tipx" id="tipDismiss">Not now</button>
+        </div>
+      </div>
     </div>
     <div class="listsub" id="listSub">
       <button class="subbtn" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
@@ -619,24 +629,24 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=129"></script>
-<script src="js/data.js?v=129"></script>
-<script src="js/state.js?v=129"></script>
-<script src="js/api.js?v=129"></script>
-<script src="js/rec.js?v=129"></script>
-<script src="js/deck.js?v=129"></script>
-<script src="js/lists.js?v=129"></script>
-<script src="js/search.js?v=129"></script>
-<script src="js/art.js?v=129"></script>
-<script src="js/settings.js?v=129"></script>
-<script src="js/import.js?v=129"></script>
-<script src="js/compat.js?v=129"></script>
-<script src="js/profile.js?v=129"></script>
-<script src="js/detail.js?v=129"></script>
-<script src="js/browse.js?v=129"></script>
-<script src="js/demo.js?v=129"></script>
-<script src="js/auth.js?v=129"></script>
-<script src="js/share.js?v=129"></script>
-<script src="js/main.js?v=129"></script>
+<script src="auth-config.js?v=131"></script>
+<script src="js/data.js?v=131"></script>
+<script src="js/state.js?v=131"></script>
+<script src="js/api.js?v=131"></script>
+<script src="js/rec.js?v=131"></script>
+<script src="js/deck.js?v=131"></script>
+<script src="js/lists.js?v=131"></script>
+<script src="js/search.js?v=131"></script>
+<script src="js/art.js?v=131"></script>
+<script src="js/settings.js?v=131"></script>
+<script src="js/import.js?v=131"></script>
+<script src="js/compat.js?v=131"></script>
+<script src="js/profile.js?v=131"></script>
+<script src="js/detail.js?v=131"></script>
+<script src="js/browse.js?v=131"></script>
+<script src="js/demo.js?v=131"></script>
+<script src="js/auth.js?v=131"></script>
+<script src="js/share.js?v=131"></script>
+<script src="js/main.js?v=131"></script>
 </body>
 </html>
