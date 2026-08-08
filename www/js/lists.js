@@ -114,7 +114,7 @@ function renderRanked(){
   c.innerHTML=demo+banner+list.map((m,i)=>`
     <div class="row rankrow" data-rid="${m.id}">
       <span class="rank grip" data-grip title="Drag to reorder">${i+1}</span>
-      <div class="tier" style="background:${TIER_COLOR[m.tier]||"var(--line)"}">${m.tier||"–"}</div>
+      <div class="tier${m.tier?"":" none"}"${m.tier?` style="background:${TIER_COLOR[m.tier]}"`:""}>${m.tier||"–"}</div>
       <div class="rc rc-open" data-open-watched="${m.id}">
         <h4>${m.title}</h4>
         <div class="sub">${[m.year,(m.genres||[]).join(" · ")].filter(Boolean).join("  ·  ")}</div>
