@@ -44,7 +44,9 @@ function initNav(){
   // swipe preferences
   const syncSwipeUI=()=>document.querySelectorAll("#swRate .langopt").forEach(b=>b.classList.toggle("on",b.dataset.sw===swipePrefs.rate));
   $("#swipeGear").onclick=()=>{syncSwipeUI();syncPassedRow();$("#swipeSettings").classList.add("on");startDemos("swipeSettings");};
-  document.querySelectorAll("#swRate .langopt").forEach(b=>b.onclick=()=>{swipePrefs.rate=b.dataset.sw;syncSwipeUI();buzz(6);});
+  document.querySelectorAll("#swRate .langopt").forEach(b=>b.onclick=()=>{
+    swipePrefs.rate=b.dataset.sw;store.set("swipePrefs",swipePrefs);   // save on change, not on Done
+    syncSwipeUI();buzz(6);$("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");});
   $("#swipeSettingsDone").onclick=()=>{
     store.set("swipePrefs",swipePrefs);
     $("#swipeSettings").classList.remove("on");stopDemos("swipeSettings");

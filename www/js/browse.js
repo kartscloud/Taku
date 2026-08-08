@@ -19,7 +19,7 @@ function toggleFilter(group,val){
   const a=browseFilters[group],i=a.indexOf(val);
   if(i>=0)a.splice(i,1);else a.push(val);
 }
-let browseTab="browse";                      // browse | schedule
+let browseTab=store.get("browseTab","browse");   // browse | schedule — remembered
 let _browseData=null, _seasonData=null, _browseToken=0, _schedToken=0;
 /* must mirror whatever langCountry() will use on the FIRST fetch, or clearing a
    persisted single origin computes the same key and skips cache invalidation */
@@ -192,7 +192,8 @@ function _browseItem(id){
 /* ---- Best of a year ----
    Its own mode rather than a tab or a settings toggle: it takes over the feed
    while active and exits with one tap, so it never competes with Browse. */
-let yearMode={year:null,lens:"gems"};
+/* the lens is a preference and persists; the YEAR is not, so it always starts unset */
+let yearMode={year:null,lens:store.get("yearLens","gems")};
 let _yearData=null,_yearToken=0;
 const LENS_LABEL={popular:"Most popular",rated:"Top rated",gems:"Hidden gems"};
 function yearBannerHTML(){
@@ -251,7 +252,7 @@ function enterYear(y,lens){
 }
 function exitYear(){
   yearMode.year=null;browseTab="browse";_yearData=null;
-  document.querySelectorAll("#browseTabs .seg").forEach(s=>s.classList.toggle("on",s.dataset.btab==="browse"));
+  document.querySelectorAll("#browseTabs .seg").forEach(s=>s.classList.toggle("on",s.dataset.btab===browseTab));
   renderBrowse();
 }
 
@@ -409,6 +410,11 @@ function _updateGearDot(){
 }
 
 function initBrowse(){
+  /* The markup hardcodes Browse as the active tab, so a remembered Schedule
+     preference showed schedule CONTENT under a Browse highlight. */
+  document.querySelectorAll("#browseTabs .seg").forEach(b=>
+    b.classList.toggle("on",b.dataset.btab===browseTab));
+
   $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");startDemos("browseSettings");};
   $("#bsNew").onclick=()=>{browseFilters.new=!browseFilters.new;_syncSettingsUI();};
   // search-only: stored separately from browseFilters because it never touches the feeds
@@ -477,7 +483,7 @@ function initBrowse(){
   $("#yearBtn").onclick=()=>{syncLens();$("#yearSheet").classList.add("on");startDemos("yearSheet");};
   $("#yearClose").onclick=()=>$("#yearSheet").classList.remove("on");
   document.querySelectorAll("#ysLens [data-lens]").forEach(b=>b.onclick=()=>{
-    yearMode.lens=b.dataset.lens;syncLens();buzz(6);
+    yearMode.lens=b.dataset.lens;store.set("yearLens",yearMode.lens);syncLens();buzz(6);
   });
   $("#ysYears").addEventListener("click",e=>{
     const b=e.target.closest("[data-year]");if(!b)return;
@@ -489,12 +495,12 @@ function initBrowse(){
     if(!e.target.closest)return;
     if(e.target.closest("#yearExit")){exitYear();return;}
     const l=e.target.closest("[data-ylens]");
-    if(l){yearMode.lens=l.dataset.ylens;_yearData=null;buzz(6);renderYear();}
+    if(l){yearMode.lens=l.dataset.ylens;store.set("yearLens",yearMode.lens);_yearData=null;buzz(6);renderYear();}
   });
 
   document.querySelectorAll("#browseTabs .seg").forEach(b=>b.onclick=()=>{
     yearMode.year=null;_yearData=null;      // leaving year mode via the tabs
-    browseTab=b.dataset.btab;
+    browseTab=b.dataset.btab;store.set("browseTab",browseTab);
     document.querySelectorAll("#browseTabs .seg").forEach(s=>s.classList.toggle("on",s===b));
     buzz(6);$("#browseShelves").scrollTop=0;renderBrowse();
   });
