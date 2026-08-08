@@ -509,18 +509,24 @@ function paintSignature(canvas,prof){
   c.setTransform(dpr,0,0,dpr,0,0);
   c.clearRect(0,0,W,H);
 
-  const accent=(prof&&prof.arch&&prof.arch.color)||"#8b5cf6";
+  /* Read the live palette instead of baking in colours. The labels were a fixed
+     cool grey, which vanished on the light grounds. */
+  const V=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const accent=(prof&&prof.arch&&prof.arch.color)||V("--accent")||"#8b5cf6";
+  const inkRGB=(V("--tintRGB")||"255,255,255").trim();
+  const dim=V("--dim")||"rgba(198,190,224,.55)";
+  const txt=V("--txt")||"#fff";
   const cx=W/2, cy=H*.5, R=Math.min(W,H)*.34;
   const data=_sigData(prof);
   const MONO="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
 
   // hairline rings — the instrument's scale
-  c.strokeStyle="rgba(198,190,224,.10)";c.lineWidth=1;
+  c.strokeStyle="rgba("+inkRGB+",.16)";c.lineWidth=1;
   for(let i=1;i<=4;i++){
     c.beginPath();c.arc(cx,cy,R*(i/4),0,Math.PI*2);c.stroke();
   }
   if(!data){
-    c.fillStyle="rgba(198,190,224,.45)";
+    c.fillStyle=dim;
     c.font="600 10px "+MONO;c.textAlign="center";c.textBaseline="middle";
     try{c.letterSpacing="0.22em";}catch(e){}
     c.fillText("NO SIGNAL YET",cx,cy);
@@ -533,7 +539,7 @@ function paintSignature(canvas,prof){
   const at=(i,r)=>({x:cx+Math.cos(ang(i))*r, y:cy+Math.sin(ang(i))*r});
 
   // spokes
-  c.strokeStyle="rgba(198,190,224,.13)";
+  c.strokeStyle="rgba("+inkRGB+",.20)";
   for(let i=0;i<n;i++){
     const p=at(i,R);
     c.beginPath();c.moveTo(cx,cy);c.lineTo(p.x,p.y);c.stroke();
@@ -549,7 +555,7 @@ function paintSignature(canvas,prof){
   const topIdx=data.reduce((b,d,i)=>d[1]>data[b][1]?i:b,0);
   pts.forEach((p,i)=>{
     c.beginPath();c.arc(p.x,p.y,i===topIdx?3.4:2,0,Math.PI*2);
-    c.fillStyle=i===topIdx?"#fff":accent;c.fill();
+    c.fillStyle=i===topIdx?txt:accent;c.fill();
     if(i===topIdx){c.strokeStyle=accent;c.lineWidth=1.4;
       c.beginPath();c.arc(p.x,p.y,6.5,0,Math.PI*2);c.stroke();}
   });
@@ -558,14 +564,17 @@ function paintSignature(canvas,prof){
   try{c.letterSpacing="0.14em";}catch(e){}
   data.forEach((d,i)=>{
     const a=ang(i), p=at(i,R+13);
-    c.fillStyle=i===topIdx?accent:"rgba(198,190,224,.55)";
+    c.fillStyle=i===topIdx?accent:txt;
+    c.globalAlpha=i===topIdx?1:.82;
     c.textAlign=Math.cos(a)>.25?"left":Math.cos(a)<-.25?"right":"center";
     c.fillText(_shortGenre(d[0]),p.x,p.y);
+    c.globalAlpha=1;
   });
   // corner captions — reads as a measurement, which is what it is
-  c.font="600 8.5px "+MONO;c.fillStyle="rgba(198,190,224,.42)";
+  c.font="600 8.5px "+MONO;c.fillStyle=txt;c.globalAlpha=.62;
   c.textBaseline="alphabetic";
   c.textAlign="left";c.fillText("TASTE SIGNATURE",12,H-12);
   c.textAlign="right";c.fillText(n+" GENRES TRACKED",W-12,H-12);
+  c.globalAlpha=1;
   try{c.letterSpacing="0px";}catch(e){}
 }

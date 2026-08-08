@@ -277,7 +277,10 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .card:active{cursor:grabbing}
 .card .poster{position:absolute;inset:0;background-size:cover;background-position:center top}
 .card .shade{position:absolute;inset:0;background:linear-gradient(to top,rgba(var(--bgRGB),.98) 8%,rgba(var(--bgRGB),.72) 30%,rgba(var(--bgRGB),0) 58%)}
-.card .info{position:relative;padding:16px 18px 84px;z-index:2}
+/* The info block sits on the dark scrim over the poster, so it is light text in
+   EVERY theme — inheriting --txt made the title dark-on-dark and invisible in
+   light mode, leaving only its shadow showing. */
+.card .info{position:relative;padding:16px 18px 84px;z-index:2;color:#fff}
 .card .cinfo{position:absolute;right:16px;bottom:88px;width:30px;height:30px;display:grid;place-items:center;color:#d8d2ef;background:rgba(var(--bgRGB),.5);backdrop-filter:blur(6px);border:1px solid rgba(var(--tintRGB),.16);border-radius:50%;cursor:pointer}
 .card .cinfo .ic{width:16px;height:16px}
 .card .score{position:absolute;top:14px;right:14px;z-index:3;background:rgba(var(--bgRGB),.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:5px}
@@ -285,7 +288,16 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .card .reason{position:absolute;top:16px;left:58px;z-index:3;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:1px;text-transform:uppercase;background:rgba(var(--bgRGB),.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:#c9bfff}
 .card .reason.new{color:#4ade80;border-color:rgba(74,222,128,.4)}
 .card .reason.airing{color:#f59e0b;border-color:rgba(245,158,11,.4)}
-.card h2{font-size:29px;font-weight:900;line-height:1.08;letter-spacing:-.7px;margin-bottom:9px;text-shadow:0 2px 14px #000}
+/* Long titles ran to five lines and buried the artwork — "Demon Slayer: Kimetsu
+   no Yaiba Swordsmith Village Arc" is 51 characters. Capped at three lines with
+   an ellipsis, and the size steps down as the title grows so a long one still
+   fits rather than being cut mid-word. The full title is on the detail sheet. */
+.card h2{font-size:29px;font-weight:900;line-height:1.08;letter-spacing:-.7px;margin-bottom:9px;
+  text-shadow:0 2px 14px #000;text-wrap:balance;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  overflow-wrap:break-word}
+.card h2[data-len="long"]{font-size:24px;letter-spacing:-.5px;-webkit-line-clamp:3}
+.card h2[data-len="xlong"]{font-size:20px;letter-spacing:-.3px;line-height:1.14;-webkit-line-clamp:3}
 .card .meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
 .chip{font-size:11px;font-weight:600;color:var(--dim);background:rgba(var(--tintRGB),.07);border:1px solid var(--line);padding:3px 9px;border-radius:999px}
 .card .desc{font-size:12.5px;line-height:1.5;color:#cfc9e6;max-height:60px;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,#000 60%,transparent)}
@@ -1191,9 +1203,15 @@ body.dragging-row .rankrow{cursor:grabbing}
   pointer-events:none}
 /* the card's own contents have to clear the artwork, and stay readable on it */
 .idcard.hasbanner::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(90deg,rgba(var(--bgRGB),.86),rgba(var(--bgRGB),.55) 55%,rgba(var(--bgRGB),.78))}
+  background:linear-gradient(90deg,rgba(var(--bgRGB),.88),rgba(var(--bgRGB),.62) 55%,rgba(var(--bgRGB),.82))}
+[data-theme="light"] .idcard.hasbanner::after{
+  background:linear-gradient(90deg,rgba(var(--cardRGB),.94),rgba(var(--cardRGB),.72) 55%,rgba(var(--cardRGB),.9))}
 .idcard>*:not(.idbanner){position:relative;z-index:2}
-.idcard.hasbanner .uname,.idcard.hasbanner .bio{text-shadow:0 1px 8px rgba(0,0,0,.85)}
+/* The scrim over a banner follows the theme, so a hard black shadow smudged the
+   name on light grounds. Match the shadow to the ground it sits on. */
+.idcard.hasbanner .uname,.idcard.hasbanner .bio{text-shadow:0 1px 6px rgba(var(--bgRGB),.9)}
+[data-theme="light"] .idcard.hasbanner .uname,
+[data-theme="light"] .idcard.hasbanner .bio{text-shadow:0 1px 2px rgba(255,255,255,.9)}
 
 .lookbtn{width:100%;display:flex;align-items:center;gap:10px;background:var(--bg);
   border:1px solid var(--line);border-radius:13px;padding:13px 14px;cursor:pointer;
@@ -1332,3 +1350,12 @@ select:focus-visible,textarea:focus-visible{
 .minibtn:not(.ghost),.altbtn:not(.ghost){background:var(--accent)}
 .compatbtn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--onAccent2,#fff)}
 .ob-start .icw,.compatbtn .icw{color:inherit}
+
+/* Anything overlaying poster artwork keeps its own light treatment regardless of
+   theme — the scrim under it is dark in both. */
+.card .chip{color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.2)}
+.card .desc{color:#e6e2f0}
+.card .cinfo{color:rgba(255,255,255,.9)}
+.hero .chip{color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.2)}

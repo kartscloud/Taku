@@ -51,7 +51,7 @@ function cardEl(m){
     ${m.averageScore?`<div class="score ${scoreClass(m.averageScore)}">${icSvg("star",true)} ${(m.averageScore/10).toFixed(1)}</div>`:""}
     <div class="badge seen">Seen</div><div class="badge nope">Nope</div>
     <div class="info">
-      <h2>${mTitle(m)}</h2>
+      <h2${(()=>{const t=mTitle(m).length;return t>46?' data-len="xlong"':t>28?' data-len="long"':"";})()}>${mTitle(m)}</h2>
       <div class="meta">${meta}</div>
       <div class="desc">${(m.description||"")}</div>
       <span class="cinfo" title="Details">${icSvg("info")}</span>
