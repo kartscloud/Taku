@@ -337,92 +337,119 @@ function initCompatUI(){
 }
 
 /* ---- the compatibility reveal ----
-   A synaptic link, not a progress bar. taku already frames taste as a "neural
-   signature" on the profile, so a compatibility check reads as two of those
-   signatures trying to connect: your node on the left, theirs on the right, a
-   lattice between them, one strand lighting per five percent.
+   A star chart. You and them are two stars; the score decides how brightly the
+   constellation line between you burns. Chosen over a gauge because the feature
+   is about finding someone, and that is what a constellation is for.
 
-   The reason it beats a ring: a 50% match visibly FAILS to connect half its
-   paths. Half a circle is an abstraction; ten dead strands is a picture of what
-   the number means. */
-const LINK_STRANDS=20;
+   Everything is drawn from primitives — no art assets, nothing anyone owns. */
+
 /* local so this file does not depend on art.js being loaded */
 function _crng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;
   let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
   return ((t^t>>>14)>>>0)/4294967296;};}
-function _linkLattice(w,h){
-  const r=_crng(97),cols=3,nodes=[];
-  for(let c=0;c<cols;c++){
-    const per=c===1?4:3,x=w*(.30+c*.20);
-    for(let i=0;i<per;i++)nodes.push({x,y:h*(.22+(i+.5)*(.56/per))+(r()-.5)*h*.06,c});
+
+/* The grain is what stops this reading as clean vector art. Rendered ONCE into
+   an offscreen tile and blitted each frame — drawing ~3000 single pixels per
+   frame is fine on a laptop and drops frames on a phone. */
+let _grainTile=null,_grainKey="";
+function _grain(W,H){
+  const key=W+"x"+H;
+  if(_grainTile&&_grainKey===key)return _grainTile;
+  const g=document.createElement("canvas");
+  g.width=W;g.height=H;
+  const gc=g.getContext("2d"), img=gc.createImageData(W,H), d=img.data, r=_crng(4242);
+  for(let k=0;k<d.length;k+=4){
+    const v=(r()*255)|0;
+    d[k]=d[k+1]=d[k+2]=v;
+    d[k+3]=r()<.30?26:0;            // sparse, low alpha
   }
-  const A={x:w*.13,y:h/2},B={x:w*.87,y:h/2};
-  const col=c=>nodes.filter(n=>n.c===c);
-  const strands=[];
-  for(let i=0;i<LINK_STRANDS;i++)
-    strands.push([A,col(0)[i%col(0).length],col(1)[(i*3+1)%col(1).length],
-                  col(2)[(i*2+2)%col(2).length],B]);
-  return {A,B,nodes,strands};
+  gc.putImageData(img,0,0);
+  _grainTile=g;_grainKey=key;
+  return g;
 }
-function _pathAt(pts,t){
-  const segs=pts.length-1,s=Math.min(segs-1,Math.floor(t*segs)),lt=t*segs-s;
-  const a=pts[s],b=pts[s+1];
-  return {x:a.x+(b.x-a.x)*lt,y:a.y+(b.y-a.y)*lt};
+/* Star positions are fixed per pair, so the same two people always get the same
+   sky rather than a reshuffle on every open. */
+function _sky(W,H,seed){
+  const r=_crng(seed>>>0||17), stars=[];
+  for(let i=0;i<200;i++)
+    stars.push({x:r()*W,y:r()*H,s:r()*1.5+.2,a:.12+r()*.7,ph:r()*7});
+  return stars;
 }
-function drawCompatLink(canvas,st){
+function drawCompatStars(canvas,st){
   const W=st.w,H=st.h,dpr=Math.min(2,window.devicePixelRatio||1);
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  if(canvas.width!==W*dpr){canvas.width=W*dpr;canvas.height=H*dpr;
+    canvas.style.width=W+"px";canvas.style.height=H+"px";}
   const c=canvas.getContext("2d");
-  c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
-  const L=st.lattice,t=st.t,lit=Math.round(LINK_STRANDS*(st.pct/100));
+  c.setTransform(dpr,0,0,dpr,0,0);
+  const t=st.t;
 
-  L.strands.forEach((pts,i)=>{
-    c.beginPath();c.moveTo(pts[0].x,pts[0].y);
-    for(let k=1;k<pts.length;k++)c.lineTo(pts[k].x,pts[k].y);
-    c.strokeStyle="rgba(255,255,255,.05)";c.lineWidth=1;c.stroke();
-    const on=i<lit,prog=Math.max(0,Math.min(1,(t*1.35)-(i/LINK_STRANDS)*.35));
-    if(!on||prog<=0)return;
-    const end=_pathAt(pts,prog);
-    c.beginPath();c.moveTo(pts[0].x,pts[0].y);
-    for(let k=1;k<pts.length;k++)if(k/(pts.length-1)<=prog)c.lineTo(pts[k].x,pts[k].y);
-    c.lineTo(end.x,end.y);
-    c.strokeStyle=st.col[0];c.globalAlpha=.55;c.lineWidth=1.4;
-    c.shadowColor=st.col[0];c.shadowBlur=7;c.stroke();
-    c.globalAlpha=1;c.shadowBlur=0;
-    if(prog<1){c.beginPath();c.arc(end.x,end.y,2.1,0,7);
-      c.fillStyle="#fff";c.shadowColor=st.col[0];c.shadowBlur=10;c.fill();c.shadowBlur=0;}
+  const g=c.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#05060f");g.addColorStop(.55,"#0b1024");g.addColorStop(1,"#141034");
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+
+  st.stars.forEach((s,i)=>{
+    const tw=.75+.25*Math.sin(t*6+s.ph);
+    c.fillStyle="rgba(226,232,255,"+(s.a*tw)+")";
+    c.beginPath();c.arc(s.x,s.y,s.s,0,7);c.fill();
   });
 
-  L.nodes.forEach(n=>{
-    const on=t>.2+(n.c*.16);
-    c.beginPath();c.arc(n.x,n.y,on?2.6:1.8,0,7);
-    c.fillStyle=on?st.col[0]:"rgba(190,180,230,.28)";
-    if(on){c.shadowColor=st.col[0];c.shadowBlur=8;}
-    c.fill();c.shadowBlur=0;
-  });
-
-  const node=(p,color,glyph,pulse)=>{
-    const R=25+pulse*3;
-    const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,R*2.1);
-    g.addColorStop(0,color+"55");g.addColorStop(1,color+"00");
-    c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,R*2.1,0,7);c.fill();
-    c.beginPath();c.arc(p.x,p.y,R,0,7);
-    c.fillStyle="rgba(12,10,20,.92)";c.fill();
-    c.lineWidth=2;c.strokeStyle=color;c.shadowColor=color;c.shadowBlur=14;c.stroke();c.shadowBlur=0;
-    c.font="20px system-ui,'Apple Color Emoji','Segoe UI Emoji'";
-    c.textAlign="center";c.textBaseline="middle";
-    c.fillText(glyph,p.x,p.y+1);
+  const A={x:W*.26,y:H*.34}, B={x:W*.74,y:H*.29};
+  const star=(p,col,size,glow)=>{
+    const gg=c.createRadialGradient(p.x,p.y,0,p.x,p.y,size*5*glow);
+    gg.addColorStop(0,col+"cc");gg.addColorStop(1,col+"00");
+    c.fillStyle=gg;c.beginPath();c.arc(p.x,p.y,size*5*glow,0,7);c.fill();
+    c.fillStyle="#fff";c.beginPath();c.arc(p.x,p.y,size,0,7);c.fill();
+    c.strokeStyle=col+"aa";c.lineWidth=1;
+    c.beginPath();
+    c.moveTo(p.x-size*4,p.y);c.lineTo(p.x+size*4,p.y);
+    c.moveTo(p.x,p.y-size*4);c.lineTo(p.x,p.y+size*4);
+    c.stroke();
   };
-  const pulse=Math.sin(t*Math.PI*3)*.5+.5;
-  node(L.A,st.colA,st.glyphA,t<1?pulse:0);
-  node(L.B,st.colB,st.glyphB,t<1?pulse:0);
+  const pulse=1+.14*Math.sin(t*5);
+  star(A,st.colA,2.6,pulse);
+  star(B,st.colB,2.6,pulse);
 
-  if(st.land>0&&st.land<1){          // one shockwave as it lands
-    c.beginPath();c.arc(W/2,H/2,st.land*Math.max(W,H)*.55,0,7);
-    c.strokeStyle=st.col[0];c.globalAlpha=(1-st.land)*.5;c.lineWidth=2.5;c.stroke();
-    c.globalAlpha=1;
-  }
+  /* The line is the whole metaphor, so the score is IN it: a strong match burns
+     bright and solid, a weak one stays faint and dotted. */
+  const prog=Math.min(1,t*1.35), strength=st.pct/100;
+  c.strokeStyle="rgba(226,214,255,"+(.12+.62*strength*t)+")";
+  c.lineWidth=.8+1.4*strength;
+  c.setLineDash(strength>.78?[]:[3,4+(1-strength)*7]);
+  c.shadowColor="#c9b6ff";c.shadowBlur=14*strength*t;
+  c.beginPath();c.moveTo(A.x,A.y);
+  c.lineTo(A.x+(B.x-A.x)*prog,A.y+(B.y-A.y)*prog);
+  c.stroke();
+  c.setLineDash([]);c.shadowBlur=0;
+
+  // thin, wide-tracked type — weight does most of the work in this register
+  const na=Math.min(1,t*1.4);
+  c.save();c.globalAlpha=na;
+  c.textAlign="center";c.textBaseline="middle";
+  c.font="200 58px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+  c.shadowColor=st.numGlow;c.shadowBlur=34;c.fillStyle=st.numCol;
+  c.fillText(st.shownPct+"%",W/2,H*.63);
+  c.shadowBlur=0;c.fillText(st.shownPct+"%",W/2,H*.63);
+  c.restore();
+
+  const cap=(x,y,text,col,alpha,size)=>{
+    if(alpha<=0)return;
+    c.save();c.globalAlpha=Math.min(1,alpha);
+    c.textAlign="center";c.textBaseline="middle";
+    c.font="300 "+(size||9)+"px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+    c.fillStyle=col;
+    try{c.letterSpacing="0.34em";}catch(e){}
+    c.fillText(text,x,y);
+    try{c.letterSpacing="0px";}catch(e){}
+    c.restore();
+  };
+  cap(W/2,H*.79,st.caption,"rgba(226,214,255,.7)",t*1.5-.5,9);
+  cap(A.x,A.y-22,"YOU","rgba(226,214,255,.75)",t*2-.6,8);
+  cap(B.x,B.y-22,st.themName,"rgba(255,214,190,.75)",t*2-.6,8);
+
+  const vg=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.72);
+  vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.5)");
+  c.fillStyle=vg;c.fillRect(0,0,W,H);
+  c.globalAlpha=.5;c.drawImage(_grain(W,H),0,0);c.globalAlpha=1;
 }
 const COMPAT_COLORS={hi:["#34d399","#22c55e"],mid:["#fbbf24","#f59e0b"],lo:["#fb7185","#ef4444"]};
 function revealCompat(){
@@ -443,11 +470,7 @@ function revealCompat(){
     </div>`;
   body.innerHTML=`
     <div class="reveal">
-      <div class="linkwrap">
-        <canvas id="compatLink"></canvas>
-        <div class="linknum ${tone}"><b id="compatNum">0</b><i>%</i></div>
-      </div>
-      <div class="linkstrands" id="compatStrands"></div>
+      <div class="skywrap"><canvas id="compatSky"></canvas></div>
       <div class="revealwho">You <span>vs</span> ${escHTML(f.name)}</div>
       <div class="duelbasis" id="compatBasis" style="opacity:0">${escHTML(compatLabel(r))}</div>
       <div class="revealrest" id="compatRest" style="opacity:0">
@@ -461,38 +484,44 @@ function revealCompat(){
           <span>This is from genre taste alone — rate a few of the same shows and it sharpens.</span></div>`:""}
       </div>
     </div>`;
-  const canvas=$("#compatLink"), num=$("#compatNum"), strandLbl=$("#compatStrands");
-  const W=Math.max(260,Math.min(340,body.clientWidth||320)), H=214;
-  const st={w:W,h:H,pct:r.pct,col,t:0,land:0,
+  const canvas=$("#compatSky");
+  const W=Math.max(260,Math.min(360,body.clientWidth||320)), H=238;
+  const NUM_COL={hi:"#dff7e9",mid:"#fdeccd",lo:"#ffe0e6"};
+  const NUM_GLOW={hi:"#34d399",mid:"#fbbf24",lo:"#fb7185"};
+  const st={w:W,h:H,pct:r.pct,t:0,shownPct:0,
     colA:(window._lastProf&&window._lastProf.arch.color)||"#8b5cf6",
     colB:safeColor(f.color),
-    glyphA:profile.avatar||"?", glyphB:f.avatar||"?",
-    lattice:_linkLattice(W,H)};
-  const lit=Math.round(LINK_STRANDS*(r.pct/100));
+    themName:String(f.name||"THEM").toUpperCase().slice(0,12),
+    caption:(r.n?"BOUND BY "+r.n+" SHOW"+(r.n>1?"S":""):"BOUND BY GENRE ALONE"),
+    numCol:NUM_COL[tone], numGlow:NUM_GLOW[tone],
+    stars:_sky(W,H,f.id?f.id.length*7919:17)};
   const finish=()=>{
-    num.textContent=r.pct;
-    strandLbl.textContent=lit+" of "+LINK_STRANDS+" links connected";
+    st.shownPct=r.pct;
     $("#compatBasis").style.opacity="1";
-    setTimeout(()=>{$("#compatRest").style.opacity="1";},180);
+    setTimeout(()=>{$("#compatRest").style.opacity="1";},220);
   };
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
-  if(reduce){st.t=1;drawCompatLink(canvas,st);finish();return;}
-  const DUR=1450, t0=performance.now();
-  buzz(10);
+  if(reduce){st.t=1;st.shownPct=r.pct;drawCompatStars(canvas,st);finish();return;}
+  const DUR=2100, t0=performance.now();          // slow on purpose; this register needs air
+  buzz(8);
   (function step(now){
     const p=Math.min(1,(now-t0)/DUR);
-    st.t=1-Math.pow(1-p,2.6);                  // ease-out: fast, then settles
-    num.textContent=Math.round(r.pct*st.t);
-    drawCompatLink(canvas,st);
+    st.t=1-Math.pow(1-p,3);
+    st.shownPct=Math.round(r.pct*st.t);
+    drawCompatStars(canvas,st);
     if(p<1)return requestAnimationFrame(step);
-    buzz([10,45,10]);
-    const l0=performance.now();
-    (function land(n){                          // shockwave after the strands land
-      st.land=Math.min(1,(n-l0)/520);
-      drawCompatLink(canvas,st);
-      if(st.land<1)requestAnimationFrame(land);
-    })(l0);
+    buzz([6,50,6]);
     finish();
+    /* keep the sky alive after it lands — the stars twinkle and the pair pulse,
+       so the panel does not freeze into a screenshot of itself */
+    const idle0=performance.now();
+    (function drift(n){
+      if(!document.body.contains(canvas))return;              // sheet closed
+      if(!$("#fpSheet").classList.contains("on"))return;
+      st.t=1+(n-idle0)/1000;
+      drawCompatStars(canvas,st);
+      requestAnimationFrame(drift);
+    })(idle0);
   })(t0);
 }
 document.addEventListener("click",e=>{
