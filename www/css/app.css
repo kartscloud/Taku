@@ -1346,9 +1346,12 @@ select:focus-visible,textarea:focus-visible{
 /* Solid accent surfaces take the palette's measured-safe text colour. White was
    assumed everywhere before, which failed on orange, green and cyan — 2.5:1 in
    the worst case, against a 4.5:1 requirement. */
+/* .navbtn.active is deliberately NOT here. Its highlight is the sliding pill —
+   a translucent accent wash over the nav ground, not a solid accent fill — so
+   the "text on accent" colour landed white-on-near-white at 1.03:1. */
 .savebtn:not(.ghostbtn):not(.danger),.ob-start,.langopt.on,
 .fbtn:not(.ghost):not(.danger),.minibtn:not(.ghost),.compatbtn,
-.seg.on,.subbtn.on,.pill.active,.navbtn.active,.rbdone,.altbtn:not(.ghost){
+.seg.on,.subbtn.on,.pill.active,.rbdone,.altbtn:not(.ghost){
   color:var(--onAccent,#fff)}
 .savebtn:not(.ghostbtn):not(.danger),.ob-start,.fbtn:not(.ghost):not(.danger),
 .minibtn:not(.ghost),.altbtn:not(.ghost){background:var(--accent)}
@@ -1375,3 +1378,16 @@ select:focus-visible,textarea:focus-visible{
 /* A friend's archetype colour is theirs, but it still has to be readable on the
    card, so it gets a floor via a subtle backing rather than being overridden. */
 .fsub{text-shadow:0 0 10px rgba(var(--bgRGB),.9)}
+
+/* ---- bottom nav legibility ----
+   The nav sits on its own translucent panel, so its labels are measured against
+   THAT rather than the page. The active one takes full ink (the pill behind it
+   is a wash, not a fill) and the inactive ones needed more weight than --dim
+   gave them on the dark grounds. */
+.navbtn{color:var(--dim)}
+.navbtn small{opacity:.95}
+.navbtn.active,.navbtn.active small,.navbtn.active .icw{color:var(--txt);opacity:1}
+[data-theme="dark"] .navbtn:not(.active){color:#cfc6b6}
+[data-theme="light"] .navbtn:not(.active){color:#5f564a}
+[data-theme="light"] nav.bottom{background:rgba(255,255,255,.94);
+  box-shadow:0 8px 30px rgba(var(--bgRGB),.16), inset 0 0 0 1px rgba(var(--bgRGB),.08)}
