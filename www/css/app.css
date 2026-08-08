@@ -283,11 +283,12 @@ body.nav-side #deck{height:min(calc(100dvh - var(--sat) - var(--sab) - 118px),82
 .card .info{position:relative;padding:16px 18px 84px;z-index:2;color:#fff}
 .card .cinfo{position:absolute;right:16px;bottom:88px;width:30px;height:30px;display:grid;place-items:center;color:#d8d2ef;background:rgba(var(--bgRGB),.5);backdrop-filter:blur(6px);border:1px solid rgba(var(--tintRGB),.16);border-radius:50%;cursor:pointer}
 .card .cinfo .ic{width:16px;height:16px}
-.card .score{position:absolute;top:14px;right:14px;z-index:3;background:rgba(var(--bgRGB),.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:5px}
+.card .score{position:absolute;top:14px;right:14px;z-index:3;background:rgba(8,6,14,.68);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);color:#fff;border-radius:12px;padding:6px 10px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:5px}
 .card .score.hi{color:#22c55e}.card .score.mid{color:#f59e0b}.card .score.lo{color:#ef4444}
-.card .reason{position:absolute;top:16px;left:58px;z-index:3;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:1px;text-transform:uppercase;background:rgba(var(--bgRGB),.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:#c9bfff}
-.card .reason.new{color:#4ade80;border-color:rgba(74,222,128,.4)}
-.card .reason.airing{color:#f59e0b;border-color:rgba(245,158,11,.4)}
+.card .reason{position:absolute;top:16px;left:58px;z-index:3;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:1px;text-transform:uppercase;background:rgba(8,6,14,.68);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:6px 10px;color:#efe9ff;
+  text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.card .reason.new{color:#7ff0a8;border-color:rgba(74,222,128,.5)}
+.card .reason.airing{color:#ffc861;border-color:rgba(245,158,11,.5)}
 /* Long titles ran to five lines and buried the artwork — "Demon Slayer: Kimetsu
    no Yaiba Swordsmith Village Arc" is 51 characters. Capped at three lines with
    an ellipsis, and the size steps down as the title grows so a long one still
