@@ -119,7 +119,15 @@ document.addEventListener("click",e=>{
   if(t&&!e.target.closest("[data-friend-remove]"))openDuel(t.dataset.duel);
 });
 
+let _sigResizeBound=false;
 function renderProfile(){
+  if(!_sigResizeBound){
+    _sigResizeBound=true;
+    window.addEventListener("resize",()=>{
+      if(currentView==="profile"&&typeof paintSignature==="function")
+        paintSignature($("#net"),window._lastProf||computeProfile());
+    });
+  }
   if(typeof renderAuthZone==="function")renderAuthZone();
   const prof=computeProfile();
   window._lastProf=prof;
@@ -148,17 +156,20 @@ function renderProfile(){
   const sig=prof.title+"|"+prof.tierName+"|"+prof.count;
   const seen=store.get("rankSeen","");
   const worthCelebrating=sig!==seen;
+
+  /* The signature is painted every time and costs one draw. The previous code
+     returned early on repeat visits, which skipped the canvas entirely and left
+     an empty box above the rank card. */
   stopNet();
+  if(typeof paintSignature==="function")paintSignature($("#net"),prof);
 
   if(!worthCelebrating){
-    an.classList.add("hide");rev.classList.add("show");   // straight to the point
+    an.classList.add("hide");rev.classList.add("show");
     return;
   }
   rev.classList.remove("show");an.classList.remove("hide");
-  startNet(prof);
   store.set("rankSeen",sig);
   window._revealT=setTimeout(()=>{an.classList.add("hide");rev.classList.add("show");},520);
-  window._netStopT=setTimeout(stopNet,2600);
 }
 
 function initProfile(){

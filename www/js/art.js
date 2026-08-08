@@ -466,3 +466,106 @@ function initLook(){
   });
   window.addEventListener("resize",()=>{if(currentView==="profile")paintIdBanner();});
 }
+
+/* ============================================================ taste signature
+   The panel above the rank card used to hold an animated "neural network" —
+   floating nodes and pulsing links. It looked like every AI product's hero
+   graphic, said nothing about the person, and cost a permanent rAF loop.
+
+   This is a polar plot of the genres you actually rate: one spoke per genre,
+   length by learned weight. It is an instrument reading, not decoration —
+   two people never get the same shape, and yours changes as you swipe.
+
+   Drawn once, statically. No animation loop, nothing to throttle, no
+   reduced-motion exception needed. */
+const SIG_MAX_SPOKES=10;
+
+function _sigData(prof){
+  /* Prefer learned affinity — it comes from every swipe, not just the handful
+     of shows rated — and fall back to the rated-genre counts when the feed has
+     not learned anything yet (a fresh install, or after a taste reset). */
+  let pairs=Object.entries(affinity||{}).filter(([,v])=>v>0);
+  if(pairs.length<3&&prof&&prof.genres&&prof.genres.length)pairs=prof.genres.slice();
+  pairs.sort((a,b)=>b[1]-a[1]);
+  pairs=pairs.slice(0,SIG_MAX_SPOKES);
+  if(pairs.length<3)return null;
+  /* Alphabetical so the shape is stable as weights shift — sorting by value
+     would make the figure rearrange itself every few swipes. */
+  pairs.sort((a,b)=>a[0].localeCompare(b[0]));
+  return pairs;
+}
+function _shortGenre(g){
+  return g.length<=9?g.toUpperCase()
+    :g.replace(/[aeiou]/gi,"").slice(0,8).toUpperCase();
+}
+function paintSignature(canvas,prof){
+  if(!canvas)return;
+  const wrap=canvas.parentElement;
+  const W=(wrap&&wrap.clientWidth)||340, H=(wrap&&wrap.clientHeight)||210;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  const c=canvas.getContext("2d");
+  c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,W,H);
+
+  const accent=(prof&&prof.arch&&prof.arch.color)||"#8b5cf6";
+  const cx=W/2, cy=H*.5, R=Math.min(W,H)*.34;
+  const data=_sigData(prof);
+  const MONO="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+
+  // hairline rings — the instrument's scale
+  c.strokeStyle="rgba(198,190,224,.10)";c.lineWidth=1;
+  for(let i=1;i<=4;i++){
+    c.beginPath();c.arc(cx,cy,R*(i/4),0,Math.PI*2);c.stroke();
+  }
+  if(!data){
+    c.fillStyle="rgba(198,190,224,.45)";
+    c.font="600 10px "+MONO;c.textAlign="center";c.textBaseline="middle";
+    try{c.letterSpacing="0.22em";}catch(e){}
+    c.fillText("NO SIGNAL YET",cx,cy);
+    c.fillText("RATE SOMETHING TO DRAW YOUR SIGNATURE",cx,cy+18);
+    try{c.letterSpacing="0px";}catch(e){}
+    return;
+  }
+  const n=data.length, max=Math.max(...data.map(d=>d[1]))||1;
+  const ang=i=>-Math.PI/2+(i/n)*Math.PI*2;
+  const at=(i,r)=>({x:cx+Math.cos(ang(i))*r, y:cy+Math.sin(ang(i))*r});
+
+  // spokes
+  c.strokeStyle="rgba(198,190,224,.13)";
+  for(let i=0;i<n;i++){
+    const p=at(i,R);
+    c.beginPath();c.moveTo(cx,cy);c.lineTo(p.x,p.y);c.stroke();
+  }
+  // the shape itself
+  const pts=data.map((d,i)=>at(i,R*(.18+.82*(d[1]/max))));
+  c.beginPath();
+  pts.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+  c.closePath();
+  c.fillStyle=accent+"22";c.fill();
+  c.strokeStyle=accent;c.lineWidth=1.6;c.stroke();
+  // vertices, with the strongest genre marked
+  const topIdx=data.reduce((b,d,i)=>d[1]>data[b][1]?i:b,0);
+  pts.forEach((p,i)=>{
+    c.beginPath();c.arc(p.x,p.y,i===topIdx?3.4:2,0,Math.PI*2);
+    c.fillStyle=i===topIdx?"#fff":accent;c.fill();
+    if(i===topIdx){c.strokeStyle=accent;c.lineWidth=1.4;
+      c.beginPath();c.arc(p.x,p.y,6.5,0,Math.PI*2);c.stroke();}
+  });
+  // labels sit outside the rings so they never collide with the shape
+  c.font="600 8px "+MONO;c.textBaseline="middle";
+  try{c.letterSpacing="0.14em";}catch(e){}
+  data.forEach((d,i)=>{
+    const a=ang(i), p=at(i,R+13);
+    c.fillStyle=i===topIdx?accent:"rgba(198,190,224,.55)";
+    c.textAlign=Math.cos(a)>.25?"left":Math.cos(a)<-.25?"right":"center";
+    c.fillText(_shortGenre(d[0]),p.x,p.y);
+  });
+  // corner captions — reads as a measurement, which is what it is
+  c.font="600 8.5px "+MONO;c.fillStyle="rgba(198,190,224,.42)";
+  c.textBaseline="alphabetic";
+  c.textAlign="left";c.fillText("TASTE SIGNATURE",12,H-12);
+  c.textAlign="right";c.fillText(n+" GENRES TRACKED",W-12,H-12);
+  try{c.letterSpacing="0px";}catch(e){}
+}

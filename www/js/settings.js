@@ -66,7 +66,7 @@ function _storage(){
 }
 
 function _syncSettings(){
-  _summaries();_storage();
+  _summaries();_storage();_themeUI();
   const d=$("#setDemos");
   if(d){const on=!(typeof demosOff==="function"&&demosOff());
     d.classList.toggle("on",on);d.setAttribute("aria-checked",String(on));}
@@ -179,3 +179,64 @@ function initSettings(){
 
   $("#setAuthToggle").onclick=()=>$("#authToggle")&&$("#authToggle").click();
 }
+
+/* ============================================================== themes ===== */
+/* Two axes kept separate on purpose: the ground (light/dark/auto) and the
+   character (palette). Mixing them into one list of "themes" would mean
+   maintaining ten variants and offering people a choice they cannot reason
+   about. */
+const PALETTES=[
+  {id:"sumi",     name:"Sumi",      note:"ink & washi",      sw:["#14120f","#f3ede1","#d9542f"]},
+  {id:"jump",     name:"Jump",      note:"newsprint",        sw:["#111111","#f6f2e8","#ff5a1f"]},
+  {id:"matcha",   name:"Matcha",    note:"cream & green",    sw:["#0f1210","#edf2e9","#7cb342"]},
+  {id:"blueprint",name:"Blueprint", note:"cyanotype",        sw:["#070c16","#e7eefb","#3aa6e0"]},
+  {id:"violet",   name:"Violet",    note:"the original",     sw:["#0d0b14","#f4f1ff","#8b5cf6"]}
+];
+const DEFAULT_PALETTE="sumi";
+
+function applyTheme(){
+  const root=document.documentElement;
+  const pal=store.get("palette",DEFAULT_PALETTE);
+  const mode=store.get("theme","auto");
+  const dark=mode==="auto"
+    ? !(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)
+    : mode==="dark";
+  root.setAttribute("data-palette",pal);
+  root.setAttribute("data-theme",dark?"dark":"light");
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute("content",
+    getComputedStyle(root).getPropertyValue("--bg").trim()||"#0d0b14");
+  /* Canvas graphics read the variables once when they paint, so they have to be
+     redrawn rather than left showing the previous palette's colours. */
+  if(currentView==="profile"){
+    if(typeof paintSignature==="function")paintSignature($("#net"),window._lastProf||computeProfile());
+    if(typeof paintIdBanner==="function")paintIdBanner();
+  }
+}
+function _themeUI(){
+  const row=$("#themeRow"),grid=$("#palGrid");
+  if(!row||!grid)return;
+  const mode=store.get("theme","auto"), pal=store.get("palette",DEFAULT_PALETTE);
+  row.innerHTML=[["auto","Auto","gear"],["light","Light","star"],["dark","Dark","cards"]]
+    .map(([v,l,ic])=>`<button class="themeopt${v===mode?" on":""}" data-theme-set="${v}">
+      <span class="icw">${icSvg(ic)}</span>${l}</button>`).join("");
+  grid.innerHTML=PALETTES.map(p=>`<button class="palopt${p.id===pal?" on":""}" data-pal="${p.id}">
+      <span class="palswatch">${p.sw.map(c=>`<i style="background:${c}"></i>`).join("")}</span>
+      <span class="palname">${p.name}</span><span class="palnote">${p.note}</span>
+    </button>`).join("");
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest)return;
+  const t=e.target.closest("[data-theme-set]");
+  if(t){store.set("theme",t.dataset.themeSet);applyTheme();_themeUI();buzz(6);return;}
+  const p=e.target.closest("[data-pal]");
+  if(p){store.set("palette",p.dataset.pal);applyTheme();_themeUI();buzz(8);
+    toast(PALETTES.find(x=>x.id===p.dataset.pal).name);return;}
+});
+/* follow the system when set to auto */
+try{
+  const mq=window.matchMedia("(prefers-color-scheme: light)");
+  (mq.addEventListener?mq.addEventListener.bind(mq,"change"):mq.addListener.bind(mq))(()=>{
+    if(store.get("theme","auto")==="auto")applyTheme();
+  });
+}catch(e){}

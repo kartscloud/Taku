@@ -138,6 +138,7 @@ function hydrateIcons(){
 function updateFilterBadge(){const b=$("#filterCount");if(!b)return;b.textContent=deckGenres.length||"";$("#filterBtn").classList.toggle("active",deckGenres.length>0);}
 
 /* boot */
+if(typeof applyTheme==="function")applyTheme();   // before first paint
 sweepCaches();   // reclaim expired + superseded API caches before anything writes
 sortWatched();
 hydrateIcons();mountDemos(document);
