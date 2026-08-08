@@ -337,37 +337,91 @@ function initCompatUI(){
 }
 
 /* ---- the compatibility reveal ----
-   The number lands after a beat rather than simply appearing. A ring sweeps to
-   the score while the digits count up, then the breakdown fades in beneath.
-   Purely presentational, but a percentage that arrives instantly reads as a
-   lookup; one that resolves reads as a verdict. */
-function drawCompatRing(canvas,pct,color,t){
-  const dpr=Math.min(2,window.devicePixelRatio||1), S=190;
-  canvas.width=S*dpr;canvas.height=S*dpr;
-  canvas.style.width=canvas.style.height=S+"px";
-  const c=canvas.getContext("2d");
-  c.setTransform(dpr,0,0,dpr,0,0);
-  c.clearRect(0,0,S,S);
-  const cx=S/2, cy=S/2, r=S/2-16, start=-Math.PI/2;
-  c.lineWidth=11;c.lineCap="round";
-  c.strokeStyle="rgba(255,255,255,.07)";
-  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();
-  const sweep=Math.PI*2*(pct/100)*t;
-  if(sweep>0.001){
-    const g=c.createLinearGradient(0,0,S,S);
-    g.addColorStop(0,color[0]);g.addColorStop(1,color[1]);
-    c.strokeStyle=g;c.shadowColor=color[0];c.shadowBlur=18;
-    c.beginPath();c.arc(cx,cy,r,start,start+sweep);c.stroke();
-    c.shadowBlur=0;
+   A synaptic link, not a progress bar. taku already frames taste as a "neural
+   signature" on the profile, so a compatibility check reads as two of those
+   signatures trying to connect: your node on the left, theirs on the right, a
+   lattice between them, one strand lighting per five percent.
+
+   The reason it beats a ring: a 50% match visibly FAILS to connect half its
+   paths. Half a circle is an abstraction; ten dead strands is a picture of what
+   the number means. */
+const LINK_STRANDS=20;
+/* local so this file does not depend on art.js being loaded */
+function _crng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296;};}
+function _linkLattice(w,h){
+  const r=_crng(97),cols=3,nodes=[];
+  for(let c=0;c<cols;c++){
+    const per=c===1?4:3,x=w*(.30+c*.20);
+    for(let i=0;i<per;i++)nodes.push({x,y:h*(.22+(i+.5)*(.56/per))+(r()-.5)*h*.06,c});
   }
-  // tick marks, so the ring reads as a gauge rather than a loading spinner
-  c.strokeStyle="rgba(255,255,255,.13)";c.lineWidth=1.5;
-  for(let i=0;i<20;i++){
-    const a=start+(Math.PI*2*i/20);
-    c.beginPath();
-    c.moveTo(cx+Math.cos(a)*(r-19),cy+Math.sin(a)*(r-19));
-    c.lineTo(cx+Math.cos(a)*(r-15),cy+Math.sin(a)*(r-15));
-    c.stroke();
+  const A={x:w*.13,y:h/2},B={x:w*.87,y:h/2};
+  const col=c=>nodes.filter(n=>n.c===c);
+  const strands=[];
+  for(let i=0;i<LINK_STRANDS;i++)
+    strands.push([A,col(0)[i%col(0).length],col(1)[(i*3+1)%col(1).length],
+                  col(2)[(i*2+2)%col(2).length],B]);
+  return {A,B,nodes,strands};
+}
+function _pathAt(pts,t){
+  const segs=pts.length-1,s=Math.min(segs-1,Math.floor(t*segs)),lt=t*segs-s;
+  const a=pts[s],b=pts[s+1];
+  return {x:a.x+(b.x-a.x)*lt,y:a.y+(b.y-a.y)*lt};
+}
+function drawCompatLink(canvas,st){
+  const W=st.w,H=st.h,dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  const c=canvas.getContext("2d");
+  c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const L=st.lattice,t=st.t,lit=Math.round(LINK_STRANDS*(st.pct/100));
+
+  L.strands.forEach((pts,i)=>{
+    c.beginPath();c.moveTo(pts[0].x,pts[0].y);
+    for(let k=1;k<pts.length;k++)c.lineTo(pts[k].x,pts[k].y);
+    c.strokeStyle="rgba(255,255,255,.05)";c.lineWidth=1;c.stroke();
+    const on=i<lit,prog=Math.max(0,Math.min(1,(t*1.35)-(i/LINK_STRANDS)*.35));
+    if(!on||prog<=0)return;
+    const end=_pathAt(pts,prog);
+    c.beginPath();c.moveTo(pts[0].x,pts[0].y);
+    for(let k=1;k<pts.length;k++)if(k/(pts.length-1)<=prog)c.lineTo(pts[k].x,pts[k].y);
+    c.lineTo(end.x,end.y);
+    c.strokeStyle=st.col[0];c.globalAlpha=.55;c.lineWidth=1.4;
+    c.shadowColor=st.col[0];c.shadowBlur=7;c.stroke();
+    c.globalAlpha=1;c.shadowBlur=0;
+    if(prog<1){c.beginPath();c.arc(end.x,end.y,2.1,0,7);
+      c.fillStyle="#fff";c.shadowColor=st.col[0];c.shadowBlur=10;c.fill();c.shadowBlur=0;}
+  });
+
+  L.nodes.forEach(n=>{
+    const on=t>.2+(n.c*.16);
+    c.beginPath();c.arc(n.x,n.y,on?2.6:1.8,0,7);
+    c.fillStyle=on?st.col[0]:"rgba(190,180,230,.28)";
+    if(on){c.shadowColor=st.col[0];c.shadowBlur=8;}
+    c.fill();c.shadowBlur=0;
+  });
+
+  const node=(p,color,glyph,pulse)=>{
+    const R=25+pulse*3;
+    const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,R*2.1);
+    g.addColorStop(0,color+"55");g.addColorStop(1,color+"00");
+    c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,R*2.1,0,7);c.fill();
+    c.beginPath();c.arc(p.x,p.y,R,0,7);
+    c.fillStyle="rgba(12,10,20,.92)";c.fill();
+    c.lineWidth=2;c.strokeStyle=color;c.shadowColor=color;c.shadowBlur=14;c.stroke();c.shadowBlur=0;
+    c.font="20px system-ui,'Apple Color Emoji','Segoe UI Emoji'";
+    c.textAlign="center";c.textBaseline="middle";
+    c.fillText(glyph,p.x,p.y+1);
+  };
+  const pulse=Math.sin(t*Math.PI*3)*.5+.5;
+  node(L.A,st.colA,st.glyphA,t<1?pulse:0);
+  node(L.B,st.colB,st.glyphB,t<1?pulse:0);
+
+  if(st.land>0&&st.land<1){          // one shockwave as it lands
+    c.beginPath();c.arc(W/2,H/2,st.land*Math.max(W,H)*.55,0,7);
+    c.strokeStyle=st.col[0];c.globalAlpha=(1-st.land)*.5;c.lineWidth=2.5;c.stroke();
+    c.globalAlpha=1;
   }
 }
 const COMPAT_COLORS={hi:["#34d399","#22c55e"],mid:["#fbbf24","#f59e0b"],lo:["#fb7185","#ef4444"]};
@@ -389,10 +443,11 @@ function revealCompat(){
     </div>`;
   body.innerHTML=`
     <div class="reveal">
-      <div class="ringwrap">
-        <canvas id="compatRing"></canvas>
-        <div class="ringnum ${tone}"><b id="compatNum">0</b><i>%</i></div>
+      <div class="linkwrap">
+        <canvas id="compatLink"></canvas>
+        <div class="linknum ${tone}"><b id="compatNum">0</b><i>%</i></div>
       </div>
+      <div class="linkstrands" id="compatStrands"></div>
       <div class="revealwho">You <span>vs</span> ${escHTML(f.name)}</div>
       <div class="duelbasis" id="compatBasis" style="opacity:0">${escHTML(compatLabel(r))}</div>
       <div class="revealrest" id="compatRest" style="opacity:0">
@@ -406,27 +461,38 @@ function revealCompat(){
           <span>This is from genre taste alone — rate a few of the same shows and it sharpens.</span></div>`:""}
       </div>
     </div>`;
-  const canvas=$("#compatRing"), num=$("#compatNum");
+  const canvas=$("#compatLink"), num=$("#compatNum"), strandLbl=$("#compatStrands");
+  const W=Math.max(260,Math.min(340,body.clientWidth||320)), H=214;
+  const st={w:W,h:H,pct:r.pct,col,t:0,land:0,
+    colA:(window._lastProf&&window._lastProf.arch.color)||"#8b5cf6",
+    colB:safeColor(f.color),
+    glyphA:profile.avatar||"?", glyphB:f.avatar||"?",
+    lattice:_linkLattice(W,H)};
+  const lit=Math.round(LINK_STRANDS*(r.pct/100));
+  const finish=()=>{
+    num.textContent=r.pct;
+    strandLbl.textContent=lit+" of "+LINK_STRANDS+" links connected";
+    $("#compatBasis").style.opacity="1";
+    setTimeout(()=>{$("#compatRest").style.opacity="1";},180);
+  };
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
-  if(reduce){
-    drawCompatRing(canvas,r.pct,col,1);num.textContent=r.pct;
-    $("#compatBasis").style.opacity="1";$("#compatRest").style.opacity="1";
-    return;
-  }
-  const DUR=1100, t0=performance.now();
-  buzz(12);
+  if(reduce){st.t=1;drawCompatLink(canvas,st);finish();return;}
+  const DUR=1450, t0=performance.now();
+  buzz(10);
   (function step(now){
     const p=Math.min(1,(now-t0)/DUR);
-    const e=1-Math.pow(1-p,3);                 // ease-out: fast, then settles
-    drawCompatRing(canvas,r.pct,col,e);
-    num.textContent=Math.round(r.pct*e);
-    if(p<1)requestAnimationFrame(step);
-    else{
-      num.textContent=r.pct;
-      buzz([8,40,8]);
-      $("#compatBasis").style.opacity="1";
-      setTimeout(()=>{$("#compatRest").style.opacity="1";},180);
-    }
+    st.t=1-Math.pow(1-p,2.6);                  // ease-out: fast, then settles
+    num.textContent=Math.round(r.pct*st.t);
+    drawCompatLink(canvas,st);
+    if(p<1)return requestAnimationFrame(step);
+    buzz([10,45,10]);
+    const l0=performance.now();
+    (function land(n){                          // shockwave after the strands land
+      st.land=Math.min(1,(n-l0)/520);
+      drawCompatLink(canvas,st);
+      if(st.land<1)requestAnimationFrame(land);
+    })(l0);
+    finish();
   })(t0);
 }
 document.addEventListener("click",e=>{
