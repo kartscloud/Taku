@@ -134,7 +134,7 @@ hydrateIcons();mountDemos(document);
 /* Accounts are off by default; authBoot() returns true only when it has taken
    over the screen, in which case normal onboarding must stay out of the way. */
 const _authTook=(typeof authBoot==="function")&&authBoot();
-initNav();initSearch();initProfile();if(!_authTook)initOnboard();initCoach();initBrowse();
+initNav();initSearch();initProfile();if(typeof initCompatUI==="function")initCompatUI();if(!_authTook)initOnboard();initCoach();initBrowse();
 refreshCounts();updateFilterBadge();
 if(typeof initInboundFriend==="function")initInboundFriend();  // opened from a shared link
 document.body.classList.toggle("nav-side",currentView==="deck"); // boot lands on the deck without calling setView

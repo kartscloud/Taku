@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=93" />
+<link rel="stylesheet" href="css/app.css?v=94" />
 </head>
 <body>
 
@@ -85,6 +85,7 @@
       <div class="idmeta">
         <div class="uname" id="pfName">Nameless Otaku</div>
         <div class="handle" id="pfHandle">@you</div>
+        <button class="pftag" id="pfTag" title="Your taku tag"></button>
         <div class="bio" id="pfBio">No bio yet — tap edit.</div>
       </div>
       <button class="editbtn" id="pfEdit">Edit</button>
@@ -112,7 +113,8 @@
       <div id="friendList" class="flist"></div>
       <div class="frow-actions">
         <button class="fbtn" id="addFriend">+ Add friend</button>
-        <button class="fbtn ghost" id="shareCode">Share my code</button>
+        <button class="fbtn ghost" id="shareCode">Share my link</button>
+        <button class="fbtn ghost" id="compareBtn">Compare two</button>
       </div>
     </div>
     <div class="datazone">
@@ -387,7 +389,12 @@
   <div class="sheet">
     <h3>Add a friend</h3>
     <p>Paste a taku code a friend shared with you. Their rank lands on your leaderboard.</p>
-    <textarea class="inp" id="inCode" placeholder="Paste code…"></textarea>
+    <div class="seth">By username or tag</div>
+    <input class="inp" id="inLookup" placeholder="ronit or RONIT#7K2Q" autocapitalize="none" spellcheck="false" />
+    <button class="savebtn ghostbtn" id="doLookup">Search</button>
+    <div class="setnote" id="lookupNote" style="margin:8px 0 16px"></div>
+    <div class="seth">Or paste a link they sent you</div>
+    <textarea class="inp" id="inCode" placeholder="Paste their taku link…"></textarea>
     <button class="savebtn" id="doAddFriend">Add to squad</button>
     <button class="skip" id="friendCancel">Cancel</button>
   </div>
@@ -472,21 +479,21 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=93"></script>
-<script src="js/data.js?v=93"></script>
-<script src="js/state.js?v=93"></script>
-<script src="js/api.js?v=93"></script>
-<script src="js/rec.js?v=93"></script>
-<script src="js/deck.js?v=93"></script>
-<script src="js/lists.js?v=93"></script>
-<script src="js/search.js?v=93"></script>
-<script src="js/compat.js?v=93"></script>
-<script src="js/profile.js?v=93"></script>
-<script src="js/detail.js?v=93"></script>
-<script src="js/browse.js?v=93"></script>
-<script src="js/demo.js?v=93"></script>
-<script src="js/auth.js?v=93"></script>
-<script src="js/share.js?v=93"></script>
-<script src="js/main.js?v=93"></script>
+<script src="auth-config.js?v=94"></script>
+<script src="js/data.js?v=94"></script>
+<script src="js/state.js?v=94"></script>
+<script src="js/api.js?v=94"></script>
+<script src="js/rec.js?v=94"></script>
+<script src="js/deck.js?v=94"></script>
+<script src="js/lists.js?v=94"></script>
+<script src="js/search.js?v=94"></script>
+<script src="js/compat.js?v=94"></script>
+<script src="js/profile.js?v=94"></script>
+<script src="js/detail.js?v=94"></script>
+<script src="js/browse.js?v=94"></script>
+<script src="js/demo.js?v=94"></script>
+<script src="js/auth.js?v=94"></script>
+<script src="js/share.js?v=94"></script>
+<script src="js/main.js?v=94"></script>
 </body>
 </html>

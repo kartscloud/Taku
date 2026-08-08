@@ -53,10 +53,10 @@ function myCode(prof){
   const t=packTaste(myTaste());
   const d={v:2,u:profile.name||"Nameless Otaku",h:profile.handle||"you",a:profile.avatar||"🍥",
     t:prof.title,tr:prof.tierName,p:prof.power,g:prof.topGenre||"—",c:prof.arch.color,
-    sh:t.sh,af:t.af};
+    cd:profile.code||"",sh:t.sh,af:t.af};
   return btoa(encodeURIComponent(JSON.stringify(d)));
 }
-function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;const cap=(v,n)=>String(v==null?"":v).slice(0,n);return{id:"f"+Math.abs(hashStr(s.trim())),name:cap(d.u,24)||"Friend",handle:cap(d.h,18)||"friend",avatar:cap(d.a,4)||"🙂",title:cap(d.t,28)||"UNTRACED",tier:cap(d.tr,18),power:Math.max(0,Math.min(9999999,+d.p||0)),genre:cap(d.g,24),color:safeColor(d.c),taste:(+d.v>=2?unpackTaste(d):null)};}catch(e){return null;}}
+function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;const cap=(v,n)=>String(v==null?"":v).slice(0,n);return{id:"f"+Math.abs(hashStr(s.trim())),name:cap(d.u,24)||"Friend",handle:cap(d.h,18)||"friend",avatar:cap(d.a,4)||"🙂",title:cap(d.t,28)||"UNTRACED",tier:cap(d.tr,18),power:Math.max(0,Math.min(9999999,+d.p||0)),genre:cap(d.g,24),color:safeColor(d.c),code:cap(d.cd,6).toUpperCase().replace(/[^0-9A-Z]/g,""),taste:(+d.v>=2?unpackTaste(d):null)};}catch(e){return null;}}
 
 function renderIdentity(prof){
   const av=$("#pfAvatar");
@@ -67,6 +67,8 @@ function renderIdentity(prof){
   const since=profile.created?new Date(profile.created).getFullYear():new Date().getFullYear();
   const h=$("#pfHandle");
   h.textContent="@"+(profile.handle||"you")+"  ·  "+(prof.count?prof.title:"unranked")+"  ·  since "+since;
+  const tg=$("#pfTag");
+  if(tg){tg.textContent=myTag();tg.title="Your taku tag — tap to copy";}
   h.style.color=prof.arch.color;
   $("#pfBio").textContent=profile.bio||"No bio yet — tap edit to say who you are as a watcher.";
 }
@@ -81,6 +83,7 @@ function renderFriends(prof){
       <div class="fmeta">
         <div class="fn">${escHTML(f.name)}${f.me?' <em>YOU</em>':''}</div>
         <div class="fsub" style="color:${safeColor(f.color)}">${escHTML(f.title)} · ${escHTML(f.tier)}</div>
+        ${f.me?"":(friendTag(f)?`<div class="ftag">${escHTML(friendTag(f))}</div>`:"")}
       </div>
       <div class="fpow">${(+f.power||0).toLocaleString()}<span>INDEX</span></div>
       ${f.me?"":_matchChip(f)}

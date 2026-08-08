@@ -120,38 +120,8 @@ function unpackTaste(d){
 /* ---- duel sheet ---- */
 let _duelFriend=null;
 function openDuel(friendId){
-  const f=friends.find(x=>x.id===friendId);
-  if(!f)return;
-  _duelFriend=f;
   const sheet=$("#duelSheet");if(!sheet)return;
-  const body=$("#duelBody");
-  if(!f.taste||!f.taste.shows){
-    body.innerHTML=`<div class="duelempty">
-      <b>${escHTML(f.name)} shared an older code.</b>
-      <span>Codes only started carrying taste data recently. Ask them to send a fresh one and this fills in.</span></div>`;
-    sheet.classList.add("on");return;
-  }
-  const me=myTaste();
-  const r=compatScore(me,f.taste);
-  const nameOf=id=>{const w=watched.find(m=>m.id===id);return w?w.title:"#"+id;};
-  const row=(x,cls)=>`<div class="duelrow ${cls}">
-      <span class="dtier t${x.mine}">${x.mine}</span>
-      <span class="dname">${escHTML(nameOf(x.id))}</span>
-      <span class="dtier t${x.theirs}">${x.theirs}</span>
-    </div>`;
-  body.innerHTML=`
-    <div class="duelscore ${compatTone(r.pct)}">
-      <b>${r.pct}%</b><span>match</span>
-    </div>
-    <div class="duelbasis">${escHTML(compatLabel(r))}</div>
-    <div class="duelheads"><span>You</span><span>${escHTML(f.name)}</span></div>
-    ${r.agreed.length?`<div class="duelsec">Where you agree</div>
-      ${r.agreed.slice(0,4).map(x=>row(x,"ok")).join("")}`:""}
-    ${r.split.length?`<div class="duelsec">Where you'd argue</div>
-      ${r.split.slice(0,4).map(x=>row(x,"vs")).join("")}`:""}
-    ${!r.agreed.length&&!r.split.length?`<div class="duelempty">
-      <b>No shows in common yet.</b>
-      <span>This score is from your genre taste alone. Rate a few of the same shows and it sharpens.</span></div>`:""}`;
+  renderDuel("me",friendId);
   sheet.classList.add("on");
 }
 
@@ -212,4 +182,141 @@ function initInboundFriend(){
   };
   $("#inviteSheet").classList.add("on");
   return true;
+}
+
+/* ---- taku tag ----
+   A short, stable handle for a person: RONIT#7K2Q. Generated once and kept, so
+   it survives renames and reinstalls-from-backup.
+
+   Honest limit worth stating in the UI: with no server there is nothing to
+   check a tag against, so uniqueness cannot be guaranteed and a tag cannot be
+   looked up. It is an identity LABEL — it tells two people they have the right
+   person. Actually finding someone by it needs the accounts backend, where the
+   usernames collection already enforces uniqueness (see firestore.rules).
+
+   Crockford-style alphabet: no I, L, O or U, so the tag can be read aloud or
+   copied off a screen without 0/O and 1/I confusion. */
+const TAG_ALPHA="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+function myTag(){
+  if(!profile.code){
+    let c="";
+    const buf=new Uint8Array(4);
+    (crypto&&crypto.getRandomValues)?crypto.getRandomValues(buf)
+      :buf.forEach((_,i)=>{buf[i]=(Date.now()*(i+7))&255;});
+    for(let i=0;i<4;i++)c+=TAG_ALPHA[buf[i]%TAG_ALPHA.length];
+    profile.code=c;store.set("profile",profile);
+  }
+  return (profile.handle||"you").toUpperCase()+"#"+profile.code;
+}
+function friendTag(f){
+  return f&&f.code?String(f.handle||"friend").toUpperCase()+"#"+f.code:null;
+}
+
+/* ---- compare any two people in the squad ----
+   Everyone's taste already lives on this device, so a friend-vs-friend duel
+   needs no server — and it is the argument people actually want to have. */
+function duelPair(aId,bId){
+  const me={id:"me",name:profile.name||"You",avatar:profile.avatar||"\ud83c\udf65",
+            color:(window._lastProf&&window._lastProf.arch.color)||"#8b5cf6",taste:myTaste()};
+  const pick=id=>id==="me"?me:friends.find(x=>x.id===id);
+  const A=pick(aId),B=pick(bId);
+  if(!A||!B)return null;
+  if(!A.taste||!B.taste)return {A,B,noTaste:true};
+  return {A,B,r:compatScore(A.taste,B.taste)};
+}
+function renderDuel(aId,bId){
+  const d=duelPair(aId,bId);
+  const body=$("#duelBody");if(!body||!d)return;
+  _duelA=aId;_duelB=bId;
+  const who=x=>`<option value="${escHTML(x.id)}"${x.id===aId?" selected":""}>${escHTML(x.name)}</option>`;
+  const whoB=x=>`<option value="${escHTML(x.id)}"${x.id===bId?" selected":""}>${escHTML(x.name)}</option>`;
+  const meOpt={id:"me",name:"You"};
+  const all=[meOpt,...friends.map(f=>({id:f.id,name:f.name}))];
+  const picker=`<div class="duelpick">
+      <select class="inp" id="duelA">${all.map(who).join("")}</select>
+      <span class="vsmark">vs</span>
+      <select class="inp" id="duelB">${all.map(whoB).join("")}</select>
+    </div>`;
+  if(d.noTaste){
+    body.innerHTML=picker+`<div class="duelempty">
+      <b>No taste data for one of them.</b>
+      <span>Older codes carried only a rank. Ask for a fresh link and this fills in.</span></div>`;
+    _bindDuelPickers();return;
+  }
+  const r=d.r;
+  const nameOf=id=>{const w=watched.find(m=>m.id===id);return w?w.title:"#"+id;};
+  const row=(x,cls)=>`<div class="duelrow ${cls}">
+      <span class="dtier t${x.mine}">${x.mine}</span>
+      <span class="dname">${escHTML(nameOf(x.id))}</span>
+      <span class="dtier t${x.theirs}">${x.theirs}</span>
+    </div>`;
+  body.innerHTML=picker+`
+    <div class="duelscore ${compatTone(r.pct)}"><b>${r.pct}%</b><span>match</span></div>
+    <div class="duelbasis">${escHTML(compatLabel(r))}</div>
+    <div class="duelheads"><span>${escHTML(d.A.name)}</span><span>${escHTML(d.B.name)}</span></div>
+    ${r.agreed.length?`<div class="duelsec">Where they agree</div>
+      ${r.agreed.slice(0,4).map(x=>row(x,"ok")).join("")}`:""}
+    ${r.split.length?`<div class="duelsec">Where they'd argue</div>
+      ${r.split.slice(0,4).map(x=>row(x,"vs")).join("")}`:""}
+    ${!r.agreed.length&&!r.split.length?`<div class="duelempty">
+      <b>No shows in common.</b>
+      <span>This score comes from genre taste alone.</span></div>`:""}`;
+  _bindDuelPickers();
+}
+let _duelA="me",_duelB=null;
+function _bindDuelPickers(){
+  const a=$("#duelA"),b=$("#duelB");
+  if(a)a.onchange=()=>renderDuel(a.value,_duelB);
+  if(b)b.onchange=()=>renderDuel(_duelA,b.value);
+}
+
+/* ---- finding someone by username or tag ----
+   This is the one part of the request that cannot work on-device. A tag is a
+   label, not a container: RONIT#7K2Q is six characters and a taste profile is
+   hundreds. Resolving one to a person needs a directory, and a directory needs
+   a server. The Firestore `usernames` collection already exists for exactly
+   this (firestore.rules) — so the lookup is written now and starts working the
+   moment accounts are switched on, with no further changes here. */
+async function lookupPerson(q){
+  const raw=String(q||"").trim();
+  if(!raw)return {err:"Type a username or tag."};
+  const username=raw.split("#")[0].replace(/^@/,"").toLowerCase();
+  if(!/^[a-z0-9_]{3,18}$/.test(username))return {err:"That doesn't look like a username or tag."};
+  if(typeof authEnabled!=="function"||!authEnabled())
+    return {err:"off",need:"Searching for people needs accounts switched on — there has to be somewhere to look them up. Until then, ask them for their link."};
+  if(typeof authIsMock==="function"&&authIsMock())
+    return {err:"off",need:"Accounts are in test mode, so there is no directory to search yet. Paste their link instead."};
+  try{
+    const fb=await FirebaseAuth._init();
+    const snap=await fb.firestore().collection("usernames").doc(username).get();
+    if(!snap.exists)return {err:"Nobody is using that username."};
+    const uid=snap.data().uid;
+    const u=await fb.firestore().collection("users").doc(uid).get();
+    if(!u.exists)return {err:"That account has no profile yet."};
+    return {found:u.data()};
+  }catch(e){return {err:"Couldn't search right now."};}
+}
+function initCompatUI(){
+  const tag=$("#pfTag");
+  if(tag)tag.onclick=async()=>{
+    try{await navigator.clipboard.writeText(myTag());toast("Tag copied");}
+    catch(e){toast(myTag());}
+  };
+  const cmp=$("#compareBtn");
+  if(cmp)cmp.onclick=()=>{
+    if(!friends.length){toast("Add a friend first");return;}
+    renderDuel("me",friends[0].id);
+    $("#duelSheet").classList.add("on");
+  };
+  const lk=$("#doLookup");
+  if(lk)lk.onclick=async()=>{
+    const note=$("#lookupNote");
+    note.textContent="Searching…";
+    const r=await lookupPerson($("#inLookup").value);
+    if(r.err){note.textContent=r.need||r.err;return;}
+    note.textContent="Found "+(r.found.name||r.found.username)+" — ask them to send you their link so their taste comes with it.";
+  };
+  const note=$("#lookupNote");
+  if(note&&(typeof authEnabled!=="function"||!authEnabled()))
+    note.textContent="Needs accounts switched on — there has to be a directory to search. For now, use their link.";
 }
