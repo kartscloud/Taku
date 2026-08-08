@@ -156,10 +156,28 @@ function initProfile(){
     friends.push(f);store.set("friends",friends);$("#friendModal").classList.remove("on");
     renderFriends(window._lastProf||computeProfile());toast(f.name+" joined your squad");
   };
-  $("#shareCode").onclick=async()=>{
-    const code=myCode(window._lastProf||computeProfile());
-    try{await navigator.clipboard.writeText(code);toast("Your code is copied — send it to a friend");}
-    catch(e){window.prompt("Copy your taku code and send it to a friend:",code);}
+  $("#shareCode").onclick=()=>{
+    const url=myShareURL();
+    $("#shareLink").textContent=url;
+    const nat=$("#shareNative");
+    if(nat)nat.hidden=typeof navigator.share!=="function";
+    $("#shareSheet").classList.add("on");
   };
+  $("#shareCopy").onclick=async()=>{
+    const url=myShareURL();
+    try{await navigator.clipboard.writeText(url);toast("Link copied — send it to a friend");}
+    catch(e){
+      // clipboard is blocked on file:// and in some webviews; select it instead
+      const el=$("#shareLink"),r=document.createRange();
+      r.selectNodeContents(el);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);
+      toast("Copy the highlighted link");
+    }
+  };
+  $("#shareNative").onclick=async()=>{
+    try{await navigator.share({title:"my taku taste",text:"See how close our anime taste is",url:myShareURL()});}
+    catch(e){}
+  };
+  $("#shareClose").onclick=()=>$("#shareSheet").classList.remove("on");
+  $("#inviteSkip").onclick=()=>$("#inviteSheet").classList.remove("on");
   document.addEventListener("click",e=>{const t=e.target.closest?e.target.closest("[data-friend-remove]"):null;if(t){friends=friends.filter(x=>x.id!==t.dataset.friendRemove);store.set("friends",friends);renderFriends(window._lastProf||computeProfile());}});
 }

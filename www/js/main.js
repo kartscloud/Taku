@@ -65,7 +65,7 @@ function initNav(){
   $("#cfCancel").onclick=()=>{$("#confirmModal").classList.remove("on");_pendingRemove=null;};
   // browseSettings is NOT here: its filters mutate on tap, so dismissing it must
   // run the same commit path as Done (see initBrowse) or the picks are lost
-  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet","duelSheet"].forEach(id=>{
+  ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet","duelSheet","inviteSheet","shareSheet"].forEach(id=>{
     $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");stopDemos(id);if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
@@ -136,6 +136,7 @@ hydrateIcons();mountDemos(document);
 const _authTook=(typeof authBoot==="function")&&authBoot();
 initNav();initSearch();initProfile();if(!_authTook)initOnboard();initCoach();initBrowse();
 refreshCounts();updateFilterBadge();
+if(typeof initInboundFriend==="function")initInboundFriend();  // opened from a shared link
 document.body.classList.toggle("nav-side",currentView==="deck"); // boot lands on the deck without calling setView
 $("#miniAv").textContent=profile.avatar||"🍥";
 if(store.get("onboarded",false))renderDeck();

@@ -154,3 +154,62 @@ function openDuel(friendId){
       <span>This score is from your genre taste alone. Rate a few of the same shows and it sharpens.</span></div>`:""}`;
   sheet.classList.add("on");
 }
+
+/* ---- sharing a code as a link ----
+   A v2 code runs ~640 characters. Nobody pastes that into a chat, and a code
+   that is annoying to send is a feature that never gets used. A link is the
+   fix: it carries the payload in the fragment, which — unlike a query string —
+   is never sent to any server, so a profile never leaves the two devices. */
+const TAKU_WEB="https://kartscloud.github.io/Taku/";
+function shareBase(){
+  // file:// has no shareable origin, so fall back to the published address
+  if(location.protocol==="http:"||location.protocol==="https:"){
+    if(/^localhost|^127\.0\.0\.1|^\[::1\]/.test(location.hostname))return location.origin+location.pathname;
+    return location.origin+location.pathname;
+  }
+  return TAKU_WEB;
+}
+/* base64 from btoa contains + / =, which are not safe unescaped in a URL
+   fragment. base64url swaps them and drops the padding. */
+function b64url(s){return s.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function unb64url(s){
+  s=String(s||"").replace(/-/g,"+").replace(/_/g,"/");
+  while(s.length%4)s+="=";
+  return s;
+}
+function myShareURL(){
+  const code=myCode(window._lastProf||computeProfile());
+  return shareBase()+"#f="+b64url(code);
+}
+
+/* Read an inbound link once, then scrub the fragment so a refresh cannot
+   re-prompt and the code does not linger in the address bar. */
+function pendingFriendFromURL(){
+  const m=/[#&?]f=([A-Za-z0-9\-_]+)/.exec(location.hash||"")||/[?&]f=([A-Za-z0-9\-_]+)/.exec(location.search||"");
+  if(!m)return null;
+  try{history.replaceState(null,"",location.pathname+location.search.replace(/[?&]f=[^&]*/,""));}catch(e){}
+  return decodeCode(unb64url(m[1]));
+}
+function initInboundFriend(){
+  const f=pendingFriendFromURL();
+  if(!f)return false;
+  if(friends.some(x=>x.id===f.id)){toast(f.name+" is already in your squad");return false;}
+  const body=$("#inviteBody");
+  if(!body)return false;
+  const r=f.taste?compatScore(myTaste(),f.taste):null;
+  body.innerHTML=`
+    <div class="invav" style="box-shadow:0 0 0 3px ${safeColor(f.color)}">${escHTML(f.avatar)}</div>
+    <div class="invname">${escHTML(f.name)}</div>
+    <div class="invsub">@${escHTML(f.handle)} · ${escHTML(f.title)}</div>
+    ${r?`<div class="duelscore ${compatTone(r.pct)}" style="margin-top:18px"><b>${r.pct}%</b><span>match</span></div>
+        <div class="duelbasis">${escHTML(compatLabel(r))}</div>`
+      :`<div class="duelbasis" style="margin-top:16px">Their code is an older version, so there's no match score yet.</div>`}`;
+  $("#inviteAdd").onclick=()=>{
+    if(!friends.some(x=>x.id===f.id)){friends.push(f);store.set("friends",friends);}
+    $("#inviteSheet").classList.remove("on");
+    toast(f.name+" joined your squad");
+    if(currentView==="profile")renderProfile();
+  };
+  $("#inviteSheet").classList.add("on");
+  return true;
+}
