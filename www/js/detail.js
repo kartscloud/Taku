@@ -6,7 +6,8 @@ function detailAction(m,action){
   if(inDeck){const top=topCard();if(top&&+top.dataset.id===m.id){doAction(action);return;}decide(m.id,action);renderDeck();return;}
   markSeen(m.id);
   if(action==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);toast("Added to Want");}
-  if(action==="nope"){bumpAffinity(m.genres,-1);}
+  // same semantics as a deck left-swipe: it goes to the passed pile, replayable
+  if(action==="nope"){bumpAffinity(m.genres,-1);addPassed(m);}
   if(action==="watch")openRate(m);
   refreshCounts();
 }
