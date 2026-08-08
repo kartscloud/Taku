@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=103" />
+<link rel="stylesheet" href="css/app.css?v=104" />
 </head>
 <body>
 
@@ -92,7 +92,8 @@
         <button class="pftag" id="pfTag" title="Your taku tag"></button>
         <div class="bio" id="pfBio">No bio yet — tap edit.</div>
       </div>
-      <button class="editbtn" id="pfEdit">Edit</button>
+      <button class="gearbtn icononly pfgear" id="pfSettings" title="Settings" aria-label="Settings and your data"><span class="icw" data-ic="gear"></span></button>
+      <button class="editbtn" id="pfEdit" hidden>Edit</button>
     </div>
     <div class="netwrap">
       <canvas id="net"></canvas>
@@ -120,11 +121,6 @@
         <button class="fbtn ghost" id="shareCode">Share my link</button>
       </div>
     </div>
-    <button class="settingsrow" id="openSettings">
-      <span class="icw" data-ic="gear"></span>
-      <span class="srtext"><b>Settings &amp; your data</b><span id="srSub">Everything in one place</span></span>
-      <span class="srgo icw" data-ic="arrowR"></span>
-    </button>
     <!-- TMDB's API terms require attribution wherever their artwork is used -->
     <div class="credits">
       Anime data from <a href="https://anilist.co" target="_blank" rel="noopener">AniList</a>.
@@ -564,23 +560,23 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=103"></script>
-<script src="js/data.js?v=103"></script>
-<script src="js/state.js?v=103"></script>
-<script src="js/api.js?v=103"></script>
-<script src="js/rec.js?v=103"></script>
-<script src="js/deck.js?v=103"></script>
-<script src="js/lists.js?v=103"></script>
-<script src="js/search.js?v=103"></script>
-<script src="js/art.js?v=103"></script>
-<script src="js/settings.js?v=103"></script>
-<script src="js/compat.js?v=103"></script>
-<script src="js/profile.js?v=103"></script>
-<script src="js/detail.js?v=103"></script>
-<script src="js/browse.js?v=103"></script>
-<script src="js/demo.js?v=103"></script>
-<script src="js/auth.js?v=103"></script>
-<script src="js/share.js?v=103"></script>
-<script src="js/main.js?v=103"></script>
+<script src="auth-config.js?v=104"></script>
+<script src="js/data.js?v=104"></script>
+<script src="js/state.js?v=104"></script>
+<script src="js/api.js?v=104"></script>
+<script src="js/rec.js?v=104"></script>
+<script src="js/deck.js?v=104"></script>
+<script src="js/lists.js?v=104"></script>
+<script src="js/search.js?v=104"></script>
+<script src="js/art.js?v=104"></script>
+<script src="js/settings.js?v=104"></script>
+<script src="js/compat.js?v=104"></script>
+<script src="js/profile.js?v=104"></script>
+<script src="js/detail.js?v=104"></script>
+<script src="js/browse.js?v=104"></script>
+<script src="js/demo.js?v=104"></script>
+<script src="js/auth.js?v=104"></script>
+<script src="js/share.js?v=104"></script>
+<script src="js/main.js?v=104"></script>
 </body>
 </html>

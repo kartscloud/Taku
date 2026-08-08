@@ -92,7 +92,7 @@ function _syncSettings(){
     `this product uses the TMDB API but is not endorsed or certified by TMDB.<br>`+
     `<a href="privacy.html" target="_blank" rel="noopener">Privacy</a>`;
   if(typeof renderAuthZone==="function")renderAuthZone();
-  const sub=$("#srSub");
+  const sub=$("#srSub");                     // only present on the old layout
   if(sub)sub.textContent=_fmtBytes(_bytesOf(""))+" stored on this device";
 }
 
@@ -104,7 +104,10 @@ function openSettings(){
 
 function initSettings(){
   if(!$("#settingsSheet"))return;
-  $("#openSettings").onclick=()=>openSettings();
+  const gear=$("#pfSettings");
+  if(gear)gear.onclick=()=>openSettings();
+  const legacy=$("#openSettings");          // the old bottom row, if it is still around
+  if(legacy)legacy.onclick=()=>openSettings();
   $("#settingsDone").onclick=()=>$("#settingsSheet").classList.remove("on");
 
   /* Navigation rows hand off to the sheet that already owns each group. The hub
