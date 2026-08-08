@@ -74,6 +74,13 @@ if(friends===null){friends=[
 ];store.set("friends",friends);}
 
 const $=s=>document.querySelector(s);
+/* Anything that reaches innerHTML from outside the app goes through this.
+   Friend codes are the live case: they are pasted from another person, so
+   every field in one is attacker-controlled by design. */
+function escHTML(v){return String(v==null?"":v).replace(/[&<>"'`]/g,c=>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;","`":"&#96;"}[c]));}
+const HEX_COLOR=/^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+function safeColor(c,fallback){return HEX_COLOR.test(String(c||""))?c:(fallback||"#8b5cf6");}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(window._toastT);window._toastT=setTimeout(()=>t.classList.remove("show"),1900);}
 function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms||10);}catch(e){}}
 
@@ -167,14 +174,17 @@ function addPassed(m){
   if(passed.length>PASSED_MAX)passed.length=PASSED_MAX;
   store.set("passed",passed);
 }
-function removePassed(id){passed=passed.filter(x=>x.id!==id);store.set("passed",passed);}
+function removePassed(id){if(!passed.some(x=>x.id===id))return;passed=passed.filter(x=>x.id!==id);store.set("passed",passed);}
 function clearPassed(){passed=[];store.set("passed",passed);}
-function addWant(m){if(!want.some(x=>x.id===m.id)){want.unshift(m);store.set("want",want);}}
+/* Saving a show retires it from the passed pile here rather than at each call
+   site — Discover, search and the detail sheet had each forgotten to, leaving
+   shows listed as both wanted and passed, and re-offered on every replay. */
+function addWant(m){if(!want.some(x=>x.id===m.id)){want.unshift(m);store.set("want",want);}removePassed(m.id);}
 function removeWant(id){want=want.filter(x=>x.id!==id);store.set("want",want);}
 function addWatched(rec){
   const i=watched.findIndex(x=>x.id===rec.id);
   if(i>=0)watched[i]=rec;else watched.push(rec);
-  removeWant(rec.id);sortWatched();store.set("watched",watched);
+  removeWant(rec.id);removePassed(rec.id);sortWatched();store.set("watched",watched);
 }
 function removeWatched(id){watched=watched.filter(x=>x.id!==id);store.set("watched",watched);}
 

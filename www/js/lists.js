@@ -134,14 +134,18 @@ function renderRanked(){
 function enableTierDrag(container){
   if(container._dragBound)return;      // one binding per container, survives re-render
   container._dragBound=true;
-  let row=null,dragging=false,startY=0,pid=null;
+  let row=null,dragging=false,startY=0,pid=null,startOrder=null,startIdx=-1;
 
+  const idsNow=()=>[...container.querySelectorAll(".rankrow")].map(r=>+r.dataset.rid);
   const onDown=e=>{
     if(e.button!==undefined&&e.button!==0)return;          // left button only
     if(e.target.closest("button"))return;                  // let re-rate / remove work
     const r=e.target.closest(".rankrow");
     if(!r||r.parentNode!==container)return;
     row=r;startY=e.clientY;pid=e.pointerId;dragging=false;
+    // snapshot so an aborted gesture can be put back exactly, and so commit can
+    // tell a real move from a row that never actually changed position
+    startOrder=idsNow();startIdx=startOrder.indexOf(+r.dataset.rid);
   };
   const onMove=e=>{
     if(!row||(pid!=null&&e.pointerId!==pid))return;
@@ -160,13 +164,32 @@ function enableTierDrag(container){
       container.insertBefore(row,e.clientY>b.top+b.height/2?over.nextSibling:over);
     }
   };
+  const clear=()=>{
+    if(row)row.classList.remove("dragging");
+    document.body.classList.remove("dragging-row");
+    row=null;dragging=false;pid=null;
+  };
   const onUp=()=>{
     if(!row)return;
     const wasDragging=dragging,id=+row.dataset.rid;
-    row.classList.remove("dragging");
-    document.body.classList.remove("dragging-row");
-    row=null;dragging=false;pid=null;
-    if(wasDragging)commitTierOrder(container,id);
+    const moved=wasDragging&&idsNow().indexOf(id)!==startIdx;
+    clear();
+    // Only a gesture that actually relocated the row may rewrite anything.
+    // Committing on any drag re-tiered rows that never moved, because the list
+    // is tier-grouped: the first row of every tier has a differently-tiered
+    // neighbour, so commitTierOrder would "correct" it to the tier above.
+    if(moved)commitTierOrder(container,id);
+  };
+  /* iOS fires pointercancel when it decides a touch belongs to the scroller.
+     Treating that as a drop committed reorders the user never made — and with
+     them, tier changes — from an ordinary scroll. Put the list back instead. */
+  const onCancel=()=>{
+    if(!row)return;
+    if(dragging&&startOrder){
+      const byId=new Map([...container.querySelectorAll(".rankrow")].map(r=>[+r.dataset.rid,r]));
+      startOrder.forEach(id=>{const el=byId.get(id);if(el)container.appendChild(el);});
+    }
+    clear();
   };
 
   // Bound to the DOCUMENT, not the row: pointer capture on a small child proved
@@ -175,7 +198,7 @@ function enableTierDrag(container){
   container.addEventListener("pointerdown",onDown);
   document.addEventListener("pointermove",onMove,{passive:false});
   document.addEventListener("pointerup",onUp);
-  document.addEventListener("pointercancel",onUp);
+  document.addEventListener("pointercancel",onCancel);
 }
 function commitTierOrder(container,movedId){
   const ids=[...container.querySelectorAll(".rankrow")].map(r=>+r.dataset.rid);

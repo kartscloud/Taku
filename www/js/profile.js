@@ -45,7 +45,7 @@ function startNet(prof){
 
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
 function myCode(prof){const d={u:profile.name||"Nameless Otaku",h:profile.handle||"you",a:profile.avatar||"🍥",t:prof.title,tr:prof.tierName,p:prof.power,g:prof.topGenre||"—",c:prof.arch.color};return btoa(encodeURIComponent(JSON.stringify(d)));}
-function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;return{id:"f"+Math.abs(hashStr(s.trim())),name:d.u,handle:d.h||"friend",avatar:d.a||"🙂",title:d.t||"UNTRACED",tier:d.tr||"",power:+d.p||0,genre:d.g||"",color:d.c||"#8b5cf6"};}catch(e){return null;}}
+function decodeCode(s){try{const d=JSON.parse(decodeURIComponent(atob((s||"").trim())));if(!d||!d.u)return null;const cap=(v,n)=>String(v==null?"":v).slice(0,n);return{id:"f"+Math.abs(hashStr(s.trim())),name:cap(d.u,24)||"Friend",handle:cap(d.h,18)||"friend",avatar:cap(d.a,4)||"🙂",title:cap(d.t,28)||"UNTRACED",tier:cap(d.tr,18),power:Math.max(0,Math.min(9999999,+d.p||0)),genre:cap(d.g,24),color:safeColor(d.c)};}catch(e){return null;}}
 
 function renderIdentity(prof){
   const av=$("#pfAvatar");
@@ -66,13 +66,13 @@ function renderFriends(prof){
   $("#friendList").innerHTML=board.map((f,i)=>`
     <div class="frow${f.me?' me':''}">
       <span class="frank">${i+1}</span>
-      <span class="fav" style="box-shadow:0 0 0 2px ${f.color}">${f.avatar}</span>
+      <span class="fav" style="box-shadow:0 0 0 2px ${safeColor(f.color)}">${escHTML(f.avatar)}</span>
       <div class="fmeta">
-        <div class="fn">${f.name}${f.me?' <em>YOU</em>':''}</div>
-        <div class="fsub" style="color:${f.color}">${f.title} · ${f.tier}</div>
+        <div class="fn">${escHTML(f.name)}${f.me?' <em>YOU</em>':''}</div>
+        <div class="fsub" style="color:${safeColor(f.color)}">${escHTML(f.title)} · ${escHTML(f.tier)}</div>
       </div>
-      <div class="fpow">${(f.power||0).toLocaleString()}<span>INDEX</span></div>
-      ${f.me?'':`<button class="fx" data-friend-remove="${f.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>`}
+      <div class="fpow">${(+f.power||0).toLocaleString()}<span>INDEX</span></div>
+      ${f.me?'':`<button class="fx" data-friend-remove="${escHTML(f.id)}" title="Remove"><span class="icw">${icSvg("x")}</span></button>`}
     </div>`).join("");
 }
 

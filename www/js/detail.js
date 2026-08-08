@@ -2,7 +2,7 @@
 let _detailStack=[];
 
 function detailAction(m,action){
-  const inDeck=queues[deckMode].some(x=>x.id===m.id);
+  const inDeck=activeQueue().some(x=>x.id===m.id);   // replay cards live in replayQueue
   if(inDeck){const top=topCard();if(top&&+top.dataset.id===m.id){doAction(action);return;}decide(m.id,action);renderDeck();return;}
   markSeen(m.id);
   if(action==="want"){addWant(slim(m));bumpAffinity(m.genres,1.5);toast("Added to Want");}
