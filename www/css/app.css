@@ -83,6 +83,26 @@
   --accentRGB:11,110,168; --accent2RGB:63,91,214; --glow:#dbe3ef;
   --tintRGB:11,18,32;
 }
+/* BEIGE — linen and clay. Low chroma on purpose: the accent is a muted
+   terracotta rather than a bright one, so the palette stays quiet. The dark
+   variant is warm espresso rather than neutral black, or it stops reading as
+   the same family. */
+[data-palette="beige"]{
+  --bgRGB:26,22,17; --cardRGB:42,36,29;
+  --onAccent:#1a1611; --onAccent2:#1a1611;
+  --bg:#1a1611; --bg2:#221d17; --card:#2a241d; --line:#3b3227;
+  --txt:#f1e9db; --dim:#a99a83; --accent:#d79a6b; --accent2:#b0b573;
+  --accentRGB:215,154,107; --accent2RGB:176,181,115; --glow:#2b241b;
+  --s:#c2705a; --a:#cf9455; --b:#c9b45f; --c:#8a9a5b; --d:#6d8a92;
+}
+[data-palette="beige"][data-theme="light"]{
+  --bgRGB:237,230,217; --cardRGB:251,247,239;
+  --onAccent:#ffffff; --onAccent2:#ffffff;
+  --bg:#ece5d8; --bg2:#f4efe5; --card:#fbf8f1; --line:#d6cbb7;
+  --txt:#241e17; --dim:#6f6555; --accent:#96502f; --accent2:#5f6535;
+  --accentRGB:150,80,47; --accent2RGB:95,101,53; --glow:#e0d7c5;
+  --tintRGB:36,30,23;
+}
 /* VIOLET — the original. Kept because it is what the app shipped with. */
 [data-palette="violet"]{
   --bgRGB:13,11,20; --cardRGB:28,24,48;

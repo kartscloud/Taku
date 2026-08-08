@@ -190,6 +190,7 @@ const PALETTES=[
   {id:"jump",     name:"Jump",      note:"newsprint",        sw:["#111111","#f6f2e8","#ff5a1f"]},
   {id:"matcha",   name:"Matcha",    note:"cream & green",    sw:["#0f1210","#edf2e9","#7cb342"]},
   {id:"blueprint",name:"Blueprint", note:"cyanotype",        sw:["#070c16","#e7eefb","#3aa6e0"]},
+  {id:"beige",    name:"Beige",     note:"linen & clay",     sw:["#ece5d8","#241e17","#96502f"]},
   {id:"violet",   name:"Violet",    note:"the original",     sw:["#0d0b14","#f4f1ff","#8b5cf6"]}
 ];
 const DEFAULT_PALETTE="sumi";
