@@ -1,8 +1,10 @@
 /* taku · Want (swipe-to-reveal) + Tiers views */
 function refreshCounts(){
   const nt=$("#nWatched");
-  const total=want.length+watched.length;             // Tiers now holds Want + Watched + Watching
-  if(nt){nt.textContent=total;nt.style.display=total?"grid":"none";}
+  /* the badge is a to-do, not a library size: only shows that still need a tier.
+     A permanent count of everything you've ever added is noise you can't clear. */
+  const pending=watched.filter(m=>m.status!=="watching"&&!m.tier).length;
+  if(nt){nt.textContent=pending;nt.style.display=pending?"grid":"none";}
   updateTierCounts();
   if(currentView==="watched")renderWatched();
 }
@@ -74,7 +76,15 @@ function renderWant(){
 }
 
 let tierTab="list";      // list | want
-let listTab="watching";  // within List: watching | ranked
+let listTab="ranked";    // within List: watching | ranked | trash — opens on Watched
+
+/* Tiers always opens on List › Watched: that is where ranking happens, and
+   landing on Watching meant an extra tap every single time. */
+function resetTierTabs(){
+  tierTab="list";listTab="ranked";
+  document.querySelectorAll("#tierTabs .seg").forEach(s=>s.classList.toggle("on",s.dataset.tiertab===tierTab));
+  document.querySelectorAll("#listSub .subbtn").forEach(s=>s.classList.toggle("on",s.dataset.listtab===listTab));
+}
 function updateTierCounts(){
   const w=watched.filter(m=>m.status==="watching").length, r=watched.length-w;
   const cr=$("#cRanked"),cw=$("#cWatching"),cwant=$("#cWant"),cl=$("#cList");
@@ -95,12 +105,13 @@ function renderRanked(){
   const list=watched.filter(m=>m.status!=="watching");
   if(!list.length){c.innerHTML=`<div class="emptylist">No ratings yet.<br>Swipe up on something you've finished and give it a tier.</div>`;return;}
   const untiered=list.filter(m=>!m.tier).length;
+  const demo=`<div class="demo" data-demo="rank" data-demo-max="2"></div>`;
   const banner=untiered?`<button class="rankcta" id="rankCta">
       <span class="rcicon icw">${icSvg("trophy")}</span>
       <span class="rctext"><b>${untiered} show${untiered>1?"s":""} need${untiered>1?"":"s"} a tier</b><span>Rank them in one pass</span></span>
       <span class="rcgo icw">${icSvg("arrowR")}</span>
     </button>`:"";
-  c.innerHTML=banner+list.map((m,i)=>`
+  c.innerHTML=demo+banner+list.map((m,i)=>`
     <div class="row rankrow" data-rid="${m.id}">
       <span class="rank grip" data-grip title="Drag to reorder">${i+1}</span>
       <div class="tier" style="background:${TIER_COLOR[m.tier]||"var(--line)"}">${m.tier||"–"}</div>
@@ -111,6 +122,7 @@ function renderRanked(){
       <button class="x" data-rewatch="${m.id}" title="Re-rate"><span class="icw">${icSvg("rotate")}</span></button>
       <button class="x danger" data-watch-remove="${m.id}" title="Remove"><span class="icw">${icSvg("x")}</span></button>
     </div>`).join("");
+  mountDemos(c);startDemos("view-watched");
   enableTierDrag(c);
 }
 

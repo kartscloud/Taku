@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=77" />
+<link rel="stylesheet" href="css/app.css?v=88" />
 </head>
 <body>
 
@@ -27,6 +27,11 @@
 <main>
   <!-- DISCOVER -->
   <section id="view-deck">
+    <div class="replaybar" id="replayBar" hidden>
+      <span class="icw" data-ic="rotate"></span>
+      <span class="rbtext">Shows you passed &middot; <b id="replayLeft">0</b> left</span>
+      <button class="rbdone" id="replayExit">Done</button>
+    </div>
     <div class="deckwrap">
       <div id="deck"></div>
     </div>
@@ -64,8 +69,8 @@
       <button class="seg" data-tiertab="want">Want<span class="segn" id="cWant"></span></button>
     </div>
     <div class="listsub" id="listSub">
-      <button class="subbtn on" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
-      <button class="subbtn" data-listtab="ranked">Watched<span class="subn" id="cRanked"></span></button>
+      <button class="subbtn" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
+      <button class="subbtn on" data-listtab="ranked">Watched<span class="subn" id="cRanked"></span></button>
       <!-- Label says "Dropped"; the internal name stays "trash" (data-listtab, id="cTrash",
            the localStorage key). Renaming those would orphan existing users' saved data. -->
       <button class="subbtn" data-listtab="trash">Dropped<span class="subn" id="cTrash"></span></button>
@@ -118,6 +123,15 @@
       </div>
       <input type="file" id="restoreFile" accept="application/json,.json" hidden />
     </div>
+    <!-- Accounts are built but not shipped. This row is the only way in until
+         someone decides to launch them; see js/auth.js. -->
+    <div class="datazone" id="authZone">
+      <div class="fhead"><span class="ft">Accounts</span><span class="fc" id="authState">preview · off</span></div>
+      <div class="frow-actions" id="authActions">
+        <button class="fbtn ghost" id="authToggle">Turn on</button>
+      </div>
+      <div class="credits" id="authHint" style="margin-top:8px"></div>
+    </div>
     <!-- TMDB's API terms require attribution wherever their artwork is used -->
     <div class="credits">
       Anime data from <a href="https://anilist.co" target="_blank" rel="noopener">AniList</a>.
@@ -130,23 +144,22 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom">
+  <button class="navbtn active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span><small>Swipe</small></button>
   <button class="navbtn" data-view="browse" title="Discover" aria-label="Discover"><span class="icw" data-ic="compass"></span><small>Discover</small></button>
-  <button class="navbtn navmain active" data-view="deck" title="Swipe" aria-label="Swipe"><span class="icw" data-ic="cards"></span></button>
-  <button class="navbtn" data-view="watched" title="Tiers" aria-label="Tiers"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" style="display:none">0</span></button>
+  <button class="navbtn" data-view="watched" title="Tiers" aria-label="Tiers"><span class="icw" data-ic="trophy"></span><small>Tiers</small><span class="n" id="nWatched" title="Shows waiting for a tier" style="display:none">0</span></button>
 </nav>
 
 <!-- BEST OF A YEAR -->
 <div class="modal" id="yearSheet">
   <div class="sheet">
     <h3>Best of a year</h3>
-    <p class="setnote" style="margin-top:0">Ranking by popularity buries old shows — it mostly measures who logged something recently. Pick a year and rank it properly.</p>
+    <div class="demo" data-demo="year"></div>
     <div class="seth">Show me</div>
     <div class="langopts" id="ysLens">
       <button class="langopt" data-lens="popular">Most popular</button>
       <button class="langopt" data-lens="rated">Top rated</button>
       <button class="langopt on" data-lens="gems">Hidden gems</button>
     </div>
-    <p class="setnote"><b>Hidden gems</b> = well-scored but rarely logged, so you get the overlooked stuff instead of the same canon.</p>
     <div class="seth">Year</div>
     <div id="ysYears" class="yeargrid"></div>
     <button class="skip" id="yearClose">Cancel</button>
@@ -193,12 +206,18 @@
 <div class="modal" id="swipeSettings">
   <div class="sheet">
     <h3>Swipe settings</h3>
+    <div class="demo" data-demo="swipe"></div>
+    <div class="seth">Shows you passed</div>
+    <div class="setrow">
+      <div class="setlabel"><b>Go back through them</b><span id="passedNote">Nothing passed yet</span></div>
+      <button class="minibtn ghost" id="passedRecover" hidden>Recover</button>
+      <button class="minibtn" id="replayStart">Replay</button>
+    </div>
     <div class="seth">When you swipe right</div>
     <div class="langopts" id="swRate">
       <button class="langopt on" data-sw="ask">Rate it now</button>
       <button class="langopt" data-sw="quick">Just mark watched</button>
     </div>
-    <p class="setnote"><b>Rate it now</b> opens the tier sheet after every right-swipe — best when you're ranking properly.<br><b>Just mark watched</b> logs it and moves straight to the next card — best for sorting through what you have and haven't seen. Nothing is lost: unranked shows sit in Tiers → List → Watched and you can tier them whenever.</p>
     <button class="savebtn" id="swipeSettingsDone">Done</button>
   </div>
 </div>
@@ -219,7 +238,7 @@
 <div class="modal" id="rateModal">
   <div class="sheet">
     <h3 id="rateTitle">Rate it</h3>
-    <p>Drop it in a tier — this trains your feed and builds your rank.</p>
+    <div class="demo" data-demo="rate" data-demo-max="3" data-demo-after="hide"></div>
     <div class="tiers">
       <button class="tierbtn" style="background:var(--s)" data-tier="S">S<small>peak</small></button>
       <button class="tierbtn" style="background:var(--a)" data-tier="A">A<small>great</small></button>
@@ -243,7 +262,9 @@
 <div class="modal" id="browseSettings">
   <div class="sheet">
     <h3>Discover filters</h3>
+    <div class="demo" data-demo="filters"></div>
     <div class="setrow"><div class="setlabel"><b>New releases only</b><span>Everything coming out this season</span></div><button class="toggle" id="bsNew"></button></div>
+    <div class="setrow" id="bsAdultRow"><div class="setlabel"><b>Adult titles in search</b><span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div><button class="toggle" id="bsAdult"></button></div>
 
     <div class="seth">Order by <span class="sethnote">browse &amp; schedule</span></div>
     <div class="langopts" id="bsSort">
@@ -291,6 +312,10 @@
       <button class="langopt" data-fmt="SPECIAL">Special</button>
     </div>
 
+    <div class="seth">Release times <span class="sethnote">schedule days &amp; clock</span></div>
+    <select class="inp tzsel" id="bsTz"></select>
+    <div class="setnote" id="bsTzNote" style="margin-top:6px"></div>
+
     <p class="setnote">Nothing selected in a group means <b>any</b>. Picking several inside one group widens it (Japanese <i>or</i> Korean); the groups then narrow each other (Japanese <i>and</i> on Netflix), so no two choices can contradict.<br><b>No dub/sub filter yet.</b> AniList publishes no dub, sub or simulcast field — every streaming link comes back with an empty language. Original language above is the audio it was animated in; the platform list is what's licensed where you are.</p>
     <div class="ratealt">
       <button class="altbtn ghost" id="browseFiltersReset">Reset</button>
@@ -319,6 +344,8 @@
     <input class="inp" id="inName" maxlength="20" placeholder="Display name" />
     <input class="inp" id="inHandle" maxlength="18" placeholder="handle (no spaces)" />
     <textarea class="inp" id="inBio" maxlength="120" placeholder="Your bio — who are you as a watcher?"></textarea>
+    <input class="inp" id="inAge" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+    <div class="setnote" style="margin:0 0 4px">Under 18 hides the 18+ search switch entirely.</div>
     <button class="savebtn" id="saveProfile">Save profile</button>
     <button class="skip" id="editCancel">Cancel</button>
   </div>
@@ -336,6 +363,65 @@
 </div>
 
 <!-- ONBOARDING -->
+<!-- ACCOUNT GATE — hidden unless store "authEnabled" is true. See js/auth.js. -->
+<div class="onboard authgate" id="authGate" hidden>
+  <div class="ob-inner">
+    <div class="ob-logo">taku</div>
+    <div class="ob-tag" id="agTag">Make an account to keep your tiers safe.</div>
+
+    <div class="segmented agtabs" id="agTabs">
+      <button class="seg on" data-ag="signup">Sign up</button>
+      <button class="seg" data-ag="login">Log in</button>
+    </div>
+
+    <form id="agForm" autocomplete="on" novalidate>
+      <div class="agrow" data-only="signup">
+        <input class="inp" id="agName" maxlength="20" placeholder="Your name" autocomplete="name" />
+        <div class="agerr" id="agNameErr"></div>
+      </div>
+      <div class="agrow" data-only="signup">
+        <input class="inp" id="agUser" maxlength="18" placeholder="Username" autocomplete="username" autocapitalize="none" spellcheck="false" />
+        <div class="agerr" id="agUserErr"></div>
+      </div>
+      <div class="agrow" data-only="signup">
+        <input class="inp" id="agAge" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+        <div class="agerr" id="agAgeErr"></div>
+      </div>
+      <div class="agrow">
+        <input class="inp" id="agEmail" type="email" placeholder="Email" autocomplete="email" autocapitalize="none" spellcheck="false" />
+        <div class="agerr" id="agEmailErr"></div>
+      </div>
+      <div class="agrow">
+        <div class="pwwrap">
+          <input class="inp" id="agPass" type="password" placeholder="Password" autocomplete="new-password" />
+          <button type="button" class="pweye" id="agPassEye" aria-label="Show password"></button>
+        </div>
+        <div class="pwbar" data-only="signup"><i></i><i></i><i></i><i></i></div>
+        <div class="agerr" id="agPassErr"></div>
+      </div>
+      <button class="ob-start" id="agGo" type="submit">Create account<span class="icw" data-ic="arrowR"></span></button>
+    </form>
+
+    <button class="aglink" id="agForgot" data-only="login" hidden>Forgot your password?</button>
+    <button class="aglink" id="agSkip">Look around first</button>
+    <div class="ob-note" id="agNote">Your password goes straight to the login provider — taku never stores it.</div>
+  </div>
+</div>
+
+<!-- CONFIRM YOUR EMAIL -->
+<div class="onboard authgate" id="authVerify" hidden>
+  <div class="ob-inner">
+    <div class="ob-logo">taku</div>
+    <div class="vmark icw" data-ic="check"></div>
+    <div class="ob-h" style="text-align:center">Check your inbox</div>
+    <div class="ob-tag">We sent a confirmation link to <b id="avEmail">you</b>. Tap it, then come back.</div>
+    <button class="ob-start" id="avCheck">I've confirmed it</button>
+    <button class="aglink" id="avResend">Send it again</button>
+    <button class="aglink" id="avOut">Use a different account</button>
+    <div class="ob-note" id="avNote">Not there? Check spam — confirmation mail lands there often.</div>
+  </div>
+</div>
+
 <div class="onboard" id="onboard" hidden>
   <div class="ob-inner">
     <div class="ob-logo">taku</div>
@@ -343,6 +429,9 @@
     <div class="ob-h">Pick a face + name</div>
     <div class="avpick" id="obAvPick"></div>
     <input class="inp" id="obName" maxlength="20" placeholder="What do we call you?" />
+    <div class="ob-h">How old are you?</div>
+    <input class="inp" id="obAge" type="number" inputmode="numeric" min="5" max="120" placeholder="Age" />
+    <div class="ob-note" style="margin:6px 0 0">Sets whether 18+ titles can ever show up in search. You can change it later in your profile.</div>
     <div class="ob-h">What do you vibe with? <span style="color:var(--dim);font-weight:400">(pick any — trains your feed)</span></div>
     <div class="ob-genres" id="obGenres"></div>
     <button class="ob-start" id="obStart">Start swiping<span class="icw" data-ic="arrowR"></span></button>
@@ -352,17 +441,20 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=77"></script>
-<script src="js/state.js?v=77"></script>
-<script src="js/api.js?v=77"></script>
-<script src="js/rec.js?v=77"></script>
-<script src="js/deck.js?v=77"></script>
-<script src="js/lists.js?v=77"></script>
-<script src="js/search.js?v=77"></script>
-<script src="js/profile.js?v=77"></script>
-<script src="js/detail.js?v=77"></script>
-<script src="js/browse.js?v=77"></script>
-<script src="js/share.js?v=77"></script>
-<script src="js/main.js?v=77"></script>
+<script src="auth-config.js?v=88"></script>
+<script src="js/data.js?v=88"></script>
+<script src="js/state.js?v=88"></script>
+<script src="js/api.js?v=88"></script>
+<script src="js/rec.js?v=88"></script>
+<script src="js/deck.js?v=88"></script>
+<script src="js/lists.js?v=88"></script>
+<script src="js/search.js?v=88"></script>
+<script src="js/profile.js?v=88"></script>
+<script src="js/detail.js?v=88"></script>
+<script src="js/browse.js?v=88"></script>
+<script src="js/demo.js?v=88"></script>
+<script src="js/auth.js?v=88"></script>
+<script src="js/share.js?v=88"></script>
+<script src="js/main.js?v=88"></script>
 </body>
 </html>

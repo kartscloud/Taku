@@ -1,10 +1,39 @@
 /* taku · persistent state (localStorage, same taku_* keys as v1 so data survives) */
 const store={
   get(k,d){try{const v=JSON.parse(localStorage.getItem("taku_"+k));return v===null||v===undefined?d:v;}catch(e){return d;}},
-  set(k,v){try{localStorage.setItem("taku_"+k,JSON.stringify(v));}catch(e){/* quota — drop caches */ purgeCaches();}}
+  /* On quota the old version purged caches and gave up — so the write that
+     tripped the limit (a rating, a tier) was silently thrown away. Now it frees
+     space in increasing order of pain and retries after each step. */
+  set(k,v){
+    const key="taku_"+k, json=JSON.stringify(v);
+    try{localStorage.setItem(key,json);return true;}catch(e){}
+    sweepCaches();                                  // expired + orphaned entries
+    try{localStorage.setItem(key,json);return true;}catch(e){}
+    purgeCaches();                                  // everything cacheable, TMDB included
+    try{localStorage.setItem(key,json);return true;}
+    catch(e){console.warn("taku: could not save",k,e);return false;}
+  }
 };
+const CACHE_KEEP="taku_cache_tmdb";   // a hand-built poster map, expensive to refill
 function purgeCaches(){
   for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith("taku_cache"))localStorage.removeItem(k);}
+}
+/* Cache keys are versioned (cache_sched_ → sched2_ → sched3_) whenever the
+   stored shape changes, but the superseded generations were never deleted — they
+   just sat there burning quota forever. Every cache entry carries a timestamp,
+   so sweeping by age clears both expired entries and every orphaned generation. */
+function sweepCaches(){
+  const ttl=(typeof CACHE_TTL==="number"?CACHE_TTL:30*60*1000), now=Date.now();
+  let freed=0;
+  for(let i=localStorage.length-1;i>=0;i--){
+    const k=localStorage.key(i);
+    if(!k||!k.startsWith("taku_cache")||k===CACHE_KEEP)continue;
+    try{
+      const v=JSON.parse(localStorage.getItem(k));
+      if(!v||typeof v.t!=="number"||now-v.t>=ttl){freed+=localStorage.getItem(k).length;localStorage.removeItem(k);}
+    }catch(e){localStorage.removeItem(k);}
+  }
+  return freed;
 }
 
 /* one-time migration: the app was renamed naku → taku; carry old naku_* data over */
@@ -25,7 +54,15 @@ let seen=new Set(store.get("seen",[]));        // every id acted on
 // how swiping behaves. rate: "ask" = tier sheet after every right-swipe,
 // "quick" = just log it as watched and keep the deck moving
 let swipePrefs=store.get("swipePrefs",{rate:"ask"});
-let profile=store.get("profile",{name:"",handle:"",bio:"",avatar:"🍥",created:0});
+let profile=store.get("profile",{name:"",handle:"",bio:"",avatar:"🍥",created:0,age:null});
+
+/* Age gate. Self-declared, so this is a preference gate, not verification —
+   it decides whether the 18+ switch is even offered. Unknown age = treated as
+   under 18, so anyone who onboarded before this existed stays gated until they
+   say otherwise. Feeds are filtered for everyone regardless. */
+function userAge(){const a=+(profile&&profile.age);return Number.isFinite(a)&&a>0?a:null;}
+function canAdult(){const a=userAge();return a!==null&&a>=18;}
+function adultOn(){return canAdult()&&!!store.get("searchAdult",false);}
 let friends=store.get("friends",null);
 let affinity=store.get("affinity",{});         // genre -> learned weight
 let deckGenres=store.get("deckGenres",[]);      // Discover genre filter (empty = all)
@@ -64,7 +101,74 @@ function bumpAffinity(genres,delta){
 }
 const TIER_AFFINITY={S:3,A:2,B:1,C:-0.5,D:-1.5};
 
+/* ---- timezone ----
+   Airing times come back as absolute epoch seconds. Everything that turns one
+   into a day, a weekday or a clock time has to agree on WHICH zone, or an
+   episode airing 01:00 JST lands on a different calendar day than the header
+   says. The user picks the zone; "" means follow the device.
+
+   All of this goes through Intl rather than Date's local-time getters, because
+   Date can only ever answer in the device's zone. */
+function deviceTz(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";}catch(e){return "UTC";}}
+function tzName(){const t=store.get("tz","");if(!t)return deviceTz();
+  try{new Intl.DateTimeFormat("en-US",{timeZone:t});return t;}catch(e){return deviceTz();}}
+const _tzFmts={};
+function _tzFmt(tz){
+  if(!_tzFmts[tz])_tzFmts[tz]=new Intl.DateTimeFormat("en-US",{timeZone:tz,
+    year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",
+    second:"numeric",weekday:"short",hourCycle:"h23"});
+  return _tzFmts[tz];
+}
+/* epoch seconds -> calendar fields in the active zone */
+function tzParts(at){
+  const p={};
+  _tzFmt(tzName()).formatToParts(new Date(at*1000)).forEach(x=>{p[x.type]=x.value;});
+  return {y:+p.year,mo:+p.month-1,d:+p.day,h:+p.hour%24,mi:+p.minute,s:+p.second,wd:p.weekday};
+}
+function tzDayKey(at){const p=tzParts(at);return p.y+"_"+p.mo+"_"+p.d;}
+/* epoch of the start of the calendar day containing `at`, in the active zone.
+   Derived by subtracting the wall-clock time rather than by constructing a
+   local Date, so it stays correct for any offset including :30 and :45 zones. */
+function tzStartOfDay(at){const p=tzParts(at);return at-(p.h*3600+p.mi*60+p.s);}
+function tzTimeLabel(at){
+  try{return new Date(at*1000).toLocaleTimeString([],{timeZone:tzName(),hour:"numeric",minute:"2-digit"});}
+  catch(e){return "";}
+}
+/* Short label for the picker, e.g. "GMT+9". */
+function tzOffsetLabel(tz){
+  try{
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:tz,timeZoneName:"shortOffset"}).formatToParts(new Date());
+    const z=parts.find(x=>x.type==="timeZoneName");
+    return z?z.value:"";
+  }catch(e){return "";}
+}
+
 function markSeen(id){seen.add(id);store.set("seen",[...seen]);}
+
+/* ---- passed pile ----
+   Everything swiped left. These stay in `seen`, so the normal deck can never
+   resurface them (rec.js filters the pool on `seen`) — this list exists only so
+   the pile can be replayed on purpose. Stored card-ready rather than slim()
+   because a replayed card has to render the same as a fresh one, and capped so
+   a heavy swiper can't fill localStorage. */
+const PASSED_MAX=200;
+let passed=store.get("passed",[]);
+function passRec(m){
+  return {id:m.id,title:mTitle(m),
+    coverImage:{large:m.coverImage&&m.coverImage.large,extraLarge:m.coverImage&&m.coverImage.extraLarge},
+    averageScore:m.averageScore||null,format:m.format||null,seasonYear:m.seasonYear||null,
+    episodes:m.episodes||null,duration:m.duration||null,
+    genres:(m.genres||[]).slice(0,4),description:(m.description||"").slice(0,320),
+    passedAt:Date.now()};
+}
+function addPassed(m){
+  passed=passed.filter(x=>x.id!==m.id);
+  passed.unshift(passRec(m));
+  if(passed.length>PASSED_MAX)passed.length=PASSED_MAX;
+  store.set("passed",passed);
+}
+function removePassed(id){passed=passed.filter(x=>x.id!==id);store.set("passed",passed);}
+function clearPassed(){passed=[];store.set("passed",passed);}
 function addWant(m){if(!want.some(x=>x.id===m.id)){want.unshift(m);store.set("want",want);}}
 function removeWant(id){want=want.filter(x=>x.id!==id);store.set("want",want);}
 function addWatched(rec){

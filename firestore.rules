@@ -1,0 +1,54 @@
+rules_version = '2';
+
+/* taku · Firestore security rules
+   ============================================================================
+   Paste into Firebase Console → Firestore Database → Rules → Publish.
+
+   This file is the ONLY thing that actually protects user data. Every check in
+   the JavaScript is convenience — anyone can open devtools and skip it. If a
+   rule below is wrong, the app is open regardless of what the client does.
+
+   Read it as: nobody can touch anything unless a rule explicitly allows it.
+   The default at the bottom denies everything not matched above. */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn()      { return request.auth != null; }
+    function verified()      { return signedIn() && request.auth.token.email_verified == true; }
+    function isOwner(uid)    { return signedIn() && request.auth.uid == uid; }
+
+    /* A user's own document: their profile and their synced lists.
+       Read/write only by that user, and only once the email is confirmed —
+       this is where "confirmation email" stops being decoration and becomes
+       enforcement, because it is checked on the server. */
+    match /users/{uid} {
+      allow read, update, delete: if isOwner(uid) && verified();
+      // create runs during signup, before the inbox trip, so it cannot require
+      // verification — but it can require that you only create your OWN doc
+      allow create: if isOwner(uid);
+    }
+
+    /* Username reservations. The document id IS the username, so Firestore's
+       "create fails if the document already exists" gives atomic uniqueness
+       with no server of ours involved.
+
+       Public read is deliberate: the signup form needs to tell you a name is
+       taken before you submit. It exposes only which names exist, never who
+       owns one — no email, no profile data.
+
+       No update rule at all: a claim can be made or released, never reassigned
+       to someone else. */
+    match /usernames/{name} {
+      allow read:   if true;
+      allow create: if signedIn()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['uid'])
+                    && name.size() >= 3 && name.size() <= 18
+                    && name.matches('^[a-z0-9_]+$');
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}

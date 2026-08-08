@@ -42,8 +42,6 @@ main{width:100%;max-width:480px;flex:1;padding:4px 14px calc(var(--nav-h) + var(
 nav.bottom{
   --nb-w:66px;    /* side tab width   */
   --nb-h:54px;    /* side tab height  */
-  --nm-w:54px;    /* centre button    */
-  --nm-h:54px;
   --nb-gap:4px; --nb-px:8px; --nb-py:6px;
   --nb-ease:cubic-bezier(.22,1,.36,1);
   position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 9px);
@@ -65,27 +63,20 @@ nav.bottom{
 .navbtn.active .ic{stroke-width:2.5}
 .navbtn.active small{font-weight:800}
 .navbtn .n{position:absolute;z-index:2;top:8px;right:calc(50% - 22px);background:var(--accent2);color:#fff;font-size:8.5px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
-/* Tinder-style center Swipe. Keeps the round shape and an accent ring so it
-   stays the obvious primary action, but the saturated *fill* only lands on it
-   when it IS the current view — a permanently purple button reads as
-   "you are here" on every screen. */
-.navbtn.navmain{flex:0 0 auto;align-self:center;width:var(--nm-w);height:var(--nm-h);border-radius:50%;
-  background:rgba(139,92,246,.14);color:#c7b6fd;
-  box-shadow:inset 0 0 0 1.5px rgba(139,92,246,.45)}
-.navbtn.navmain .icw{width:25px;height:25px}
-.navbtn.navmain:active{transform:scale(.9)}
+/* Swipe leads the row. Three equal tabs — the round centre FAB is gone,
+   because a circle pinned to the left edge reads as lopsided, not primary.
+   Leading position + the sliding pill carry the emphasis instead. */
+.navbtn:active{transform:scale(.94)}
 
 /* --- selection treatment -------------------------------------------------
    Fallback (engines without :has()): the pill is painted by the tab itself. */
 .navbtn.active{background:linear-gradient(135deg,rgba(139,92,246,.34),rgba(236,72,153,.24));
   box-shadow:inset 0 0 0 1px rgba(139,92,246,.55)}
-.navbtn.navmain.active{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 6px 18px rgba(139,92,246,.55)}
 /* Preferred: ONE shared pill that slides between tabs. Being a single element,
    it is physically impossible for two tabs to look selected; with no .active
    tab at all (profile view) it just fades out. */
 @supports selector(:has(*)){
-  .navbtn.active,.navbtn.navmain.active{background:transparent;box-shadow:none}
+  .navbtn.active{background:transparent;box-shadow:none}
   nav.bottom::before{
     content:"";position:absolute;z-index:0;pointer-events:none;
     top:var(--nb-py);left:0;width:var(--nb-w);height:var(--nb-h);border-radius:999px;
@@ -96,18 +87,13 @@ nav.bottom{
       height .38s var(--nb-ease),top .38s var(--nb-ease),left .38s var(--nb-ease),
       background .3s ease,box-shadow .3s ease,opacity .22s ease;
   }
-  nav.bottom:has(.navbtn[data-view="browse"].active)::before{
-    opacity:1;width:var(--nb-w);height:var(--nb-h);top:var(--nb-py);
-    transform:translateX(var(--nb-px)) scale(1)}
+  /* slot n sits at px + n*(w+gap) — uniform now that every tab is the same size */
   nav.bottom:has(.navbtn[data-view="deck"].active)::before{
-    opacity:1;width:var(--nm-w);height:var(--nm-h);
-    top:calc(var(--nb-py) + (var(--nb-h) - var(--nm-h))/2);
-    transform:translateX(calc(var(--nb-px) + var(--nb-w) + var(--nb-gap))) scale(1);
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 6px 18px rgba(139,92,246,.55)}
+    opacity:1;transform:translateX(var(--nb-px)) scale(1)}
+  nav.bottom:has(.navbtn[data-view="browse"].active)::before{
+    opacity:1;transform:translateX(calc(var(--nb-px) + var(--nb-w) + var(--nb-gap))) scale(1)}
   nav.bottom:has(.navbtn[data-view="watched"].active)::before{
-    opacity:1;width:var(--nb-w);height:var(--nb-h);top:var(--nb-py);
-    transform:translateX(calc(var(--nb-px) + var(--nb-w) + var(--nb-gap) + var(--nm-w) + var(--nb-gap))) scale(1)}
+    opacity:1;transform:translateX(calc(var(--nb-px) + 2*(var(--nb-w) + var(--nb-gap)))) scale(1)}
 }
 @media (prefers-reduced-motion:reduce){
   nav.bottom::before{transition:opacity .12s ease,background .12s ease}
@@ -118,29 +104,24 @@ nav.bottom{
    the full height of the screen */
 body.nav-side nav.bottom{
   /* same geometry contract, smaller numbers — the pill maths follows along */
-  --nb-w:46px;--nb-h:44px;--nm-w:42px;--nm-h:42px;--nb-gap:2px;--nb-px:5px;--nb-py:6px;
+  --nb-w:46px;--nb-h:44px;--nb-gap:2px;--nb-px:5px;--nb-py:6px;
   left:auto;right:8px;bottom:auto;top:50%;transform:translateY(-50%);
   flex-direction:column;border-radius:999px;
 }
 body.nav-side .navbtn small{display:none}
 body.nav-side .navbtn .icw{width:19px;height:19px}
-body.nav-side .navbtn.navmain .icw{width:20px;height:20px}
 body.nav-side .navbtn .n{top:2px;right:4px}
 /* the shared pill now travels down the column instead of across the row */
 @supports selector(:has(*)){
   body.nav-side nav.bottom::before{
     top:0;left:var(--nb-px);width:var(--nb-w);height:var(--nb-h);
     transform:translateY(var(--nb-py)) scale(.7)}
-  body.nav-side nav.bottom:has(.navbtn[data-view="browse"].active)::before{
-    top:0;left:var(--nb-px);width:var(--nb-w);height:var(--nb-h);
-    transform:translateY(var(--nb-py)) scale(1)}
   body.nav-side nav.bottom:has(.navbtn[data-view="deck"].active)::before{
-    top:0;left:calc(var(--nb-px) + (var(--nb-w) - var(--nm-w))/2);
-    width:var(--nm-w);height:var(--nm-h);
+    transform:translateY(var(--nb-py)) scale(1)}
+  body.nav-side nav.bottom:has(.navbtn[data-view="browse"].active)::before{
     transform:translateY(calc(var(--nb-py) + var(--nb-h) + var(--nb-gap))) scale(1)}
   body.nav-side nav.bottom:has(.navbtn[data-view="watched"].active)::before{
-    top:0;left:var(--nb-px);width:var(--nb-w);height:var(--nb-h);
-    transform:translateY(calc(var(--nb-py) + var(--nb-h) + var(--nb-gap) + var(--nm-h) + var(--nb-gap))) scale(1)}
+    transform:translateY(calc(var(--nb-py) + 2*(var(--nb-h) + var(--nb-gap)))) scale(1)}
 }
 body.nav-side main{padding-bottom:22px}    /* nav no longer sits at the bottom */
 /* with the island off the bottom, the card takes the space back */
@@ -718,13 +699,6 @@ body.dragging-row .rankrow{cursor:grabbing}
   body.nav-side nav.bottom .navbtn small{display:block;font-size:14px;letter-spacing:0}
   nav.bottom .navbtn .icw,
   body.nav-side nav.bottom .navbtn .icw{width:21px;height:21px}
-  /* the centre button is just another row here — the sidebar already gives it prominence */
-  nav.bottom .navbtn.navmain,
-  body.nav-side nav.bottom .navbtn.navmain{
-    width:100%;height:52px;border-radius:14px;background:transparent;box-shadow:none;color:var(--dim);
-  }
-  nav.bottom .navbtn.navmain::after{content:"Swipe";font-size:14px;font-weight:600;letter-spacing:0}
-  nav.bottom .navbtn.navmain.active{color:#fff}
   nav.bottom .navbtn .n{position:static;margin-left:auto}
   /* the sliding pill is horizontal-only; on the rail each item paints its own */
   nav.bottom::before{display:none !important}
@@ -734,11 +708,6 @@ body.dragging-row .rankrow{cursor:grabbing}
   body.nav-side nav.bottom .navbtn.active{
     background:linear-gradient(135deg,rgba(139,92,246,.34),rgba(236,72,153,.22));
     box-shadow:inset 0 0 0 1px rgba(139,92,246,.55);color:#fff;
-  }
-  body nav.bottom .navbtn.navmain.active,
-  body.nav-side nav.bottom .navbtn.navmain.active{
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    box-shadow:0 6px 18px rgba(139,92,246,.45);color:#fff;
   }
 
   header{max-width:1040px;padding:18px 26px 0}
@@ -798,3 +767,212 @@ body.dragging-row .rankrow{cursor:grabbing}
 .credits{margin:20px 2px 6px;font-size:11px;line-height:1.65;color:var(--dim);text-align:center}
 .credits a{color:var(--accent);text-decoration:none}
 .credits a:hover{text-decoration:underline}
+.adultbadge{display:inline-block;background:var(--nope);color:#fff;font:800 8.5px ui-monospace,monospace;
+  padding:2px 5px;border-radius:5px;margin-right:7px;vertical-align:1px;letter-spacing:.3px}
+
+/* ============ inline demos ============
+   Small looping demonstrations that replace the paragraphs that used to sit
+   under confusing controls. One Skip turns them all off (see js/demo.js);
+   the collapsed state leaves a "Show me how" affordance behind. */
+.demo{margin:2px 0 20px}
+.demohead{display:flex;align-items:center;justify-content:space-between;margin:0 2px 9px}
+.demohead>span{font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--dim);opacity:.8}
+.demoskip{background:transparent;border:0;color:var(--dim);font-size:11.5px;font-weight:700;
+  cursor:pointer;padding:4px 8px;border-radius:8px;transition:.15s}
+.demoskip:hover{color:var(--txt);background:rgba(255,255,255,.07)}
+.demoshow{width:100%;background:transparent;border:1px dashed var(--line);color:var(--dim);
+  font-size:12px;font-weight:700;padding:11px;border-radius:12px;cursor:pointer;transition:.15s}
+.demoshow:hover{color:var(--txt);border-color:rgba(139,92,246,.5)}
+
+.dstage{position:relative;height:180px;border-radius:16px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  background:radial-gradient(130% 92% at 50% 4%,rgba(139,92,246,.15),transparent 66%),rgba(255,255,255,.022);
+  border:1px solid var(--line)}
+.democap{min-height:34px;display:block;text-align:center;
+  font-size:12.5px;color:var(--dim);line-height:1.45;padding:11px 8px 0}
+.democap b{color:var(--txt);font-weight:800}
+.demodots{display:flex;justify-content:center;gap:5px;margin-top:3px}
+.demodots i{width:5px;height:5px;border-radius:3px;background:var(--line);transition:.25s}
+.demodots i.on{background:var(--accent);width:15px}
+
+/* --- swipe: a card miming each gesture, bubbles round the edge --- */
+.dstage.d-swipe .gcard{position:absolute;top:50%;left:50%;width:60px;height:84px;margin:-42px 0 0 -30px;
+  border-radius:12px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(155deg,var(--accent),var(--accent2));
+  box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.18);
+  transition:transform .55s cubic-bezier(.22,1,.36,1),opacity .35s ease}
+.dstage.d-swipe .gcard .icw{width:21px;height:21px;opacity:.92}
+.gbub{position:absolute;display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;letter-spacing:.2px;color:var(--dim);
+  background:rgba(255,255,255,.05);border:1px solid var(--line);
+  padding:5px 10px;border-radius:999px;white-space:nowrap;
+  transition:opacity .25s ease,color .25s ease,border-color .25s ease,background .25s ease,transform .25s ease;
+  opacity:.4}
+.gbub .icw{width:12px;height:12px}
+.gbub[data-g="left"] {left:10px;top:50%;margin-top:-13px}
+.gbub[data-g="right"]{right:10px;top:50%;margin-top:-13px}
+.gbub[data-g="up"]   {left:50%;top:12px;transform:translateX(-50%)}
+.gbub[data-g="tap"]  {left:50%;bottom:12px;transform:translateX(-50%)}
+.dstage.d-swipe[data-k="left"]  .gbub[data-g="left"],
+.dstage.d-swipe[data-k="right"] .gbub[data-g="right"],
+.dstage.d-swipe[data-k="up"]    .gbub[data-g="up"],
+.dstage.d-swipe[data-k="tap"]   .gbub[data-g="tap"]{opacity:1;color:#fff;
+  background:rgba(139,92,246,.22);border-color:rgba(139,92,246,.62)}
+.dstage.d-swipe[data-k="left"]  .gbub[data-g="left"] {color:#ffb4b4;background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.55)}
+.dstage.d-swipe[data-k="right"] .gbub[data-g="right"]{color:#a8f0c6;background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.55)}
+.dstage.d-swipe[data-k="up"]    .gbub[data-g="up"]   {transform:translateX(-50%) scale(1.06)}
+.dstage.d-swipe[data-k="tap"]   .gbub[data-g="tap"]  {transform:translateX(-50%) scale(1.06)}
+.dstage.d-swipe[data-k="left"]  .gcard{transform:translateX(-80px) rotate(-16deg);opacity:.1}
+.dstage.d-swipe[data-k="right"] .gcard{transform:translateX(80px) rotate(16deg);opacity:.1}
+.dstage.d-swipe[data-k="up"]    .gcard{transform:translateY(-60px) scale(.88);opacity:.1}
+.dstage.d-swipe[data-k="tap"]   .gcard{transform:scale(.87)}
+
+/* --- rate: the tier row and its two escape hatches --- */
+.dstage.d-rate{flex-direction:column;gap:14px}
+.dtiers{display:flex;gap:7px}
+.dt{width:38px;height:44px;border-radius:10px;display:grid;place-items:center;
+  font-size:15px;font-weight:900;color:#0d0b14;opacity:.34;transition:.3s}
+.dalts{display:flex;gap:8px}
+.dalt{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--dim);
+  background:rgba(255,255,255,.05);border:1px solid var(--line);padding:7px 12px;border-radius:999px;
+  opacity:.42;transition:.3s}
+.dalt .icw{width:12px;height:12px}
+.dstage.d-rate[data-k="tiers"] .dt{opacity:1;transform:translateY(-2px)}
+.dstage.d-rate[data-k="watching"] .dalt[data-a="watching"],
+.dstage.d-rate[data-k="notier"]   .dalt[data-a="notier"]{opacity:1;color:#fff;
+  background:rgba(139,92,246,.22);border-color:rgba(139,92,246,.62);transform:scale(1.05)}
+
+/* --- year / filters: a row of chips, one lit at a time --- */
+.dstage.d-year,.dstage.d-filters{flex-wrap:wrap;padding:0 16px}
+.dchip{font-size:12px;font-weight:700;color:var(--dim);background:rgba(255,255,255,.05);
+  border:1px solid var(--line);padding:9px 14px;border-radius:999px;opacity:.4;transition:.3s}
+.dstage.d-year[data-k="popular"]  .dchip[data-c="popular"],
+.dstage.d-year[data-k="rated"]    .dchip[data-c="rated"],
+.dstage.d-year[data-k="gems"]     .dchip[data-c="gems"],
+.dstage.d-filters[data-k="origin"]   .dchip[data-c="origin"],
+.dstage.d-filters[data-k="platform"] .dchip[data-c="platform"],
+.dstage.d-filters[data-k="format"]   .dchip[data-c="format"]{opacity:1;color:#fff;
+  background:rgba(139,92,246,.24);border-color:rgba(139,92,246,.65);transform:scale(1.07)}
+
+/* --- rank: three rows, the middle one lifting and moving --- */
+/* --pitch is row height + gap: the swap animation moves rows by exactly one
+   slot, so it must track the real geometry rather than a guessed pixel value.
+   flex:none because .dstage is a flex container and would otherwise shrink the
+   column below its width; nowrap because a wrapped title changes the height and
+   silently breaks the pitch. */
+.drows{--pitch:41px;flex:none;display:flex;flex-direction:column;gap:7px;width:190px;max-width:100%}
+.drow{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;color:var(--dim);
+  background:rgba(255,255,255,.05);border:1px solid var(--line);padding:0 12px;border-radius:11px;
+  height:34px;box-sizing:border-box;white-space:nowrap;overflow:hidden;
+  transition:transform .5s cubic-bezier(.22,1,.36,1),box-shadow .3s ease,opacity .3s ease,color .3s ease}
+.drow i{font-style:normal;font-size:10.5px;font-weight:900;color:var(--accent);
+  min-width:14px;text-align:center;opacity:.8}
+.dstage.d-rank[data-k="hold"] .drow[data-r="2"]{color:#fff;transform:scale(1.05);
+  box-shadow:0 8px 20px rgba(0,0,0,.5);border-color:rgba(139,92,246,.6)}
+.dstage.d-rank[data-k="drag"] .drow[data-r="2"]{color:#fff;transform:translateY(calc(var(--pitch) * -1)) scale(1.05);
+  box-shadow:0 12px 26px rgba(0,0,0,.55);border-color:rgba(139,92,246,.6)}
+.dstage.d-rank[data-k="drag"] .drow[data-r="1"]{transform:translateY(var(--pitch))}
+.dstage.d-rank[data-k="drop"] .drow[data-r="2"]{transform:translateY(calc(var(--pitch) * -1));color:#fff;
+  background:rgba(139,92,246,.18);border-color:rgba(139,92,246,.6)}
+.dstage.d-rank[data-k="drop"] .drow[data-r="1"]{transform:translateY(var(--pitch))}
+
+/* Nothing to follow without motion — light everything and let the caption lead */
+@media (prefers-reduced-motion:reduce){
+  .dstage.d-swipe .gcard,.drow{transition:none}
+  .gbub,.dt,.dalt,.dchip{opacity:1}
+}
+
+/* Done used to butt straight into the option grid above it — and since a
+   selected .langopt is the same purple, the two fused into one blob. */
+.sheet .savebtn{margin-top:16px}
+
+/* Phones: the stage has to shrink or the sheet needs scrolling to reach Done.
+   Everything scales from the stage height, so this is a short block. */
+@media (max-width:430px){
+  .demo{margin-bottom:16px}
+  .dstage{height:150px}
+  .dstage.d-swipe .gcard{width:52px;height:72px;margin:-36px 0 0 -26px;border-radius:10px}
+  .dstage.d-swipe .gcard .icw{width:18px;height:18px}
+  .gbub{font-size:10.5px;padding:4px 9px;gap:4px}
+  .gbub[data-g="left"]{left:8px;margin-top:-12px}
+  .gbub[data-g="right"]{right:8px;margin-top:-12px}
+  .gbub[data-g="up"]{top:10px}
+  .gbub[data-g="tap"]{bottom:10px}
+  .dstage.d-swipe[data-k="left"]  .gcard{transform:translateX(-62px) rotate(-16deg)}
+  .dstage.d-swipe[data-k="right"] .gcard{transform:translateX(62px) rotate(16deg)}
+  .dstage.d-swipe[data-k="up"]    .gcard{transform:translateY(-46px) scale(.88)}
+  .dstage.d-rate{gap:11px}
+  .dt{width:33px;height:39px;border-radius:9px;font-size:14px}
+  .dtiers{gap:6px}
+  .dalt{font-size:10.5px;padding:6px 10px}
+  .dchip{font-size:11px;padding:8px 12px}
+  .drows{--pitch:37px;width:170px}
+  .drow{font-size:11px;padding:0 10px;height:30px}
+  .democap{font-size:12px;min-height:31px;padding-top:9px}
+}
+
+/* Only the swipe stage needs room for a card to travel through. A row of chips
+   in a 180px box is dead space that pushes Done below the fold. */
+.dstage.d-year,.dstage.d-filters{height:104px}
+.dstage.d-rate{height:154px}
+.dstage.d-rank{height:162px}
+@media (max-width:430px){
+  .dstage.d-year,.dstage.d-filters{height:92px}
+  .dstage.d-rate{height:136px}
+  .dstage.d-rank{height:146px}
+}
+
+/* ============ passed-pile replay ============ */
+.replaybar{display:flex;align-items:center;gap:9px;margin:0 0 8px;
+  background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(236,72,153,.14));
+  border:1px solid rgba(139,92,246,.45);border-radius:13px;padding:9px 10px 9px 12px}
+.replaybar .icw{width:15px;height:15px;color:#c7b6fd;flex:none}
+.rbtext{flex:1;font-size:12.5px;font-weight:700;color:#e9e2ff}
+.rbtext b{font-weight:900}
+.rbdone{flex:none;background:rgba(255,255,255,.12);border:0;color:#fff;font-size:12px;font-weight:800;
+  padding:6px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+.rbdone:hover{background:rgba(255,255,255,.2)}
+.minibtn{flex:none;background:var(--accent);border:0;color:#fff;font-size:12.5px;font-weight:700;
+  padding:9px 16px;border-radius:10px;cursor:pointer;transition:.15s}
+.minibtn:disabled{background:var(--bg);color:var(--dim);cursor:default;border:1px solid var(--line)}
+.empty .savebtn{margin-top:18px;max-width:280px}
+.minibtn.ghost{background:transparent;border:1px solid rgba(139,92,246,.55);color:#c7b6fd;margin-right:6px}
+.minibtn.ghost:hover{background:rgba(139,92,246,.16)}
+/* timezone picker — a native select so the OS gives us search on a 400-entry list */
+.tzsel{width:100%;appearance:none;-webkit-appearance:none;cursor:pointer;
+  background:var(--bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b8398' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 12px center;
+  background-size:15px;padding-right:36px}
+.tzsel option{background:var(--bg2);color:var(--txt)}
+
+/* ============ account gate (preview — off by default) ============ */
+.authgate .ob-inner{max-width:400px}
+.agtabs{margin:18px 0 16px}
+.agrow{margin-bottom:11px}
+.agrow .inp{margin:0}
+.agerr{font-size:11.5px;color:#ff9b9b;line-height:1.4;max-height:0;overflow:hidden;
+  opacity:0;transition:max-height .18s ease,opacity .18s ease,margin .18s ease}
+.agerr.on{max-height:44px;opacity:1;margin-top:5px}
+.pwwrap{position:relative}
+.pwwrap .inp{padding-right:44px}
+.pweye{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:32px;height:32px;border:0;background:transparent;cursor:pointer;border-radius:8px;
+  display:grid;place-items:center;opacity:.55;transition:.15s}
+.pweye::before{content:"";width:17px;height:17px;background:currentColor;color:var(--dim);
+  -webkit-mask:var(--eye) center/contain no-repeat;mask:var(--eye) center/contain no-repeat}
+.pweye:hover{opacity:1;background:rgba(255,255,255,.06)}
+.pweye.on{opacity:1}
+:root{--eye:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z'/><circle cx='12' cy='12' r='3'/></svg>")}
+.pwbar{display:flex;gap:4px;margin-top:7px}
+.pwbar i{flex:1;height:3px;border-radius:2px;background:var(--line);transition:background .2s}
+.pwbar i.weak{background:#ef4444}.pwbar i.ok{background:#f59e0b}
+.pwbar i.good{background:#84cc16}.pwbar i.strong{background:#22c55e}
+.aglink{display:block;width:100%;margin-top:11px;background:transparent;border:0;
+  color:var(--dim);font-size:12.5px;font-weight:600;cursor:pointer;padding:6px;transition:.15s}
+.aglink:hover{color:var(--txt)}
+.authgate .ob-note{margin-top:16px}
+.vmark{width:52px;height:52px;margin:22px auto 6px;border-radius:50%;display:grid;place-items:center;
+  color:#22c55e;background:rgba(34,197,94,.14);box-shadow:inset 0 0 0 1.5px rgba(34,197,94,.45)}
+.vmark svg{width:24px;height:24px}
+.authgate .ob-tag b{color:var(--txt);font-weight:800}
+.fbtn.danger{border-color:rgba(239,68,68,.5);color:#ff9b9b;background:transparent}
+.fbtn.danger:hover{background:rgba(239,68,68,.14)}

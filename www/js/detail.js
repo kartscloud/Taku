@@ -155,7 +155,7 @@ function renderDetail(m,full){
   $("#detailSheet").querySelectorAll(".dact").forEach(btn=>btn.onclick=()=>{
     const a=btn.dataset.da;
     if(a==="nope"||a==="want"||a==="watch"){closeDetail();detailAction(m,a);return;}
-    if(a==="rerank"){const w=watched.find(x=>x.id===m.id);if(w){closeDetail();pendingWatch={rec:w,genres:w.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");}return;}
+    if(a==="rerank"){const w=watched.find(x=>x.id===m.id);if(w){closeDetail();pendingWatch={rec:w,genres:w.genres||[]};$("#rateTitle").textContent=mTitle(m);$("#rateModal").classList.add("on");mountDemos($("#rateModal"));startDemos("rateModal");}return;}
     if(a==="rmwatched"){removeWatched(m.id);refreshCounts();closeDetail();toast("Removed from your tiers");return;}
     if(a==="rmwant"){removeWant(m.id);refreshCounts();closeDetail();toast("Removed from Want");return;}
   });

@@ -47,14 +47,19 @@ const BROWSE_SORT={
 function browseSorter(){return BROWSE_SORT[browseFilters.sort]||BROWSE_SORT.popularity;}
 const _DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const _MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-function _dayKey(at){const d=new Date(at*1000);return d.getFullYear()+"_"+d.getMonth()+"_"+d.getDate();}
+/* Day bucketing and labelling both run in the user's chosen zone (see
+   tzParts in state.js) so a header and the times under it can never disagree. */
+const _WD={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+function _dayKey(at){return tzDayKey(at);}
 function _dayLabel(at){
-  const d=new Date(at*1000),now=new Date(),tm=new Date(now.getTime()+864e5);
-  const same=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
-  let name=_DAYS[d.getDay()];if(same(d,now))name="Today";else if(same(d,tm))name="Tomorrow";
-  return name+" · "+_MON[d.getMonth()]+" "+d.getDate();
+  const p=tzParts(at), nowS=Math.floor(Date.now()/1000);
+  let name=_DAYS[_WD[p.wd]!==undefined?_WD[p.wd]:0];
+  if(tzDayKey(at)===tzDayKey(nowS))name="Today";
+  else if(tzDayKey(at)===tzDayKey(nowS+86400))name="Tomorrow";
+  else if(tzDayKey(at)===tzDayKey(nowS-86400))name="Yesterday";
+  return name+" · "+_MON[p.mo]+" "+p.d;
 }
-function _timeLabel(at){try{return new Date(at*1000).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}catch(e){return "";}}
+function _timeLabel(at){return tzTimeLabel(at);}
 /* AniList's countryOfOrigin takes one value, so a fetch-level narrow is only
    possible when exactly one origin is picked. With several we fetch unfiltered
    (which returns all countries) and narrow client-side. */
@@ -250,6 +255,29 @@ function exitYear(){
   renderBrowse();
 }
 
+/* Batch drops (Star Wars: Visions, most Netflix/Disney+ seasons) return one
+   airingSchedule row PER EPISODE, all at the same timestamp — which rendered as
+   nine identical posters in a row. Collapse same-show rows within a day into one
+   card and say the range instead. Merging per day, not per week, so a normal
+   weekly show still gets one card per airing. */
+function _mergeEpisodes(items){
+  const byId=new Map();
+  items.forEach(e=>{
+    const cur=byId.get(e.m.id);
+    if(!cur){byId.set(e.m.id,{m:e.m,at:e.at,eps:[e.ep]});return;}
+    cur.eps.push(e.ep);
+    if(e.at<cur.at)cur.at=e.at;          // label the batch with its earliest slot
+  });
+  return [...byId.values()].map(e=>({...e,eps:e.eps.sort((a,b)=>a-b)}));
+}
+function _epLabel(e){
+  const eps=e.eps||[e.ep];
+  if(eps.length<=1)return "EP "+eps[0];
+  const lo=eps[0],hi=eps[eps.length-1];
+  // a gap means it isn't a clean run, so give the count rather than lie with a range
+  return (hi-lo+1)===eps.length ? "EP "+lo+"–"+hi : eps.length+" EPS";
+}
+
 /* weekly airing schedule (animeschedule-style poster grid) */
 function schcard(e){
   const m=e.m,img=(m.coverImage&&(m.coverImage.extraLarge||m.coverImage.large))||"";
@@ -259,15 +287,17 @@ function schcard(e){
     <div class="schart" style="background-image:url('${img}')">
       <span class="schtime">${_timeLabel(e.at)}</span>
       ${flag}${score}
-      <span class="schep">EP ${e.ep}</span>
+      <span class="schep">${_epLabel(e)}</span>
       ${m.audio?`<span class="schaud">${m.audio.sub?'<i class="sub">SUB</i>':""}${m.audio.dub?'<i class="dub">DUB</i>':""}</span>`:""}
     </div>
     <div class="schname">${mTitle(m)}</div>
   </div>`;
 }
 function _weekRangeLabel(off){
-  const d0=new Date(Date.now()+off*7*864e5), d1=new Date(Date.now()+(off*7+6)*864e5);
-  return _MON[d0.getMonth()]+" "+d0.getDate()+" – "+_MON[d1.getMonth()]+" "+d1.getDate();
+  // must match fetchSchedule's window exactly, or the header lies about the range
+  const a=tzStartOfDay(Math.floor(Date.now()/1000))+off*7*86400;
+  const p0=tzParts(a), p1=tzParts(a+6*86400);
+  return _MON[p0.mo]+" "+p0.d+" – "+_MON[p1.mo]+" "+p1.d;
 }
 function _weekNavHTML(){
   const label=_schedWeek===0?"This week":_schedWeek===-1?"Last week":_schedWeek===1?"Next week":
@@ -292,6 +322,7 @@ function paintSchedule(){
   }else{
     const order=[],map={};
     entries.forEach(e=>{const k=_dayKey(e.at);if(!map[k]){map[k]={at:e.at,items:[]};order.push(k);}map[k].items.push(e);});
+    order.forEach(k=>{map[k].items=_mergeEpisodes(map[k].items);});
     const cmp=SCHED_SORT[browseFilters.sort]||SCHED_SORT.time;
     order.forEach(k=>map[k].items.sort(cmp));      // days stay in date order; titles reorder inside each
     const tag=browseFilters.sort==="time"?"":`<span class="schsort">${SORT_LABEL[browseFilters.sort]}</span>`;
@@ -328,8 +359,40 @@ async function renderBrowse(){
   if(currentView==="browse"&&browseTab==="browse")paintBrowse();
 }
 
+/* Timezone picker. Intl.supportedValuesOf gives the full IANA list on modern
+   engines; the fallback covers the zones an anime schedule actually needs. */
+const TZ_FALLBACK=["Asia/Tokyo","Asia/Seoul","Asia/Shanghai","Asia/Kolkata","Asia/Dubai",
+  "Europe/London","Europe/Paris","Europe/Berlin","Europe/Moscow","America/Sao_Paulo",
+  "America/New_York","America/Chicago","America/Denver","America/Los_Angeles",
+  "Australia/Sydney","Pacific/Auckland","UTC"];
+let _tzBuilt=false;
+function _buildTzPicker(){
+  const sel=$("#bsTz");
+  if(!sel||_tzBuilt)return;
+  let zones;
+  try{zones=Intl.supportedValuesOf("timeZone");}catch(e){zones=null;}
+  if(!zones||!zones.length)zones=TZ_FALLBACK;
+  const dev=deviceTz();
+  const opts=[`<option value="">Device default — ${dev} (${tzOffsetLabel(dev)})</option>`]
+    .concat(zones.map(z=>`<option value="${z}">${z.replace(/_/g," ")} (${tzOffsetLabel(z)})</option>`));
+  sel.innerHTML=opts.join("");
+  _tzBuilt=true;
+}
+function _syncTzUI(){
+  _buildTzPicker();
+  const sel=$("#bsTz"),note=$("#bsTzNote");
+  if(sel)sel.value=store.get("tz","");
+  if(note){
+    const tz=tzName();
+    note.innerHTML=`Schedule days and air times are shown in <b>${tz.replace(/_/g," ")}</b> (${tzOffsetLabel(tz)}). `+
+      `Japanese TV airs late at night, so a show listed 01:30 JST Monday lands on Sunday evening in the US.`;
+  }
+}
 function _syncSettingsUI(){
   const t=$("#bsNew");if(t)t.classList.toggle("on",browseFilters.new);
+  _syncTzUI();
+  const adRow=$("#bsAdultRow");if(adRow)adRow.hidden=!canAdult();   // under 18: the switch does not exist
+  const ad=$("#bsAdult");if(ad)ad.classList.toggle("on",adultOn());
   document.querySelectorAll("#bsSort [data-sort]").forEach(b=>b.classList.toggle("on",b.dataset.sort===browseFilters.sort));
   document.querySelectorAll("#bsAudio [data-audio]").forEach(b=>b.classList.toggle("on",browseFilters.audio.includes(b.dataset.audio)));
   const an=$("#audioNote");
@@ -346,8 +409,20 @@ function _updateGearDot(){
 }
 
 function initBrowse(){
-  $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");};
+  $("#browseGear").onclick=()=>{_syncSettingsUI();$("#browseSettings").classList.add("on");startDemos("browseSettings");};
   $("#bsNew").onclick=()=>{browseFilters.new=!browseFilters.new;_syncSettingsUI();};
+  // search-only: stored separately from browseFilters because it never touches the feeds
+  /* Changing the zone re-buckets every entry into different days, and the fetch
+     window itself is anchored to local midnight — so both caches must go. */
+  const tzSel=$("#bsTz");
+  if(tzSel)tzSel.onchange=()=>{
+    store.set("tz",tzSel.value);
+    _schedCache={};                      // client-side memo, keyed by week
+    _syncTzUI();buzz(6);
+    if(browseTab==="schedule")renderSchedule();
+    toast("Times now in "+tzName().replace(/_/g," "));
+  };
+  $("#bsAdult").onclick=()=>{if(!canAdult())return;store.set("searchAdult",!store.get("searchAdult",false));buzz(6);_syncSettingsUI();_lastQ="";};
   document.querySelectorAll("#bsSort [data-sort]").forEach(b=>b.onclick=()=>{browseFilters.sort=b.dataset.sort;buzz(6);_syncSettingsUI();});
   document.querySelectorAll("#bsAudio [data-audio]").forEach(b=>b.onclick=()=>{toggleFilter("audio",b.dataset.audio);buzz(6);_syncSettingsUI();});
   document.querySelectorAll("#bsOrigins [data-origin]").forEach(b=>b.onclick=()=>{toggleFilter("origins",b.dataset.origin);buzz(6);_syncSettingsUI();});
@@ -399,7 +474,7 @@ function initBrowse(){
   }
   const syncLens=()=>document.querySelectorAll("#ysLens [data-lens]")
     .forEach(b=>b.classList.toggle("on",b.dataset.lens===yearMode.lens));
-  $("#yearBtn").onclick=()=>{syncLens();$("#yearSheet").classList.add("on");};
+  $("#yearBtn").onclick=()=>{syncLens();$("#yearSheet").classList.add("on");startDemos("yearSheet");};
   $("#yearClose").onclick=()=>$("#yearSheet").classList.remove("on");
   document.querySelectorAll("#ysLens [data-lens]").forEach(b=>b.onclick=()=>{
     yearMode.lens=b.dataset.lens;syncLens();buzz(6);

@@ -77,6 +77,7 @@ function renderFriends(prof){
 }
 
 function renderProfile(){
+  if(typeof renderAuthZone==="function")renderAuthZone();
   const prof=computeProfile();
   window._lastProf=prof;
   renderIdentity(prof);renderFriends(prof);
@@ -100,7 +101,7 @@ function renderProfile(){
 
 function initProfile(){
   function openEdit(){
-    $("#inName").value=profile.name;$("#inHandle").value=profile.handle;$("#inBio").value=profile.bio;
+    $("#inName").value=profile.name;$("#inHandle").value=profile.handle;$("#inBio").value=profile.bio;$("#inAge").value=userAge()||"";
     $("#avPick").innerHTML=AVATARS.map(a=>`<button class="avopt${a===(profile.avatar||"🍥")?' sel':''}" data-av="${a}">${a}</button>`).join("");
     $("#editModal").classList.add("on");
   }
@@ -110,6 +111,9 @@ function initProfile(){
     profile.name=$("#inName").value.trim().slice(0,20);
     profile.handle=$("#inHandle").value.trim().replace(/\s+/g,"").slice(0,18);
     profile.bio=$("#inBio").value.trim().slice(0,120);
+    const age=parseInt($("#inAge").value,10);
+    profile.age=Number.isFinite(age)&&age>0&&age<=120?age:null;
+    if(!canAdult())store.set("searchAdult",false);   // dropping below 18 revokes it
     if(!profile.created)profile.created=Date.now();
     store.set("profile",profile);$("#editModal").classList.remove("on");
     const p=window._lastProf||computeProfile();renderIdentity(p);renderFriends(p);

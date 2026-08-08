@@ -9,7 +9,7 @@ function setView(v){
   document.body.classList.toggle("nav-side",v==="deck");  // Swipe: island goes vertical on the right
   ["deck","browse","watched","profile"].forEach(x=>{$("#view-"+x).style.display=x===v?"block":"none";});
   if(v!=="profile")stopNet();
-  if(v==="watched")renderWatched();
+  if(v==="watched"){resetTierTabs();renderWatched();}
   if(v==="deck")renderDeck();
   if(v==="browse")renderBrowse();
   if(v==="profile")renderProfile();
@@ -43,11 +43,11 @@ function initNav(){
   $("#clearGenres").onclick=()=>{deckGenres.length=0;store.set("deckGenres",deckGenres);$("#genreModal").classList.remove("on");updateFilterBadge();applyGenreFilter();toast("Filter cleared");};
   // swipe preferences
   const syncSwipeUI=()=>document.querySelectorAll("#swRate .langopt").forEach(b=>b.classList.toggle("on",b.dataset.sw===swipePrefs.rate));
-  $("#swipeGear").onclick=()=>{syncSwipeUI();$("#swipeSettings").classList.add("on");};
+  $("#swipeGear").onclick=()=>{syncSwipeUI();syncPassedRow();$("#swipeSettings").classList.add("on");startDemos("swipeSettings");};
   document.querySelectorAll("#swRate .langopt").forEach(b=>b.onclick=()=>{swipePrefs.rate=b.dataset.sw;syncSwipeUI();buzz(6);});
   $("#swipeSettingsDone").onclick=()=>{
     store.set("swipePrefs",swipePrefs);
-    $("#swipeSettings").classList.remove("on");
+    $("#swipeSettings").classList.remove("on");stopDemos("swipeSettings");
     $("#swipeGear").classList.toggle("active",swipePrefs.rate!=="ask");
     toast(swipePrefs.rate==="quick"?"Swiping right just marks watched":"You'll rate after each swipe");
   };
@@ -65,7 +65,7 @@ function initNav(){
   // browseSettings is NOT here: its filters mutate on tap, so dismissing it must
   // run the same commit path as Done (see initBrowse) or the picks are lost
   ["rateModal","detailModal","editModal","friendModal","genreModal","swipeSettings","confirmModal","yearSheet"].forEach(id=>{
-    $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");if(id==="rateModal")pendingWatch=null;}});
+    $("#"+id).addEventListener("click",e=>{if(e.target.id===id){$("#"+id).classList.remove("on");stopDemos(id);if(id==="rateModal")pendingWatch=null;}});
   });
   document.addEventListener("keydown",e=>{
     if(currentView!=="deck")return;
@@ -94,6 +94,9 @@ function initOnboard(){
     profile.avatar=av;
     profile.name=$("#obName").value.trim().slice(0,20);
     profile.handle=profile.name?profile.name.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,18):"";
+    const age=parseInt($("#obAge").value,10);
+    profile.age=Number.isFinite(age)&&age>0&&age<=120?age:null;
+    if(!canAdult())store.set("searchAdult",false);   // under 18 (or blank) can't leave it on
     if(!profile.created)profile.created=Date.now();
     store.set("profile",profile);
     picked.forEach(g=>{affinity[g]=(affinity[g]||0)+2;});
@@ -124,9 +127,13 @@ function hydrateIcons(){
 function updateFilterBadge(){const b=$("#filterCount");if(!b)return;b.textContent=deckGenres.length||"";$("#filterBtn").classList.toggle("active",deckGenres.length>0);}
 
 /* boot */
+sweepCaches();   // reclaim expired + superseded API caches before anything writes
 sortWatched();
-hydrateIcons();
-initNav();initSearch();initProfile();initOnboard();initCoach();initBrowse();
+hydrateIcons();mountDemos(document);
+/* Accounts are off by default; authBoot() returns true only when it has taken
+   over the screen, in which case normal onboarding must stay out of the way. */
+const _authTook=(typeof authBoot==="function")&&authBoot();
+initNav();initSearch();initProfile();if(!_authTook)initOnboard();initCoach();initBrowse();
 refreshCounts();updateFilterBadge();
 document.body.classList.toggle("nav-side",currentView==="deck"); // boot lands on the deck without calling setView
 $("#miniAv").textContent=profile.avatar||"🍥";
