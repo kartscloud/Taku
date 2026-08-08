@@ -1406,3 +1406,6 @@ select:focus-visible,textarea:focus-visible{
 .impnote{margin-top:10px;font-size:12px;color:var(--dim);line-height:1.5;
   border-top:1px solid var(--line);padding-top:9px}
 .impnote b{color:var(--accent)}
+.tiershead{display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.tiershead .segmented{margin-bottom:0}
+.tiershead .gearbtn{flex:none;align-self:stretch;height:auto}

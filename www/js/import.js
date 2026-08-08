@@ -175,6 +175,11 @@ function _stage(entries,sourceLabel){
 function initImport(){
   if(!$("#importSheet"))return;
   $("#impOpen")&&($("#impOpen").onclick=()=>{$("#settingsSheet").classList.remove("on");openImport();});
+  /* Two more ways in, because one row inside a settings sheet is not findable:
+     the Tiers header — where you go looking for "my list" — and onboarding, the
+     moment someone with an existing list most wants it. */
+  $("#tiersImport")&&($("#tiersImport").onclick=()=>openImport());
+  $("#obImport")&&($("#obImport").onclick=()=>openImport());
   $("#impClose").onclick=()=>$("#importSheet").classList.remove("on");
   document.querySelectorAll("#impTabs .seg").forEach(b=>b.onclick=()=>{
     const src=b.dataset.imp;

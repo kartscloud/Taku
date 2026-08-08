@@ -18,7 +18,7 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon.svg" />
-<link rel="stylesheet" href="css/app.css?v=128" />
+<link rel="stylesheet" href="css/app.css?v=129" />
 </head>
 <body>
 
@@ -70,9 +70,12 @@
 
   <!-- TIERS (List: Watching/Watched · Want) -->
   <section id="view-watched" style="display:none">
-    <div class="segmented" id="tierTabs">
+    <div class="tiershead">
+      <div class="segmented" id="tierTabs" style="flex:1">
       <button class="seg on" data-tiertab="list">List<span class="segn" id="cList"></span></button>
       <button class="seg" data-tiertab="want">Want<span class="segn" id="cWant"></span></button>
+      </div>
+      <button class="gearbtn icononly" id="tiersImport" title="Import your list from MyAnimeList or AniList" aria-label="Import your list"><span class="icw" data-ic="download"></span></button>
     </div>
     <div class="listsub" id="listSub">
       <button class="subbtn" data-listtab="watching">Watching<span class="subn" id="cWatching"></span></button>
@@ -400,6 +403,11 @@
       <span class="snt"><b>Picture &amp; banner</b><span>Faces, crests, your own photo</span></span>
       <span class="icw sngo" data-ic="arrowR"></span></button>
 
+    <div class="seth">Your list</div>
+    <button class="setnav" id="impOpen"><span class="icw" data-ic="download"></span>
+      <span class="snt"><b>Import from MAL or AniList</b><span>Bring your history in, ready to rank</span></span>
+      <span class="icw sngo" data-ic="arrowR"></span></button>
+
     <div class="seth">Swiping</div>
     <button class="setnav" data-go="swipe"><span class="icw" data-ic="cards"></span>
       <span class="snt"><b>Swipe preferences</b><span id="snSwipe">—</span></span>
@@ -428,11 +436,6 @@
     <div class="setrow" id="setAdultRow"><div class="setlabel"><b>Adult titles in search</b>
       <span>Search can reach 18+ titles. Feeds stay filtered either way.</span></div>
       <button class="toggle" id="setAdult" role="switch" aria-checked="false" aria-label="Allow adult titles in search"></button></div>
-
-    <div class="seth">Your list</div>
-    <button class="setnav" id="impOpen"><span class="icw" data-ic="download"></span>
-      <span class="snt"><b>Import from MAL or AniList</b><span>Bring your history in, ready to rank</span></span>
-      <span class="icw sngo" data-ic="arrowR"></span></button>
 
     <div class="seth">Your data <span class="sethnote">stays on this device</span></div>
     <div class="storagebar"><i id="storageFill"></i></div>
@@ -609,30 +612,31 @@
     <div class="ob-h">What do you vibe with? <span style="color:var(--dim);font-weight:400">(pick any — trains your feed)</span></div>
     <div class="ob-genres" id="obGenres"></div>
     <button class="ob-start" id="obStart">Start swiping<span class="icw" data-ic="arrowR"></span></button>
+    <button class="aglink" id="obImport">Already track anime? Import your list</button>
     <div class="ob-note">Everything stays on your device. No account, no tracking.</div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="auth-config.js?v=128"></script>
-<script src="js/data.js?v=128"></script>
-<script src="js/state.js?v=128"></script>
-<script src="js/api.js?v=128"></script>
-<script src="js/rec.js?v=128"></script>
-<script src="js/deck.js?v=128"></script>
-<script src="js/lists.js?v=128"></script>
-<script src="js/search.js?v=128"></script>
-<script src="js/art.js?v=128"></script>
-<script src="js/settings.js?v=128"></script>
-<script src="js/import.js?v=128"></script>
-<script src="js/compat.js?v=128"></script>
-<script src="js/profile.js?v=128"></script>
-<script src="js/detail.js?v=128"></script>
-<script src="js/browse.js?v=128"></script>
-<script src="js/demo.js?v=128"></script>
-<script src="js/auth.js?v=128"></script>
-<script src="js/share.js?v=128"></script>
-<script src="js/main.js?v=128"></script>
+<script src="auth-config.js?v=129"></script>
+<script src="js/data.js?v=129"></script>
+<script src="js/state.js?v=129"></script>
+<script src="js/api.js?v=129"></script>
+<script src="js/rec.js?v=129"></script>
+<script src="js/deck.js?v=129"></script>
+<script src="js/lists.js?v=129"></script>
+<script src="js/search.js?v=129"></script>
+<script src="js/art.js?v=129"></script>
+<script src="js/settings.js?v=129"></script>
+<script src="js/import.js?v=129"></script>
+<script src="js/compat.js?v=129"></script>
+<script src="js/profile.js?v=129"></script>
+<script src="js/detail.js?v=129"></script>
+<script src="js/browse.js?v=129"></script>
+<script src="js/demo.js?v=129"></script>
+<script src="js/auth.js?v=129"></script>
+<script src="js/share.js?v=129"></script>
+<script src="js/main.js?v=129"></script>
 </body>
 </html>
