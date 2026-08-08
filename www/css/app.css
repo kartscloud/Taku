@@ -7,6 +7,7 @@
    recognisable "generated app" look there is. It is still available, but it is
    no longer the only option and no longer the default. */
 :root{
+  color-scheme:light dark;   /* native scrollbars and form controls follow too */
   --tintRGB:255,255,255;          /* subtle surface overlay, flipped in light mode */
   --want:#22c55e; --nope:#ef4444; --watch:#f59e0b;
   --s:#ff4d6d; --a:#ff9a3c; --b:#ffd23f; --c:#4ade80; --d:#60a5fa;
@@ -87,6 +88,8 @@
    terracotta rather than a bright one, so the palette stays quiet. The dark
    variant is warm espresso rather than neutral black, or it stops reading as
    the same family. */
+[data-theme="dark"]{color-scheme:dark}
+[data-theme="light"]{color-scheme:light}
 [data-palette="beige"]{
   --bgRGB:26,22,17; --cardRGB:42,36,29;
   --onAccent:#1a1611; --onAccent2:#1a1611;
