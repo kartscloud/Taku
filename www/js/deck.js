@@ -1,7 +1,13 @@
 /* taku · discover deck: modes, swipe, details, rating */
 let deckMode="foryou";
 const queues={foryou:[],new:[],trending:[]};
-const poolPage={foryou:0,new:0,trending:0};
+/* The page cursor is PERSISTED. It used to reset to 0 on every launch while the
+   fetch loop capped at 3 page-steps — so once someone had seen everything in the
+   first three pages (a few hundred swipes), every reload re-fetched exactly the
+   shows they had already swiped, filtered them all out, and declared the deck
+   empty. The anime were there; the engine just kept re-reading page one. */
+const poolPage=Object.assign({foryou:0,new:0,trending:0},store.get("poolCursor",{}));
+function savePoolCursor(){store.set("poolCursor",poolPage);}
 let deckLoading=false,pendingWatch=null;
 let lastUndo=null; // single-level rewind, Tinder-style
 
@@ -14,6 +20,7 @@ function activeQueue(){return replayMode?replayQueue:queues[deckMode];}
 /* genre filter changed → drop queued cards for all modes and rebuild */
 function applyGenreFilter(){
   Object.keys(queues).forEach(k=>{queues[k]=[];poolPage[k]=0;});
+  savePoolCursor();               // the filter changed what a page contains
   lastUndo=null;updateUndoBtn();
   renderDeck();
 }
@@ -23,15 +30,26 @@ const scoreClass=s=>s>=75?"hi":s>=60?"mid":"lo";
 async function ensureQueue(){
   if(replayMode)return;              // the pile is finite; nothing to page in
   if(deckLoading)return;deckLoading=true;
+  /* Walk deeper while pages come back full of already-seen shows. 8 steps is the
+     in-call cap (each step is up to 4 cached-for-30min queries); the persisted
+     cursor means progress accumulates across calls instead of restarting. */
   let guard=0;
-  while(queues[deckMode].length<4&&guard<3){
+  while(queues[deckMode].length<4&&guard<8){
     poolPage[deckMode]++;guard++;
     try{
       const cands=await buildQueue(deckMode,poolPage[deckMode]);
       const have=new Set(queues[deckMode].map(m=>m.id));
       queues[deckMode].push(...cands.filter(m=>!have.has(m.id)));
+      if(!buildQueue.lastRaw){
+        /* The pools returned NOTHING — the true end. Rewind so the next session
+           rescans from the top: trending and season shift constantly, so what is
+           exhausted today is not exhausted next week. */
+        poolPage[deckMode]=0;
+        break;
+      }
     }catch(e){console.error(e);break;}
   }
+  savePoolCursor();
   deckLoading=false;
 }
 function prefetchImages(){
