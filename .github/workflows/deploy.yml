@@ -23,6 +23,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+
+      # Development harnesses live in www/ so the dev server can load them beside
+      # index.html, but they are tooling, not product. Deleting them from the
+      # runner's throwaway checkout keeps them out of the published site without
+      # changing anything locally.
+      - name: Strip dev-only pages
+        run: rm -f www/wall.html www/themes.html www/simulator.html
+
       - name: Upload www/ as the site root
         uses: actions/upload-pages-artifact@v3
         with:
